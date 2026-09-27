@@ -32,6 +32,7 @@ class RbacSeeder extends Seeder
             ['key' => 'admin.roles', 'label' => 'Roles & Permissions', 'nav_group' => 'Admin', 'sort_order' => 9],
             ['key' => 'admin.audit-log', 'label' => 'Audit Log', 'nav_group' => 'Admin', 'sort_order' => 10],
             ['key' => 'admin.signatures', 'label' => 'Signature Verification', 'nav_group' => 'Admin', 'sort_order' => 11],
+            ['key' => 'admin.health-check', 'label' => 'System Health Check', 'nav_group' => 'Admin', 'sort_order' => 12],
         ];
         foreach ($screens as $s) {
             Screen::updateOrCreate(['key' => $s['key']], $s + ['module_key' => null]);
@@ -81,7 +82,7 @@ class RbacSeeder extends Seeder
 
         // ---- Screen grants per role ----
         $screenGrants = [
-            'admin' => ['home', 'leave.apply', 'claims.create', 'profile', 'approvals', 'employees', 'admin.master-data', 'admin.onboarding-templates', 'settings', 'admin.roles', 'admin.audit-log', 'admin.signatures'],
+            'admin' => ['home', 'leave.apply', 'claims.create', 'profile', 'approvals', 'employees', 'admin.master-data', 'admin.onboarding-templates', 'settings', 'admin.roles', 'admin.audit-log', 'admin.signatures', 'admin.health-check'],
             'hr_admin' => ['home', 'leave.apply', 'claims.create', 'profile', 'approvals', 'employees', 'admin.master-data', 'admin.onboarding-templates', 'admin.signatures'],
             'hr_officer' => ['home', 'leave.apply', 'claims.create', 'profile', 'approvals', 'employees'],
             'ess' => ['home', 'leave.apply', 'claims.create', 'profile'],

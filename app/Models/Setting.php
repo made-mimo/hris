@@ -28,6 +28,7 @@ class Setting extends Model implements HasMedia
         'smtp_host', 'smtp_port', 'smtp_username', 'smtp_password', 'smtp_encryption',
         'mail_from_address', 'mail_from_name',
         'sso_enabled', 'sso_provider', 'sso_client_id', 'sso_client_secret', 'sso_endpoint', 'sso_domain',
+        'health_check_hidden', 'show_optional_profile_fields',
     ];
 
     protected function casts(): array
@@ -42,6 +43,8 @@ class Setting extends Model implements HasMedia
             'smtp_password' => 'encrypted',
             'sso_enabled' => 'boolean',
             'sso_client_secret' => 'encrypted',
+            'health_check_hidden' => 'boolean',
+            'show_optional_profile_fields' => 'boolean',
         ];
     }
 

@@ -14,6 +14,7 @@
     $canRoles = auth()->user()?->canView('admin.roles');
     $canAuditLog = auth()->user()?->canView('admin.audit-log');
     $canSignatures = auth()->user()?->canView('admin.signatures');
+    $canHealthCheck = auth()->user()?->canView('admin.health-check');
     $approvalsBadge = $canApprovals ? \App\Models\LeaveRequest::where('status', 'pending_hr')->count()
         + \App\Models\ExpenseClaim::where('status', 'pending_hr')->count() : 0;
     $settings = \App\Models\Setting::current();
@@ -98,7 +99,7 @@
                 <span class="nav-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z"></path><path d="M14 3v5h5M9 13h6M9 17h6"></path></svg></span>Policies
             </span>
 
-            @if($canMasterData || $canOnboardingTemplates || $canSettings || $canRoles || $canAuditLog || $canSignatures)
+            @if($canMasterData || $canOnboardingTemplates || $canSettings || $canRoles || $canAuditLog || $canSignatures || $canHealthCheck)
                 <div class="nav-section-label">Admin</div>
                 @if($canMasterData)
                     <a href="{{ route('admin.master-data') }}" class="nav-link {{ request()->routeIs('admin.master-data') ? 'active' : '' }}">
@@ -128,6 +129,11 @@
                 @if($canSignatures)
                     <a href="{{ route('admin.signatures') }}" class="nav-link {{ request()->routeIs('admin.signatures') ? 'active' : '' }}">
                         <span class="nav-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17l4-4 3 3 5-5"></path><path d="M14 9h4v4"></path><path d="M4 21h16"></path></svg></span>Signature Verification
+                    </a>
+                @endif
+                @if($canHealthCheck && ! \App\Models\Setting::current()->health_check_hidden)
+                    <a href="{{ route('admin.health-check') }}" class="nav-link {{ request()->routeIs('admin.health-check') ? 'active' : '' }}">
+                        <span class="nav-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg></span>Health Check
                     </a>
                 @endif
             @endif

@@ -45,6 +45,9 @@ new class extends Component
     public ?string $ssoEndpoint = null;
     public ?string $ssoDomain = null;
 
+    public bool $healthCheckHidden = false;
+    public bool $showOptionalProfileFields = true;
+
     public function mount(): void
     {
         $settings = Setting::current();
@@ -75,6 +78,8 @@ new class extends Component
         $this->ssoClientId = $settings->sso_client_id;
         $this->ssoEndpoint = $settings->sso_endpoint;
         $this->ssoDomain = $settings->sso_domain;
+        $this->healthCheckHidden = $settings->health_check_hidden;
+        $this->showOptionalProfileFields = $settings->show_optional_profile_fields;
     }
 
     public function getEmployeeIdPreviewProperty(): string
@@ -111,6 +116,21 @@ new class extends Component
         session()->flash('status', $value
             ? 'Two-factor authentication is now required project-wide.'
             : 'Two-factor authentication is now switched off project-wide — for local dev/testing only.');
+    }
+
+    public function updatedHealthCheckHidden($value): void
+    {
+        Setting::current()->update(['health_check_hidden' => $value]);
+        Setting::forget();
+        session()->flash('status', $value ? 'Health Check hidden from everyone, including Admin, until re-enabled here.' : 'Health Check is now visible again.');
+    }
+
+    /** Spec B2: "Organization-wide toggle to show/hide optional (non-required) profile fields" — implemented at tab granularity (see employee-profile-tabs.blade.php), not per individual field. */
+    public function updatedShowOptionalProfileFields($value): void
+    {
+        Setting::current()->update(['show_optional_profile_fields' => $value]);
+        Setting::forget();
+        session()->flash('status', $value ? 'Optional profile tabs are now shown.' : 'Optional profile tabs are now hidden project-wide.');
     }
 
     public function savePasswordPolicy(): void
@@ -523,6 +543,28 @@ new class extends Component
                 </div>
                 <button type="submit" class="self-start rounded-sm bg-primary px-4.5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-primary-dark">Save SSO configuration</button>
             </form>
+        </section>
+
+        <section class="rounded-md border border-border bg-surface p-5 shadow-sm">
+            <div class="mb-3.5 flex items-center justify-between">
+                <h2 class="font-display text-base font-bold text-text">System</h2>
+            </div>
+            <div class="flex flex-col gap-3.5">
+                <label class="flex cursor-pointer items-start gap-3 rounded-[10px] border border-border p-3.5">
+                    <input type="checkbox" wire:model.live="healthCheckHidden" class="mt-0.5 h-[18px] w-[18px] accent-primary">
+                    <span>
+                        <span class="block text-sm font-semibold text-text">Hide System Health Check</span>
+                        <span class="mt-0.5 block text-xs text-text-muted">Spec A5 — reduces information disclosure once initial setup is complete. Hides the screen and blocks direct access for everyone, including Admin, until switched back off here.</span>
+                    </span>
+                </label>
+                <label class="flex cursor-pointer items-start gap-3 rounded-[10px] border border-border p-3.5">
+                    <input type="checkbox" wire:model.live="showOptionalProfileFields" class="mt-0.5 h-[18px] w-[18px] accent-primary">
+                    <span>
+                        <span class="block text-sm font-semibold text-text">Show optional employee profile tabs</span>
+                        <span class="mt-0.5 block text-xs text-text-muted">Spec B2 — when off, hides the non-required profile tabs (Family, Immigration, Compensation, Qualifications, Career, Attachments) for everyone. Job Details, Personal, Contact, Reporting, Termination, and Activity stay visible either way.</span>
+                    </span>
+                </label>
+            </div>
         </section>
     </div>
 </div>

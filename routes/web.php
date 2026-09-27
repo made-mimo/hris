@@ -52,4 +52,5 @@ Route::middleware(['auth', 'password_policy', 'two_factor'])->group(function () 
     Route::livewire('/admin/roles/{role}', 'pages::admin-role-edit')->name('admin.roles.edit')->middleware('screen:admin.roles');
     Route::livewire('/admin/audit-log', 'pages::admin-audit-log')->name('admin.audit-log')->middleware('screen:admin.audit-log');
     Route::livewire('/admin/signatures', 'pages::admin-signatures')->name('admin.signatures')->middleware('screen:admin.signatures');
+    Route::livewire('/admin/health-check', 'pages::admin-health-check')->name('admin.health-check')->middleware('screen:admin.health-check');
 });
