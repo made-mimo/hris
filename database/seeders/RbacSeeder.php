@@ -23,9 +23,11 @@ class RbacSeeder extends Seeder
             ['key' => 'home', 'label' => 'Home', 'nav_group' => 'Workspace', 'sort_order' => 1],
             ['key' => 'leave.apply', 'label' => 'My Leave', 'nav_group' => 'Workspace', 'sort_order' => 2, 'module_key' => 'leave'],
             ['key' => 'claims.create', 'label' => 'My Claims', 'nav_group' => 'Workspace', 'sort_order' => 3, 'module_key' => 'claims'],
-            ['key' => 'profile', 'label' => 'My Profile', 'nav_group' => 'Workspace', 'sort_order' => 4],
-            ['key' => 'approvals', 'label' => 'Approvals', 'nav_group' => 'My Team', 'sort_order' => 5],
-            ['key' => 'employees', 'label' => 'Employees', 'nav_group' => 'My Team', 'sort_order' => 6],
+            ['key' => 'timesheets', 'label' => 'My Timesheets', 'nav_group' => 'Workspace', 'sort_order' => 4, 'module_key' => 'timesheets'],
+            ['key' => 'profile', 'label' => 'My Profile', 'nav_group' => 'Workspace', 'sort_order' => 5],
+            ['key' => 'approvals', 'label' => 'Approvals', 'nav_group' => 'My Team', 'sort_order' => 6],
+            ['key' => 'employees', 'label' => 'Employees', 'nav_group' => 'My Team', 'sort_order' => 7],
+            ['key' => 'admin.projects', 'label' => 'Customers & Projects', 'nav_group' => 'Admin', 'sort_order' => 6],
             ['key' => 'admin.master-data', 'label' => 'Organization & Master Data', 'nav_group' => 'Admin', 'sort_order' => 6],
             ['key' => 'admin.onboarding-templates', 'label' => 'Onboarding/Offboarding Templates', 'nav_group' => 'Admin', 'sort_order' => 7],
             ['key' => 'admin.leave-configuration', 'label' => 'Leave Configuration', 'nav_group' => 'Admin', 'sort_order' => 7],
@@ -45,6 +47,7 @@ class RbacSeeder extends Seeder
         foreach ([
             ['key' => 'leave', 'label' => 'Leave Management'],
             ['key' => 'claims', 'label' => 'Expense Claims'],
+            ['key' => 'timesheets', 'label' => 'Time & Project Tracking'],
         ] as $m) {
             ModuleToggle::updateOrCreate(['key' => $m['key']], $m);
         }
@@ -57,6 +60,7 @@ class RbacSeeder extends Seeder
             ['key' => 'expense_claims', 'label' => 'Expense Claims'],
             ['key' => 'disciplinary_case', 'label' => 'Disciplinary Case Data'],
             ['key' => 'approvals_queue', 'label' => 'Approvals Queue'],
+            ['key' => 'timesheets', 'label' => 'Timesheets'],
         ];
         foreach ($groups as $g) {
             DataGroup::updateOrCreate(['key' => $g['key']], $g);
@@ -83,10 +87,10 @@ class RbacSeeder extends Seeder
 
         // ---- Screen grants per role ----
         $screenGrants = [
-            'admin' => ['home', 'leave.apply', 'claims.create', 'profile', 'approvals', 'employees', 'admin.master-data', 'admin.onboarding-templates', 'admin.leave-configuration', 'settings', 'admin.roles', 'admin.audit-log', 'admin.signatures', 'admin.health-check'],
-            'hr_admin' => ['home', 'leave.apply', 'claims.create', 'profile', 'approvals', 'employees', 'admin.master-data', 'admin.onboarding-templates', 'admin.leave-configuration', 'admin.signatures'],
-            'hr_officer' => ['home', 'leave.apply', 'claims.create', 'profile', 'approvals', 'employees'],
-            'ess' => ['home', 'leave.apply', 'claims.create', 'profile'],
+            'admin' => ['home', 'leave.apply', 'claims.create', 'timesheets', 'profile', 'approvals', 'employees', 'admin.master-data', 'admin.onboarding-templates', 'admin.leave-configuration', 'admin.projects', 'settings', 'admin.roles', 'admin.audit-log', 'admin.signatures', 'admin.health-check'],
+            'hr_admin' => ['home', 'leave.apply', 'claims.create', 'timesheets', 'profile', 'approvals', 'employees', 'admin.master-data', 'admin.onboarding-templates', 'admin.leave-configuration', 'admin.projects', 'admin.signatures'],
+            'hr_officer' => ['home', 'leave.apply', 'claims.create', 'timesheets', 'profile', 'approvals', 'employees'],
+            'ess' => ['home', 'leave.apply', 'claims.create', 'timesheets', 'profile'],
             // Now that the workflow engine (WorkflowSeeder) gives supervisors
             // a real pending_manager stage to act on, they need the Approvals
             // screen too — layered on top of their base role same as any
@@ -113,6 +117,7 @@ class RbacSeeder extends Seeder
                 'expense_claims' => ['all', 'view_edit_delete'],
                 'disciplinary_case' => ['all', 'view_edit_delete'],
                 'approvals_queue' => ['all', 'view_edit_delete'],
+                'timesheets' => ['all', 'view_edit_delete'],
             ],
             'hr_admin' => [
                 'employee_personal_details' => ['all', 'view_edit_delete'],
@@ -121,6 +126,7 @@ class RbacSeeder extends Seeder
                 'expense_claims' => ['all', 'view_edit_delete'],
                 'disciplinary_case' => ['all', 'view_edit_delete'],
                 'approvals_queue' => ['all', 'view_edit'],
+                'timesheets' => ['all', 'view_edit'],
             ],
             'hr_officer' => [
                 'employee_personal_details' => ['all', 'view_edit'],
@@ -129,6 +135,7 @@ class RbacSeeder extends Seeder
                 'expense_claims' => ['all', 'view_edit'],
                 'disciplinary_case' => ['none', 'none'],
                 'approvals_queue' => ['all', 'view_edit'],
+                'timesheets' => ['self', 'view_edit'],
             ],
             'supervisor' => [
                 'employee_personal_details' => ['self_subordinates', 'view'],
@@ -137,6 +144,7 @@ class RbacSeeder extends Seeder
                 'expense_claims' => ['self_subordinates', 'view_edit'],
                 'disciplinary_case' => ['none', 'none'],
                 'approvals_queue' => ['self_subordinates', 'view_edit'],
+                'timesheets' => ['self_subordinates', 'view_edit'],
             ],
             'ess' => [
                 'employee_personal_details' => ['self', 'view_edit'],
@@ -145,6 +153,7 @@ class RbacSeeder extends Seeder
                 'expense_claims' => ['self', 'view_edit'],
                 'disciplinary_case' => ['none', 'none'],
                 'approvals_queue' => ['none', 'none'],
+                'timesheets' => ['self', 'view_edit'],
             ],
         ];
         foreach ($matrix as $slug => $grants) {

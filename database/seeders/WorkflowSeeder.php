@@ -50,6 +50,24 @@ class WorkflowSeeder extends Seeder
             // moment a "mark paid" action is built, per the engine's whole
             // point ("a policy change is a row edit, not new code").
             ['expense_claim', 'approved', 'hr_admin', 'mark_paid', 'Mark as paid', 'paid'],
+
+            // ---- timesheet (spec C2) — single-stage (supervisor OR admin,
+            // whichever acts), unlike Leave's two-stage sequence, and
+            // Rejected supports resubmission rather than being terminal.
+            // "admin" here is the system Admin role specifically (spec's own
+            // "supervisors/admins"), not HR Admin — Time & Project Tracking
+            // isn't an HR-specific approval chain the way Leave/Claims are.
+            ['timesheet', 'not_submitted', 'owner', 'submit', 'Submit', 'submitted'],
+            ['timesheet', 'submitted', 'supervisor', 'approve', 'Approve', 'approved'],
+            ['timesheet', 'submitted', 'supervisor', 'reject', 'Reject', 'rejected'],
+            ['timesheet', 'submitted', 'admin', 'approve', 'Approve', 'approved'],
+            ['timesheet', 'submitted', 'admin', 'reject', 'Reject', 'rejected'],
+            ['timesheet', 'rejected', 'owner', 'resubmit', 'Resubmit', 'submitted'],
+            ['timesheet', 'rejected', 'supervisor', 'resubmit', 'Resubmit', 'submitted'],
+            ['timesheet', 'rejected', 'admin', 'resubmit', 'Resubmit', 'submitted'],
+            // Spec: "only an administrator may reset an approved timesheet
+            // back to submitted (undo an approval)."
+            ['timesheet', 'approved', 'admin', 'reset', 'Undo approval', 'submitted'],
         ];
 
         foreach ($rows as [$workflow, $from, $actor, $action, $label, $to]) {

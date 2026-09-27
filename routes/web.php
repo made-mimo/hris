@@ -39,6 +39,10 @@ Route::middleware(['auth', 'password_policy', 'two_factor'])->group(function () 
     Route::livewire('/leave/assign', 'pages::leave-assign')->name('leave.assign')->middleware('screen:approvals');
     Route::livewire('/leave/reports', 'pages::leave-reports')->name('leave.reports')->middleware('screen:admin.leave-configuration');
     Route::livewire('/claims/create', 'pages::expense-claim')->name('claims.create')->middleware('screen:claims.create');
+    Route::livewire('/timesheets', 'pages::timesheets')->name('timesheets')->middleware('screen:timesheets');
+    Route::livewire('/timesheets/approvals', 'pages::timesheet-approvals')->name('timesheets.approvals')->middleware('screen:timesheets');
+    Route::livewire('/timesheets/reports', 'pages::timesheet-reports')->name('timesheets.reports')->middleware('screen:admin.projects');
+    Route::livewire('/admin/projects', 'pages::admin-projects')->name('admin.projects')->middleware('screen:admin.projects');
     Route::livewire('/profile', 'pages::profile')->name('profile')->middleware('screen:profile');
     Route::livewire('/approvals', 'pages::approvals')->name('approvals')->middleware('screen:approvals');
     Route::livewire('/employees', 'pages::employees')->name('employees')->middleware('screen:employees');

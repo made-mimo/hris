@@ -232,6 +232,16 @@ class Employee extends Model implements HasMedia
         return $this->hasMany(EmployeeCustomFieldValue::class);
     }
 
+    public function timesheets(): HasMany
+    {
+        return $this->hasMany(Timesheet::class);
+    }
+
+    public function projectAssignments(): HasMany
+    {
+        return $this->hasMany(ProjectAssignment::class);
+    }
+
     public function onboardingTasks(): HasMany
     {
         return $this->hasMany(EmployeeTask::class)->where('kind', 'onboarding');

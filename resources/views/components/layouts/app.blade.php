@@ -8,9 +8,12 @@
     $canEmployees = auth()->user()?->canView('employees');
     $canLeave = auth()->user()?->canView('leave.apply');
     $canClaims = auth()->user()?->canView('claims.create');
+    $canTimesheets = auth()->user()?->canView('timesheets');
+    $canApproveTimesheets = $canTimesheets && in_array($permissions->scopeFor(auth()->user(), 'timesheets'), ['all', 'self_subordinates'], true);
     $canMasterData = auth()->user()?->canView('admin.master-data');
     $canOnboardingTemplates = auth()->user()?->canView('admin.onboarding-templates');
     $canLeaveConfiguration = auth()->user()?->canView('admin.leave-configuration');
+    $canProjects = auth()->user()?->canView('admin.projects');
     $canSettings = auth()->user()?->canView('settings');
     $canRoles = auth()->user()?->canView('admin.roles');
     $canAuditLog = auth()->user()?->canView('admin.audit-log');
@@ -63,9 +66,11 @@
                     <span class="nav-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"></path><path d="M9 8h6M9 12h6"></path></svg></span>My Claims
                 </a>
             @endif
-            <span class="nav-link" style="opacity:.5;cursor:default;">
-                <span class="nav-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg></span>Time &amp; Attendance
-            </span>
+            @if($canTimesheets)
+                <a href="{{ route('timesheets') }}" class="nav-link {{ request()->routeIs('timesheets') ? 'active' : '' }}">
+                    <span class="nav-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg></span>My Timesheets
+                </a>
+            @endif
             <a href="{{ route('profile') }}" class="nav-link {{ request()->routeIs('profile') ? 'active' : '' }}">
                 <span class="nav-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"></path></svg></span>My Profile
             </a>
@@ -84,6 +89,11 @@
                         @endif
                     </a>
                 @endif
+                @if($canApproveTimesheets)
+                    <a href="{{ route('timesheets.approvals') }}" class="nav-link {{ request()->routeIs('timesheets.approvals') ? 'active' : '' }}">
+                        <span class="nav-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg></span>Timesheet Approvals
+                    </a>
+                @endif
                 @if($canEmployees)
                     <a href="{{ route('employees') }}" class="nav-link {{ request()->routeIs('employees*') ? 'active' : '' }}">
                         <span class="nav-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg></span>
@@ -100,7 +110,7 @@
                 <span class="nav-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z"></path><path d="M14 3v5h5M9 13h6M9 17h6"></path></svg></span>Policies
             </span>
 
-            @if($canMasterData || $canOnboardingTemplates || $canLeaveConfiguration || $canSettings || $canRoles || $canAuditLog || $canSignatures || $canHealthCheck)
+            @if($canMasterData || $canOnboardingTemplates || $canLeaveConfiguration || $canProjects || $canSettings || $canRoles || $canAuditLog || $canSignatures || $canHealthCheck)
                 <div class="nav-section-label">Admin</div>
                 @if($canMasterData)
                     <a href="{{ route('admin.master-data') }}" class="nav-link {{ request()->routeIs('admin.master-data') ? 'active' : '' }}">
@@ -118,6 +128,14 @@
                     </a>
                     <a href="{{ route('leave.reports') }}" class="nav-link {{ request()->routeIs('leave.reports') ? 'active' : '' }}">
                         <span class="nav-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"></path><path d="M18 17V9M13 17V5M8 17v-4"></path></svg></span>Leave Reports
+                    </a>
+                @endif
+                @if($canProjects)
+                    <a href="{{ route('admin.projects') }}" class="nav-link {{ request()->routeIs('admin.projects') ? 'active' : '' }}">
+                        <span class="nav-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="14" rx="2"></rect><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></span>Customers &amp; Projects
+                    </a>
+                    <a href="{{ route('timesheets.reports') }}" class="nav-link {{ request()->routeIs('timesheets.reports') ? 'active' : '' }}">
+                        <span class="nav-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"></path><path d="M7 15l4-4 3 3 5-6"></path></svg></span>Timesheet Reports
                     </a>
                 @endif
                 @if($canSettings)
