@@ -138,7 +138,7 @@ new class extends Component
         <div style="padding:22px 24px;display:flex;flex-direction:column;gap:22px;">
 
             <fieldset style="border:none;margin:0;padding:0;">
-                <legend style="font-size:13px;font-weight:600;margin-bottom:10px;padding:0;">Leave type</legend>
+                <legend style="font-size:15px;font-weight:600;margin-bottom:10px;padding:0;">Leave type</legend>
                 <div class="grid grid-4">
                     @foreach($types as $t)
                         <button type="button" wire:click="pickType({{ $t['id'] }})" wire:key="type-{{ $t['id'] }}" class="option-card {{ $leaveTypeId === $t['id'] ? 'is-active' : '' }}">
@@ -161,7 +161,7 @@ new class extends Component
             </div>
 
             <fieldset style="border:none;margin:0;padding:0;">
-                <legend style="font-size:13px;font-weight:600;margin-bottom:10px;padding:0;">Duration per day</legend>
+                <legend style="font-size:15px;font-weight:600;margin-bottom:10px;padding:0;">Duration per day</legend>
                 <div class="seg-switch">
                     @foreach($durationLabels as $key => $label)
                         <button type="button" wire:click="pickDuration('{{ $key }}')" wire:key="dur-{{ $key }}" class="seg-btn {{ $duration === $key ? 'is-active' : '' }}">{{ $label }}</button>

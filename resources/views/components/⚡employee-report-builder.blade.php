@@ -1,35 +1,23 @@
 <?php
 
-use App\Models\Employee;
 use App\Models\JobTitle;
 use App\Models\Location;
+use App\Models\ReportSchedule;
 use App\Models\SubUnit;
+use App\Services\EmployeeReportService;
 use Livewire\Component;
 
 /**
  * Spec B2: "Ad-hoc and predefined reporting: a configurable report builder
  * (choose display fields, filters, grouping) against employee data,
  * exportable (CSV/PDF) and schedulable for recurring email delivery to a
- * configurable recipient list." This builds the field/filter picker and CSV
- * export; PDF export and the scheduled-email-delivery half aren't built in
- * this prototype slice (see PLAN.md) — CSV covers the "get the data out"
- * need and the scheduling half needs a recipient-list concept this
- * prototype doesn't have anywhere else yet.
+ * configurable recipient list." Field/query/export logic lives in
+ * EmployeeReportService so the scheduled-report console command
+ * (RunScheduledReports) produces byte-identical output to these on-demand
+ * buttons.
  */
 new class extends Component
 {
-    public const AVAILABLE_FIELDS = [
-        'employee_id' => 'Employee ID',
-        'first_name' => 'First name',
-        'last_name' => 'Last name',
-        'job_title' => 'Job title',
-        'sub_unit' => 'Department',
-        'location' => 'Location',
-        'hire_date' => 'Hire date',
-        'work_email' => 'Work email',
-        'phone_mobile' => 'Mobile phone',
-    ];
-
     public array $selectedFields = ['employee_id', 'first_name', 'last_name', 'job_title', 'sub_unit', 'hire_date'];
 
     public ?int $jobTitleId = null;
@@ -40,62 +28,114 @@ new class extends Component
 
     public string $statusFilter = 'current';
 
-    protected function query()
-    {
-        return Employee::query()
-            ->with(['jobTitle', 'subUnit', 'location'])
-            ->when($this->jobTitleId, fn ($q) => $q->where('job_title_id', $this->jobTitleId))
-            ->when($this->subUnitId, fn ($q) => $q->where('sub_unit_id', $this->subUnitId))
-            ->when($this->locationId, fn ($q) => $q->where('location_id', $this->locationId))
-            ->when($this->statusFilter === 'current', fn ($q) => $q->whereDoesntHave('terminations'))
-            ->when($this->statusFilter === 'past', fn ($q) => $q->whereHas('terminations'))
-            ->orderBy('last_name');
-    }
+    public string $scheduleName = '';
 
-    public function rowValue(Employee $employee, string $field): string
-    {
-        return match ($field) {
-            'job_title' => $employee->jobTitleName() ?? '',
-            'sub_unit' => $employee->departmentName() ?? '',
-            'location' => $employee->locationName() ?? '',
-            'hire_date' => $employee->hire_date->toDateString(),
-            default => (string) ($employee->{$field} ?? ''),
-        };
-    }
+    public string $scheduleFrequency = 'weekly';
 
-    public function exportCsv()
-    {
-        $fields = $this->selectedFields;
-        $rows = $this->query()->get();
+    public string $scheduleFormat = 'csv';
 
-        return response()->streamDownload(function () use ($rows, $fields) {
-            $out = fopen('php://output', 'w');
-            fputcsv($out, array_map(fn ($f) => self::AVAILABLE_FIELDS[$f], $fields));
-            foreach ($rows as $employee) {
-                fputcsv($out, array_map(fn ($f) => $this->rowValue($employee, $f), $fields));
-            }
-            fclose($out);
-        }, 'employee-report.csv', ['Content-Type' => 'text/csv']);
-    }
+    public string $scheduleRecipients = '';
 
-    public function with(): array
+    protected function filters(): array
     {
         return [
-            'preview' => $this->query()->limit(20)->get(),
-            'totalCount' => $this->query()->count(),
+            'jobTitleId' => $this->jobTitleId,
+            'subUnitId' => $this->subUnitId,
+            'locationId' => $this->locationId,
+            'statusFilter' => $this->statusFilter,
+        ];
+    }
+
+    public function exportCsv(EmployeeReportService $reports)
+    {
+        $csv = $reports->toCsv($reports->query($this->filters())->get(), $this->selectedFields);
+
+        return response()->streamDownload(fn () => print($csv), 'employee-report.csv', ['Content-Type' => 'text/csv']);
+    }
+
+    public function exportPdf(EmployeeReportService $reports)
+    {
+        $pdf = $reports->toPdf($reports->query($this->filters())->get(), $this->selectedFields);
+
+        return response()->streamDownload(fn () => print($pdf), 'employee-report.pdf', ['Content-Type' => 'application/pdf']);
+    }
+
+    public function saveSchedule(): void
+    {
+        $data = $this->validate([
+            'scheduleName' => ['required', 'string', 'max:100'],
+            'scheduleFrequency' => ['required', 'in:'.implode(',', ReportSchedule::FREQUENCIES)],
+            'scheduleFormat' => ['required', 'in:'.implode(',', ReportSchedule::FORMATS)],
+            'scheduleRecipients' => ['required', 'string'],
+        ]);
+
+        $recipients = collect(explode(',', $data['scheduleRecipients']))
+            ->map(fn ($e) => trim($e))
+            ->filter()
+            ->values();
+
+        foreach ($recipients as $email) {
+            if (! filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                $this->addError('scheduleRecipients', "\"$email\" isn't a valid email address.");
+
+                return;
+            }
+        }
+
+        ReportSchedule::create([
+            'name' => $data['scheduleName'],
+            'report_type' => 'employee',
+            'config' => ['selectedFields' => $this->selectedFields, 'filters' => $this->filters()],
+            'recipients' => $recipients->all(),
+            'format' => $data['scheduleFormat'],
+            'frequency' => $data['scheduleFrequency'],
+            'created_by' => auth()->id(),
+        ]);
+
+        $this->reset('scheduleName', 'scheduleRecipients');
+        session()->flash('status', 'Report schedule saved.');
+    }
+
+    public function toggleSchedule(int $id): void
+    {
+        $schedule = ReportSchedule::findOrFail($id);
+        $schedule->update(['is_active' => ! $schedule->is_active]);
+    }
+
+    public function deleteSchedule(int $id): void
+    {
+        ReportSchedule::findOrFail($id)->delete();
+    }
+
+    public function with(EmployeeReportService $reports): array
+    {
+        return [
+            'availableFields' => EmployeeReportService::AVAILABLE_FIELDS,
+            'preview' => $reports->query($this->filters())->limit(20)->get(),
+            'totalCount' => $reports->query($this->filters())->count(),
             'jobTitles' => JobTitle::where('is_active', true)->orderBy('name')->get(),
             'subUnits' => SubUnit::where('is_active', true)->orderBy('name')->get(),
             'locations' => Location::where('is_active', true)->orderBy('name')->get(),
+            'schedules' => ReportSchedule::where('report_type', 'employee')->latest()->get(),
         ];
+    }
+
+    public function rowValue($employee, string $field): string
+    {
+        return app(EmployeeReportService::class)->rowValue($employee, $field);
     }
 };
 ?>
 
 <div class="flex flex-col gap-4">
+    @if(session('status'))
+        <div class="inline-flex items-center gap-2 self-start rounded-pill bg-accent-light px-3.5 py-2.5 text-xs font-semibold text-accent">{{ session('status') }}</div>
+    @endif
+
     <section class="rounded-md border border-border bg-surface p-5 shadow-sm">
         <h2 class="mb-3.5 font-display text-base font-bold text-text">Fields</h2>
         <div class="mb-4 flex flex-wrap gap-3">
-            @foreach(self::AVAILABLE_FIELDS as $key => $label)
+            @foreach($availableFields as $key => $label)
                 <label class="flex items-center gap-1.5 text-xs text-text">
                     <input type="checkbox" wire:model.live="selectedFields" value="{{ $key }}" class="h-4 w-4 accent-primary">
                     {{ $label }}
@@ -126,7 +166,10 @@ new class extends Component
 
         <div class="flex items-center justify-between">
             <div class="text-xs text-text-muted">{{ $totalCount }} matching employee{{ $totalCount === 1 ? '' : 's' }} — showing first {{ min(20, $totalCount) }} below.</div>
-            <button wire:click="exportCsv" class="rounded-sm bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-dark">Export CSV</button>
+            <div class="flex gap-2">
+                <button wire:click="exportCsv" class="rounded-sm bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-dark">Export CSV</button>
+                <button wire:click="exportPdf" class="rounded-sm border border-border bg-surface px-4 py-2 text-sm font-semibold text-text hover:bg-bg">Export PDF</button>
+            </div>
         </div>
     </section>
 
@@ -135,7 +178,7 @@ new class extends Component
             <thead>
                 <tr class="border-b border-border text-xs font-semibold uppercase tracking-wide text-text-muted">
                     @foreach($selectedFields as $field)
-                        <th class="px-4 py-2.5">{{ self::AVAILABLE_FIELDS[$field] }}</th>
+                        <th class="px-4 py-2.5">{{ $availableFields[$field] }}</th>
                     @endforeach
                 </tr>
             </thead>
@@ -152,5 +195,60 @@ new class extends Component
                 @endif
             </tbody>
         </table>
+    </section>
+
+    <section class="rounded-md border border-border bg-surface p-5 shadow-sm">
+        <h2 class="mb-3.5 font-display text-base font-bold text-text">Schedule recurring delivery</h2>
+        <p class="mb-3.5 text-xs text-text-muted">Emails this report — with the fields and filters currently selected above — to a recipient list on a recurring basis.</p>
+
+        <form wire:submit="saveSchedule" class="mb-5 flex flex-wrap items-end gap-3">
+            <div>
+                <label class="mb-1.5 block text-xs font-semibold text-text">Schedule name</label>
+                <input type="text" wire:model="scheduleName" placeholder="e.g. Monthly headcount" class="rounded-sm border border-border bg-surface px-3 py-2 text-sm text-text outline-none focus:border-primary">
+                @error('scheduleName') <div class="mt-1 text-xs text-danger">{{ $message }}</div> @enderror
+            </div>
+            <div>
+                <label class="mb-1.5 block text-xs font-semibold text-text">Frequency</label>
+                <select wire:model="scheduleFrequency" class="rounded-sm border border-border bg-surface px-3 py-2 text-sm text-text outline-none focus:border-primary">
+                    <option value="daily">Daily</option>
+                    <option value="weekly">Weekly</option>
+                    <option value="monthly">Monthly</option>
+                </select>
+            </div>
+            <div>
+                <label class="mb-1.5 block text-xs font-semibold text-text">Format</label>
+                <select wire:model="scheduleFormat" class="rounded-sm border border-border bg-surface px-3 py-2 text-sm text-text outline-none focus:border-primary">
+                    <option value="csv">CSV</option>
+                    <option value="pdf">PDF</option>
+                </select>
+            </div>
+            <div style="flex:1;min-width:220px;">
+                <label class="mb-1.5 block text-xs font-semibold text-text">Recipients</label>
+                <input type="text" wire:model="scheduleRecipients" placeholder="finance@company.com, hr@company.com" class="w-full rounded-sm border border-border bg-surface px-3 py-2 text-sm text-text outline-none focus:border-primary">
+                @error('scheduleRecipients') <div class="mt-1 text-xs text-danger">{{ $message }}</div> @enderror
+            </div>
+            <button type="submit" class="rounded-sm bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-dark">Save schedule</button>
+        </form>
+
+        <div class="divide-y divide-border">
+            @foreach($schedules as $schedule)
+                <div class="flex items-center justify-between py-2.5 text-sm">
+                    <div>
+                        <span class="font-semibold text-text">{{ $schedule->name }}</span>
+                        <span class="ml-2 text-xs text-text-muted">{{ ucfirst($schedule->frequency) }} · {{ strtoupper($schedule->format) }} · {{ count($schedule->recipients) }} recipient{{ count($schedule->recipients) === 1 ? '' : 's' }}</span>
+                        @if(! $schedule->is_active)
+                            <span class="ml-2 rounded-pill bg-text-faint/15 px-2 py-0.5 text-[10px] font-semibold text-text-muted">Paused</span>
+                        @endif
+                    </div>
+                    <div class="flex gap-3">
+                        <button wire:click="toggleSchedule({{ $schedule->id }})" class="text-xs font-semibold text-primary">{{ $schedule->is_active ? 'Pause' : 'Resume' }}</button>
+                        <button wire:click="deleteSchedule({{ $schedule->id }})" wire:confirm="Delete this report schedule?" class="text-xs font-semibold text-danger">Delete</button>
+                    </div>
+                </div>
+            @endforeach
+            @if($schedules->isEmpty())
+                <div class="py-6 text-center text-sm text-text-muted">No report schedules yet.</div>
+            @endif
+        </div>
     </section>
 </div>

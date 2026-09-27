@@ -6,6 +6,10 @@ use Livewire\Component;
 
 new class extends Component
 {
+    public const GENDERS = ['Male', 'Female', 'Prefer not to say'];
+
+    public const MARITAL_STATUSES = ['Single', 'Married', 'Divorced', 'Widowed', 'Separated'];
+
     public Employee $employee;
 
     public ?string $preferredName;
@@ -31,7 +35,7 @@ new class extends Component
         $this->dateOfBirth = $employee->date_of_birth?->toDateString();
         $this->gender = $employee->gender;
         $this->maritalStatus = $employee->marital_status;
-        $this->nationalityId = $employee->nationality_id;
+        $this->nationalityId = $employee->nationality_id ?? MasterListItem::defaultCountryId(MasterListItem::TYPE_NATIONALITY);
         $this->governmentIdType = $employee->government_id_type;
         $this->governmentIdNumber = $employee->government_id_number;
         $this->drivingLicenseNumber = $employee->driving_license_number;
@@ -42,8 +46,8 @@ new class extends Component
         $data = $this->validate([
             'preferredName' => ['nullable', 'string', 'max:100'],
             'dateOfBirth' => ['nullable', 'date', 'before:today'],
-            'gender' => ['nullable', 'string', 'max:50'],
-            'maritalStatus' => ['nullable', 'string', 'max:50'],
+            'gender' => ['nullable', 'string', 'in:'.implode(',', self::GENDERS)],
+            'maritalStatus' => ['nullable', 'string', 'in:'.implode(',', self::MARITAL_STATUSES)],
             'nationalityId' => ['nullable', 'exists:master_list_items,id'],
             'governmentIdType' => ['nullable', 'string', 'max:100'],
             'governmentIdNumber' => ['nullable', 'string', 'max:255'],
@@ -93,11 +97,21 @@ new class extends Component
             <div class="grid grid-cols-2 gap-3">
                 <div>
                     <label for="gender" class="mb-1.5 block text-xs font-semibold text-text">Gender</label>
-                    <input id="gender" type="text" wire:model="gender" class="w-full rounded-sm border border-border bg-surface px-3 py-2 text-sm text-text outline-none focus:border-primary">
+                    <select id="gender" wire:model="gender" class="w-full rounded-sm border border-border bg-surface px-3 py-2 text-sm text-text outline-none focus:border-primary">
+                        <option value="">— none —</option>
+                        @foreach(self::GENDERS as $option)
+                            <option value="{{ $option }}">{{ $option }}</option>
+                        @endforeach
+                    </select>
                 </div>
                 <div>
                     <label for="maritalStatus" class="mb-1.5 block text-xs font-semibold text-text">Marital status</label>
-                    <input id="maritalStatus" type="text" wire:model="maritalStatus" class="w-full rounded-sm border border-border bg-surface px-3 py-2 text-sm text-text outline-none focus:border-primary">
+                    <select id="maritalStatus" wire:model="maritalStatus" class="w-full rounded-sm border border-border bg-surface px-3 py-2 text-sm text-text outline-none focus:border-primary">
+                        <option value="">— none —</option>
+                        @foreach(self::MARITAL_STATUSES as $option)
+                            <option value="{{ $option }}">{{ $option }}</option>
+                        @endforeach
+                    </select>
                 </div>
             </div>
 

@@ -34,6 +34,9 @@ class MasterListItem extends Model
 
     public const TYPE_COUNTRY = 'country';
 
+    /** Spec review: every Country/Nationality dropdown in the app defaults to this. */
+    public const DEFAULT_COUNTRY_NAME = 'Nigeria';
+
     public const TYPES = [
         self::TYPE_JOB_CATEGORY => 'Job Categories',
         self::TYPE_EMPLOYMENT_STATUS => 'Employment Statuses',
@@ -56,5 +59,10 @@ class MasterListItem extends Model
     public function scopeOfType(Builder $query, string $type): Builder
     {
         return $query->where('type', $type);
+    }
+
+    public static function defaultCountryId(string $type): ?int
+    {
+        return static::ofType($type)->where('name', self::DEFAULT_COUNTRY_NAME)->value('id');
     }
 }

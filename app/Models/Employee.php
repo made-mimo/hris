@@ -41,6 +41,8 @@ class Employee extends Model implements HasMedia
         'government_id_number',
         'driving_license_number',
         'home_address',
+        'home_city_state',
+        'home_country_id',
         'phone_home',
         'phone_mobile',
         'personal_email',
@@ -111,6 +113,11 @@ class Employee extends Model implements HasMedia
     public function nationality(): BelongsTo
     {
         return $this->belongsTo(MasterListItem::class, 'nationality_id');
+    }
+
+    public function homeCountry(): BelongsTo
+    {
+        return $this->belongsTo(MasterListItem::class, 'home_country_id');
     }
 
     public function employmentStatus(): BelongsTo
@@ -318,6 +325,8 @@ class Employee extends Model implements HasMedia
             'government_id_number' => null,
             'driving_license_number' => null,
             'home_address' => null,
+            'home_city_state' => null,
+            'home_country_id' => null,
             'phone_home' => null,
             'phone_mobile' => null,
             'personal_email' => null,

@@ -49,13 +49,4 @@ new class extends Component
             <livewire:employee-contact-tab :employee="$me" :key="'self-contact-'.$me->id" />
         </div>
     </div>
-
-    <div class="grid grid-2" style="align-items:start;margin-top:24px;">
-        <section class="card">
-            <div class="card-header"><h2>Change password</h2></div>
-            <livewire:change-password />
-        </section>
-
-        <livewire:account-security />
-    </div>
 </x-layouts.app>

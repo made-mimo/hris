@@ -21,7 +21,6 @@ new class extends Component
         'work_shifts' => 'Work Shifts',
         'pay_grades' => 'Pay Grades',
         'master_lists' => 'Other Lists',
-        'provinces' => 'Provinces',
         'custom_fields' => 'Employee Custom Fields',
         'notifications' => 'Notification Subscriptions',
         'modules' => 'Modules',
@@ -51,8 +50,6 @@ new class extends Component
         <livewire:pay-grades-manager wire:key="pay-grades-manager" />
     @elseif($activeTab === 'master_lists')
         <livewire:master-list-manager wire:key="master-list-manager" />
-    @elseif($activeTab === 'provinces')
-        <livewire:provinces-manager wire:key="provinces-manager" />
     @elseif($activeTab === 'custom_fields')
         <livewire:employee-custom-fields-manager wire:key="employee-custom-fields-manager" />
     @elseif($activeTab === 'notifications')

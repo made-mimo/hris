@@ -643,7 +643,7 @@ table.data-table {
 
 .field label {
   display: block;
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 600;
   margin-bottom: 6px;
   color: var(--color-text);
