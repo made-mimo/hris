@@ -31,8 +31,23 @@ new class extends Component
                 <div style="display:flex;justify-content:space-between;"><span class="text-muted">Supervisor</span><span style="font-weight:600;">{{ $me->supervisor?->fullName() ?? '—' }}</span></div>
                 <div style="display:flex;justify-content:space-between;"><span class="text-muted">Hire date</span><span style="font-weight:600;">{{ $me->hire_date->format('j M Y') }}</span></div>
             </div>
-            <div class="hint" style="margin-top:14px;">Full Employee Master Record editing (spec B2) isn't part of this prototype slice.</div>
         </section>
+    </div>
+
+    {{--
+        Spec B2: "Self-service 'My Info' view exposing the subset of the
+        profile an employee may edit themselves." Reuses the same Personal/
+        Contact tab components the Admin/HR-facing employee profile editor
+        uses (employee-detail-form.blade.php's Job Details tab and beyond) —
+        both already take a plain Employee, with no admin-only gating, so
+        there's nothing self-service-specific to duplicate here.
+    --}}
+    <div class="mt-6">
+        <h2 class="mb-3" style="font-size:16px;font-weight:700;">My Info</h2>
+        <div class="flex flex-col gap-4">
+            <livewire:employee-personal-tab :employee="$me" :key="'self-personal-'.$me->id" />
+            <livewire:employee-contact-tab :employee="$me" :key="'self-contact-'.$me->id" />
+        </div>
     </div>
 
     <div class="grid grid-2" style="align-items:start;margin-top:24px;">

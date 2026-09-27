@@ -18,6 +18,7 @@ new class extends Component
         'immigration' => 'Immigration',
         'compensation' => 'Compensation',
         'qualifications' => 'Qualifications',
+        'career' => 'Career',
         'reporting' => 'Reporting',
         'termination' => 'Termination',
         'attachments' => 'Attachments & Custom Fields',
@@ -55,6 +56,8 @@ new class extends Component
         <livewire:employee-compensation-tab :employee="$employee" wire:key="employee-compensation-{{ $employee->id }}" />
     @elseif($activeTab === 'qualifications')
         <livewire:employee-qualifications-tab :employee="$employee" wire:key="employee-qualifications-{{ $employee->id }}" />
+    @elseif($activeTab === 'career')
+        <livewire:employee-career-tab :employee="$employee" wire:key="employee-career-{{ $employee->id }}" />
     @elseif($activeTab === 'reporting')
         <livewire:employee-reporting-tab :employee="$employee" wire:key="employee-reporting-{{ $employee->id }}" />
     @elseif($activeTab === 'termination')

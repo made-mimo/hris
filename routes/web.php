@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\EmployeeCsvTemplateController;
 use App\Http\Controllers\PushSubscriptionController;
 use App\Http\Controllers\TimezoneController;
 use Illuminate\Support\Facades\Route;
@@ -40,8 +41,12 @@ Route::middleware(['auth', 'password_policy', 'two_factor'])->group(function () 
     Route::livewire('/approvals', 'pages::approvals')->name('approvals')->middleware('screen:approvals');
     Route::livewire('/employees', 'pages::employees')->name('employees')->middleware('screen:employees');
     Route::livewire('/employees/create', 'pages::employee-create')->name('employees.create')->middleware('screen:employees');
+    Route::get('/employees/csv-template', EmployeeCsvTemplateController::class)->name('employees.csv-template')->middleware('screen:employees');
+    Route::livewire('/employees/reports', 'pages::employee-reports')->name('employees.reports')->middleware('screen:employees');
     Route::livewire('/employees/{employee}', 'pages::employee-show')->name('employees.show')->middleware('screen:employees');
+    Route::livewire('/org-chart', 'pages::org-chart')->name('org-chart')->middleware('screen:employees');
     Route::livewire('/admin/master-data', 'pages::admin-master-data')->name('admin.master-data')->middleware('screen:admin.master-data');
+    Route::livewire('/admin/onboarding-templates', 'pages::admin-onboarding-templates')->name('admin.onboarding-templates')->middleware('screen:admin.onboarding-templates');
     Route::livewire('/settings', 'pages::settings')->name('settings')->middleware('screen:settings');
     Route::livewire('/admin/roles', 'pages::admin-roles')->name('admin.roles')->middleware('screen:admin.roles');
     Route::livewire('/admin/roles/{role}', 'pages::admin-role-edit')->name('admin.roles.edit')->middleware('screen:admin.roles');
