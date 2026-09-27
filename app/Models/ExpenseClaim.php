@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Traits\Auditable;
+use Database\Factories\ExpenseClaimFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -10,8 +11,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class ExpenseClaim extends Model
 {
-    /** @use HasFactory<\Database\Factories\ExpenseClaimFactory> */
-    use HasFactory, Auditable;
+    /** @use HasFactory<ExpenseClaimFactory> */
+    use Auditable, HasFactory;
 
     protected $fillable = [
         'reference',

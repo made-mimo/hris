@@ -4,6 +4,8 @@ use App\Models\ClaimEvent;
 use App\Models\ExpenseClaim;
 use App\Models\ExpenseClaimLine;
 use App\Models\ExpenseType;
+use App\Models\Role;
+use App\Services\NotificationService;
 use Livewire\Component;
 
 new class extends Component
@@ -37,7 +39,7 @@ new class extends Component
         return collect($this->lines)->sum(fn ($l) => (float) ($l['amount'] ?? 0));
     }
 
-    public function submit(): void
+    public function submit(NotificationService $notifications): void
     {
         $this->validate([
             'claimEventId' => ['required', 'exists:claim_events,id'],
@@ -74,6 +76,21 @@ new class extends Component
                 'amount' => $line['amount'],
                 'flagged' => $flagged,
             ]);
+        }
+
+        $recipients = $hasSupervisor
+            ? ($me->supervisor?->user ? [$me->supervisor->user] : [])
+            : (Role::where('slug', 'hr_admin')->first()?->users ?? []);
+
+        foreach ($recipients as $recipient) {
+            $notifications->notify(
+                $recipient,
+                'expense_claim.submitted',
+                'New expense claim',
+                "{$me->fullName()} submitted claim {$claim->reference} for {$claim->currency} {$this->total}.",
+                '/approvals',
+                'Expense Claim'
+            );
         }
 
         session()->flash('status', "Claim {$claim->reference} submitted for approval.");

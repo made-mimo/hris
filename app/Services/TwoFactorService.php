@@ -29,7 +29,7 @@ use PragmaRX\Google2FAQRCode\Google2FA;
  */
 class TwoFactorService
 {
-    public function __construct(private Google2FA $engine = new Google2FA()) {}
+    public function __construct(private Google2FA $engine = new Google2FA) {}
 
     /** Master switch AND this user's role both say 2FA applies to them. */
     public function isRequiredFor(User $user): bool

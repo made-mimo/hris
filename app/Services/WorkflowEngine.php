@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Role;
 use App\Models\User;
 use App\Models\WorkflowTransition;
 use Illuminate\Database\Eloquent\Model;
@@ -22,6 +23,8 @@ use Illuminate\Support\Collection;
  */
 class WorkflowEngine
 {
+    public function __construct(private NotificationService $notifications) {}
+
     /** @return array<int, string> */
     public function actorTags(User $user, Model $record): array
     {
@@ -83,8 +86,43 @@ class WorkflowEngine
         $record->{$stateColumn} = $transition->to_state;
         $record->save();
 
-        // Notification fan-out (spec's "[+ roles to notify]") hooks in here
-        // once the Notification Center (A7) exists — not built yet, see PLAN.md.
+        $this->notifyNextActors($workflow, $record, $transition);
+    }
+
+    /**
+     * Spec's "[+ roles to notify]" fan-out, now that the Notification Center
+     * (A7) exists: notify whoever can legally act next from the record's new
+     * state — the same actor-tag vocabulary (owner/supervisor/RBAC role)
+     * `availableTransitions()` already resolves, just aimed at "who holds
+     * this tag" instead of "does this user hold it." No per-record detail
+     * page exists in this prototype, so the deep link goes to the relevant
+     * list screen rather than a specific record — spec's own fallback for a
+     * link that can't point at an exact record.
+     */
+    private function notifyNextActors(string $workflow, Model $record, WorkflowTransition $justApplied): void
+    {
+        $nextTags = WorkflowTransition::where('workflow', $workflow)
+            ->where('from_state', $justApplied->to_state)
+            ->pluck('actor')
+            ->unique();
+
+        $recipients = collect();
+
+        foreach ($nextTags as $tag) {
+            $recipients = $recipients->merge(match ($tag) {
+                'owner' => $record->employee?->user ? [$record->employee->user] : [],
+                'supervisor' => $record->employee?->supervisor?->user ? [$record->employee->supervisor->user] : [],
+                default => Role::where('slug', $tag)->first()?->users ?? [],
+            });
+        }
+
+        $title = ucfirst(str_replace('_', ' ', $workflow)).' update';
+        $body = "\"{$justApplied->label}\" — now {$justApplied->to_state}.";
+        $deepLink = $workflow === 'leave' ? '/leave/apply' : ($workflow === 'expense_claim' ? '/claims/create' : '/approvals');
+
+        foreach ($recipients->unique('id') as $recipient) {
+            $this->notifications->notify($recipient, $workflow.'.transition', $title, $body, $deepLink, ucfirst($workflow));
+        }
     }
 
     /**

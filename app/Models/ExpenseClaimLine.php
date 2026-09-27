@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use Database\Factories\ExpenseClaimLineFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ExpenseClaimLine extends Model
 {
-    /** @use HasFactory<\Database\Factories\ExpenseClaimLineFactory> */
+    /** @use HasFactory<ExpenseClaimLineFactory> */
     use HasFactory;
 
     protected $fillable = [

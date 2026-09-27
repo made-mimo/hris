@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Role;
 use App\Models\RoleDataGroupPermission;
+use App\Models\Screen;
 use App\Models\User;
 use Illuminate\Support\Collection;
 
@@ -44,7 +45,7 @@ class PermissionService
             ->contains(fn (Role $role) => $role->screens->contains('key', $screenKey));
     }
 
-    /** @return Collection<int, \App\Models\Screen> every screen visible to this user, nav-ordered */
+    /** @return Collection<int, Screen> every screen visible to this user, nav-ordered */
     public function visibleScreens(User $user): Collection
     {
         return $this->effectiveRoles($user)

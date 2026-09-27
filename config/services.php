@@ -35,4 +35,13 @@ return [
         ],
     ],
 
+    // Web Push (spec Section A7) — self-generated VAPID keypair, no
+    // third-party push provider needed; browsers' own push services
+    // (Chrome/Firefox/Edge) are used directly.
+    'vapid' => [
+        'public_key' => env('VAPID_PUBLIC_KEY'),
+        'private_key' => env('VAPID_PRIVATE_KEY'),
+        'subject' => env('VAPID_SUBJECT'),
+    ],
+
 ];

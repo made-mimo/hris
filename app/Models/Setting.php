@@ -13,13 +13,45 @@ use Spatie\MediaLibrary\InteractsWithMedia;
  */
 class Setting extends Model implements HasMedia
 {
-    use InteractsWithMedia, Auditable;
+    use Auditable, InteractsWithMedia;
 
-    protected $fillable = ['company_name', 'two_factor_enabled'];
+    protected $fillable = [
+        'company_name', 'two_factor_enabled',
+        'password_min_length', 'password_max_length', 'password_require_uppercase',
+        'password_require_lowercase', 'password_require_number', 'password_require_special',
+        'password_allow_spaces', 'password_policy_version',
+    ];
 
     protected function casts(): array
     {
-        return ['two_factor_enabled' => 'boolean'];
+        return [
+            'two_factor_enabled' => 'boolean',
+            'password_require_uppercase' => 'boolean',
+            'password_require_lowercase' => 'boolean',
+            'password_require_number' => 'boolean',
+            'password_require_special' => 'boolean',
+            'password_allow_spaces' => 'boolean',
+        ];
+    }
+
+    /**
+     * Bumps automatically whenever the policy fields actually change (not on
+     * every save) — this is what "enforce on login" compares a user's own
+     * `password_policy_version` against.
+     */
+    protected static function booted(): void
+    {
+        static::saving(function (self $settings) {
+            $policyFields = [
+                'password_min_length', 'password_max_length', 'password_require_uppercase',
+                'password_require_lowercase', 'password_require_number', 'password_require_special',
+                'password_allow_spaces',
+            ];
+
+            if ($settings->exists && $settings->isDirty($policyFields)) {
+                $settings->password_policy_version++;
+            }
+        });
     }
 
     /** Company logo storage (spec Section 3.5) — see App\Models\Employee for the same pattern. */

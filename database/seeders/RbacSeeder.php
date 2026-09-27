@@ -27,6 +27,7 @@ class RbacSeeder extends Seeder
             ['key' => 'settings', 'label' => 'Settings', 'nav_group' => 'Admin', 'sort_order' => 6],
             ['key' => 'admin.roles', 'label' => 'Roles & Permissions', 'nav_group' => 'Admin', 'sort_order' => 7],
             ['key' => 'admin.audit-log', 'label' => 'Audit Log', 'nav_group' => 'Admin', 'sort_order' => 8],
+            ['key' => 'admin.signatures', 'label' => 'Signature Verification', 'nav_group' => 'Admin', 'sort_order' => 9],
         ];
         foreach ($screens as $s) {
             Screen::updateOrCreate(['key' => $s['key']], $s);
@@ -66,8 +67,8 @@ class RbacSeeder extends Seeder
 
         // ---- Screen grants per role ----
         $screenGrants = [
-            'admin' => ['home', 'leave.apply', 'claims.create', 'profile', 'approvals', 'settings', 'admin.roles', 'admin.audit-log'],
-            'hr_admin' => ['home', 'leave.apply', 'claims.create', 'profile', 'approvals'],
+            'admin' => ['home', 'leave.apply', 'claims.create', 'profile', 'approvals', 'settings', 'admin.roles', 'admin.audit-log', 'admin.signatures'],
+            'hr_admin' => ['home', 'leave.apply', 'claims.create', 'profile', 'approvals', 'admin.signatures'],
             'hr_officer' => ['home', 'leave.apply', 'claims.create', 'profile', 'approvals'],
             'ess' => ['home', 'leave.apply', 'claims.create', 'profile'],
             // Now that the workflow engine (WorkflowSeeder) gives supervisors

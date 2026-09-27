@@ -2,12 +2,13 @@
 
 namespace App\Models;
 
+use Database\Factories\ExpenseTypeFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class ExpenseType extends Model
 {
-    /** @use HasFactory<\Database\Factories\ExpenseTypeFactory> */
+    /** @use HasFactory<ExpenseTypeFactory> */
     use HasFactory;
 
     protected $fillable = ['name', 'active', 'default_cap'];

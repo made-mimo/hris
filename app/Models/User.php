@@ -5,22 +5,25 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Services\PermissionService;
 use App\Traits\Auditable;
+use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable, Auditable;
+    /** @use HasFactory<UserFactory> */
+    use Auditable, HasApiTokens, HasFactory, Notifiable;
 
     protected $fillable = [
         'name',
         'email',
         'password',
+        'password_policy_version',
         'role_id',
         'timezone',
     ];
@@ -65,6 +68,16 @@ class User extends Authenticatable
     public function trustedDevices(): HasMany
     {
         return $this->hasMany(TrustedDevice::class);
+    }
+
+    public function notifications(): HasMany
+    {
+        return $this->hasMany(Notification::class)->latest();
+    }
+
+    public function pushSubscriptions(): HasMany
+    {
+        return $this->hasMany(PushSubscription::class);
     }
 
     /** Has this user completed 2FA enrollment (chosen and confirmed a method)? */

@@ -8,6 +8,7 @@
     $canSettings = auth()->user()?->canView('settings');
     $canRoles = auth()->user()?->canView('admin.roles');
     $canAuditLog = auth()->user()?->canView('admin.audit-log');
+    $canSignatures = auth()->user()?->canView('admin.signatures');
     $approvalsBadge = $canApprovals ? \App\Models\LeaveRequest::where('status', 'pending_hr')->count()
         + \App\Models\ExpenseClaim::where('status', 'pending_hr')->count() : 0;
     $settings = \App\Models\Setting::current();
@@ -80,7 +81,7 @@
                 <span class="nav-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z"></path><path d="M14 3v5h5M9 13h6M9 17h6"></path></svg></span>Policies
             </span>
 
-            @if($canSettings || $canRoles || $canAuditLog)
+            @if($canSettings || $canRoles || $canAuditLog || $canSignatures)
                 <div class="nav-section-label">Admin</div>
                 @if($canSettings)
                     <a href="{{ route('settings') }}" class="nav-link {{ request()->routeIs('settings') ? 'active' : '' }}">
@@ -95,6 +96,11 @@
                 @if($canAuditLog)
                     <a href="{{ route('admin.audit-log') }}" class="nav-link {{ request()->routeIs('admin.audit-log') ? 'active' : '' }}">
                         <span class="nav-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12h6M9 16h6M9 8h1"></path><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z"></path><path d="M14 3v5h5"></path></svg></span>Audit Log
+                    </a>
+                @endif
+                @if($canSignatures)
+                    <a href="{{ route('admin.signatures') }}" class="nav-link {{ request()->routeIs('admin.signatures') ? 'active' : '' }}">
+                        <span class="nav-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17l4-4 3 3 5-5"></path><path d="M14 9h4v4"></path><path d="M4 21h16"></path></svg></span>Signature Verification
                     </a>
                 @endif
             @endif
@@ -117,10 +123,7 @@
                 <input type="search" aria-label="Search" placeholder="Search people, requests, policies…">
             </label>
             <div class="topbar-actions">
-                <button type="button" aria-label="Notifications" class="icon-btn">
-                    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 16V11a6 6 0 1 1 12 0v5l2 2H4z"></path><path d="M10 21h4"></path></svg>
-                    <span class="dot"></span>
-                </button>
+                <livewire:notification-bell />
                 <div style="width:1px;height:28px;background:var(--color-border);"></div>
                 <div style="display:flex;align-items:center;gap:10px;">
                     <div class="avatar" style="background:#14151A;overflow:hidden;">
@@ -170,5 +173,6 @@
 
 @livewireScripts
 <x-timezone-capture />
+<x-push-notifications />
 </body>
 </html>

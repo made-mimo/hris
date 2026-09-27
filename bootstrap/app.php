@@ -1,24 +1,69 @@
 <?php
 
+use App\Http\Middleware\EnsurePasswordPolicyMet;
+use App\Http\Middleware\EnsureScreenAccess;
+use App\Http\Middleware\EnsureTwoFactorVerified;
+use App\Support\ApiEnvelope;
+use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
+        api: __DIR__.'/../routes/api.php',
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
-            'two_factor' => \App\Http\Middleware\EnsureTwoFactorVerified::class,
-            'screen' => \App\Http\Middleware\EnsureScreenAccess::class,
+            'two_factor' => EnsureTwoFactorVerified::class,
+            'screen' => EnsureScreenAccess::class,
+            'password_policy' => EnsurePasswordPolicyMet::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
         );
+
+        // Spec Section 3.2's REST API framework: "consistent error envelopes
+        // (400 validation, 403 authorization, 404 not found)" — applied only
+        // to api/* requests so the existing Livewire web app's own error
+        // pages are untouched.
+        $exceptions->render(function (ValidationException $e, Request $request) {
+            if ($request->is('api/*')) {
+                return response()->json(ApiEnvelope::error(400, 'The given data was invalid.', $e->errors()), 400);
+            }
+        });
+
+        $exceptions->render(function (AuthorizationException $e, Request $request) {
+            if ($request->is('api/*')) {
+                return response()->json(ApiEnvelope::error(403, $e->getMessage() ?: 'This action is unauthorized.'), 403);
+            }
+        });
+
+        $exceptions->render(function (ModelNotFoundException $e, Request $request) {
+            if ($request->is('api/*')) {
+                return response()->json(ApiEnvelope::error(404, 'The requested resource was not found.'), 404);
+            }
+        });
+
+        // Catches abort()/abort_if()/abort_unless() generically — those raise
+        // a plain HttpException (not AuthorizationException/ModelNotFoundException
+        // above), which is how every Api\*Controller in this app actually
+        // signals 403/404/etc., so this is the handler that matters most.
+        $exceptions->render(function (HttpExceptionInterface $e, Request $request) {
+            if ($request->is('api/*') && $e->getStatusCode() >= 400) {
+                return response()->json(
+                    ApiEnvelope::error($e->getStatusCode(), $e->getMessage() ?: 'An error occurred.'),
+                    $e->getStatusCode()
+                );
+            }
+        });
     })->create();

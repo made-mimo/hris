@@ -3,6 +3,8 @@
 use App\Models\Employee;
 use App\Models\LeaveRequest;
 use App\Models\LeaveType;
+use App\Models\Role;
+use App\Services\NotificationService;
 use Livewire\Component;
 
 new class extends Component
@@ -55,7 +57,7 @@ new class extends Component
         return $this->duration === 'full' ? $businessDays : $businessDays * $this->durationFactors[$this->duration];
     }
 
-    public function submit(): void
+    public function submit(NotificationService $notifications): void
     {
         $this->validate([
             'leaveTypeId' => ['required', 'exists:leave_types,id'],
@@ -88,7 +90,7 @@ new class extends Component
         // bypass of the matrix itself (see PLAN.md §4.7).
         $hasSupervisor = (bool) $me->supervisor_id;
 
-        LeaveRequest::create([
+        $request = LeaveRequest::create([
             'reference' => 'LV-'.now()->year.'-'.str_pad((string) (LeaveRequest::max('id') + 1), 4, '0', STR_PAD_LEFT),
             'employee_id' => $me->id,
             'leave_type_id' => $type->id,
@@ -101,6 +103,24 @@ new class extends Component
             'status' => $hasSupervisor ? 'pending_manager' : 'pending_hr',
             'manager_approved_at' => $hasSupervisor ? null : now(),
         ]);
+
+        // Spec's "every status change (apply/approve/reject/cancel/assign)
+        // triggers... notification" — submission itself, not just later
+        // transitions (which WorkflowEngine::apply() already covers).
+        $recipients = $hasSupervisor
+            ? ($me->supervisor?->user ? [$me->supervisor->user] : [])
+            : (Role::where('slug', 'hr_admin')->first()?->users ?? []);
+
+        foreach ($recipients as $recipient) {
+            $notifications->notify(
+                $recipient,
+                'leave.submitted',
+                'New leave request',
+                "{$me->fullName()} requested {$request->days} day(s) of {$type->name} leave.",
+                '/approvals',
+                'Leave'
+            );
+        }
 
         session()->flash('status', $hasSupervisor
             ? 'Leave request submitted to your line manager for approval.'
