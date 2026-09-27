@@ -23,6 +23,7 @@ new class extends Component
         'master_lists' => 'Other Lists',
         'provinces' => 'Provinces',
         'custom_fields' => 'Employee Custom Fields',
+        'notifications' => 'Notification Subscriptions',
         'modules' => 'Modules',
     ];
 };
@@ -54,6 +55,8 @@ new class extends Component
         <livewire:provinces-manager wire:key="provinces-manager" />
     @elseif($activeTab === 'custom_fields')
         <livewire:employee-custom-fields-manager wire:key="employee-custom-fields-manager" />
+    @elseif($activeTab === 'notifications')
+        <livewire:notification-subscriptions-manager wire:key="notification-subscriptions-manager" />
     @elseif($activeTab === 'modules')
         <livewire:module-toggles-manager wire:key="module-toggles-manager" />
     @endif

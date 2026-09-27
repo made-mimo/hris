@@ -2,9 +2,12 @@
 
 use App\Models\JobTitle;
 use Livewire\Component;
+use Livewire\WithFileUploads;
 
 new class extends Component
 {
+    use WithFileUploads;
+
     public string $name = '';
 
     public ?int $editingId = null;
@@ -12,6 +15,10 @@ new class extends Component
     public string $editName = '';
 
     public bool $editActive = true;
+
+    public ?int $uploadingForId = null;
+
+    public $jobSpecFile = null;
 
     public function create(): void
     {
@@ -47,6 +54,32 @@ new class extends Component
     public function cancelEdit(): void
     {
         $this->editingId = null;
+    }
+
+    public function startUpload(int $id): void
+    {
+        $this->uploadingForId = $id;
+        $this->jobSpecFile = null;
+    }
+
+    public function uploadJobSpec(): void
+    {
+        $this->validate(['jobSpecFile' => ['required', 'file', 'max:10240']]);
+
+        $jobTitle = JobTitle::findOrFail($this->uploadingForId);
+        $jobTitle->addMedia($this->jobSpecFile->getRealPath())
+            ->usingName($this->jobSpecFile->getClientOriginalName())
+            ->toMediaCollection('job_spec');
+
+        $this->uploadingForId = null;
+        $this->jobSpecFile = null;
+        session()->flash('status', 'Job specification uploaded.');
+    }
+
+    public function removeJobSpec(int $id): void
+    {
+        JobTitle::findOrFail($id)->clearMediaCollection('job_spec');
+        session()->flash('status', 'Job specification removed.');
     }
 
     public function delete(int $id): void
@@ -91,7 +124,7 @@ new class extends Component
 
         <div class="divide-y divide-border">
             @foreach($jobTitles as $jt)
-                <div class="flex items-center justify-between gap-3 py-2.5">
+                <div class="flex flex-wrap items-center justify-between gap-3 py-2.5">
                     @if($editingId === $jt->id)
                         <div class="flex flex-1 items-center gap-3">
                             <input type="text" wire:model="editName" class="flex-1 rounded-sm border border-border bg-surface px-3 py-1.5 text-sm text-text outline-none focus:border-primary">
@@ -107,10 +140,26 @@ new class extends Component
                             <span class="text-sm font-medium text-text">{{ $jt->name }}</span>
                             @if(! $jt->is_active) <span class="rounded-pill bg-text-faint/15 px-2 py-0.5 text-[10px] font-semibold text-text-muted">Inactive</span> @endif
                             <span class="text-xs text-text-faint">{{ $jt->employees_count }} employee{{ $jt->employees_count === 1 ? '' : 's' }}</span>
+                            @if($jt->jobSpecUrl())
+                                <a href="{{ $jt->jobSpecUrl() }}" target="_blank" class="text-xs font-semibold text-primary">{{ $jt->jobSpecName() }}</a>
+                                <button wire:click="removeJobSpec({{ $jt->id }})" wire:confirm="Remove the job specification document?" class="text-xs font-semibold text-danger">Remove doc</button>
+                            @endif
                         </div>
                         <div class="flex items-center gap-3">
+                            @if(! $jt->jobSpecUrl())
+                                <button wire:click="startUpload({{ $jt->id }})" class="text-xs font-semibold text-primary">Attach spec</button>
+                            @endif
                             <button wire:click="startEdit({{ $jt->id }})" class="text-xs font-semibold text-primary">Edit</button>
                             <button wire:click="delete({{ $jt->id }})" wire:confirm="Delete this job title?" class="text-xs font-semibold text-danger">Delete</button>
+                        </div>
+                    @endif
+
+                    @if($uploadingForId === $jt->id)
+                        <div class="w-full pt-2">
+                            <input type="file" wire:model="jobSpecFile" class="text-xs text-text">
+                            <button wire:click="uploadJobSpec" class="ml-2 text-xs font-semibold text-primary">Upload</button>
+                            <button wire:click="$set('uploadingForId', null)" class="ml-2 text-xs font-semibold text-text-muted">Cancel</button>
+                            @error('jobSpecFile') <div class="mt-1 text-xs text-danger">{{ $message }}</div> @enderror
                         </div>
                     @endif
                 </div>

@@ -76,6 +76,8 @@ class Employee extends Model implements HasMedia
             'government_id_number' => 'encrypted',
             'contract_start_date' => 'date',
             'contract_end_date' => 'date',
+            'is_gdpr_purged' => 'boolean',
+            'gdpr_purged_at' => 'datetime',
         ];
     }
 
@@ -253,6 +255,54 @@ class Employee extends Model implements HasMedia
     public function isTerminated(): bool
     {
         return $this->terminations()->exists();
+    }
+
+    /**
+     * Spec A6: GDPR purge — anonymizes PII while deliberately preserving the
+     * Employee ID's "used" status so it's never reissued (spec B2). Wipes
+     * every direct PII column plus the child PII tables (contacts,
+     * dependents, immigration, compensation banking/amount, qualifications'
+     * free-text fields), but leaves `employee_id`, dates, and FK-based
+     * structural fields (job title, sub-unit, location) alone — those
+     * aren't personal data and later reports/history still need them.
+     * `is_gdpr_purged`/`gdpr_purged_at` are intentionally NOT in $fillable —
+     * they must only ever be set here, never via ordinary mass-assignment
+     * from a form.
+     */
+    public function gdprPurge(): void
+    {
+        $this->emergencyContacts()->delete();
+        $this->dependents()->delete();
+        $this->immigrationRecords()->delete();
+        $this->compensations()->delete();
+        $this->education()->delete();
+        $this->skills()->delete();
+        $this->languages()->delete();
+        $this->licenses()->delete();
+        $this->memberships()->delete();
+        $this->workExperience()->delete();
+        $this->clearMediaCollection('avatar');
+        $this->clearMediaCollection('documents');
+
+        $this->forceFill([
+            'first_name' => 'Redacted',
+            'last_name' => 'Redacted',
+            'preferred_name' => null,
+            'date_of_birth' => null,
+            'gender' => null,
+            'marital_status' => null,
+            'nationality_id' => null,
+            'government_id_type' => null,
+            'government_id_number' => null,
+            'driving_license_number' => null,
+            'home_address' => null,
+            'phone_home' => null,
+            'phone_mobile' => null,
+            'personal_email' => null,
+            'work_email' => null,
+            'is_gdpr_purged' => true,
+            'gdpr_purged_at' => now(),
+        ])->save();
     }
 
     public function documentsUrl(): array

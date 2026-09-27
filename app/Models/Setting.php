@@ -15,6 +15,9 @@ class Setting extends Model implements HasMedia
 {
     use Auditable, InteractsWithMedia;
 
+    /** See Employee::$auditExcept for why — Auditable diffs post-cast values, so an encrypted field must be excluded or it leaks its decrypted plaintext into audit_logs.changes. */
+    protected array $auditExcept = ['smtp_password', 'sso_client_secret'];
+
     protected $fillable = [
         'company_name', 'two_factor_enabled',
         'password_min_length', 'password_max_length', 'password_require_uppercase',
@@ -22,6 +25,9 @@ class Setting extends Model implements HasMedia
         'password_allow_spaces', 'password_policy_version',
         'employee_id_format', 'employee_id_sequence_scope',
         'tax_id', 'registration_number', 'address', 'contact_email', 'contact_phone',
+        'smtp_host', 'smtp_port', 'smtp_username', 'smtp_password', 'smtp_encryption',
+        'mail_from_address', 'mail_from_name',
+        'sso_enabled', 'sso_provider', 'sso_client_id', 'sso_client_secret', 'sso_endpoint', 'sso_domain',
     ];
 
     protected function casts(): array
@@ -33,6 +39,9 @@ class Setting extends Model implements HasMedia
             'password_require_number' => 'boolean',
             'password_require_special' => 'boolean',
             'password_allow_spaces' => 'boolean',
+            'smtp_password' => 'encrypted',
+            'sso_enabled' => 'boolean',
+            'sso_client_secret' => 'encrypted',
         ];
     }
 

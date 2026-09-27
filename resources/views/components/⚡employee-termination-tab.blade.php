@@ -13,6 +13,10 @@ new class extends Component
 
     public string $note = '';
 
+    public bool $confirmingPurge = false;
+
+    public string $purgeConfirmation = '';
+
     public function mount(Employee $employee): void
     {
         $this->employee = $employee;
@@ -38,11 +42,29 @@ new class extends Component
         session()->flash('status', 'Termination record added.');
     }
 
+    /** Spec A6: GDPR purge — Admin-only, and gated behind typing the employee's exact Employee ID (a stronger confirmation than a plain confirm dialog, given this is irreversible). */
+    public function purge(): void
+    {
+        abort_unless(auth()->user()->isAdmin(), 403);
+
+        if ($this->purgeConfirmation !== $this->employee->employee_id) {
+            $this->addError('purgeConfirmation', 'Type the exact Employee ID to confirm.');
+
+            return;
+        }
+
+        $this->employee->gdprPurge();
+        $this->confirmingPurge = false;
+        $this->reset('purgeConfirmation');
+        session()->flash('status', 'Employee record purged — the Employee ID stays retired and will never be reissued.');
+    }
+
     public function with(): array
     {
         return [
             'terminations' => $this->employee->terminations()->orderByDesc('date')->get(),
             'canRecord' => auth()->user()->isAdmin() || auth()->user()->isHr(),
+            'canPurge' => auth()->user()->isAdmin(),
         ];
     }
 };
@@ -85,6 +107,30 @@ new class extends Component
             </form>
             @error('date') <div class="mt-2 text-xs text-danger">{{ $message }}</div> @enderror
             @error('reason') <div class="mt-2 text-xs text-danger">{{ $message }}</div> @enderror
+        </section>
+    @endif
+
+    @if($canPurge)
+        <section class="rounded-md border border-danger/30 bg-danger/5 p-5 shadow-sm">
+            <h2 class="mb-2 font-display text-base font-bold text-danger">GDPR purge</h2>
+            @if($employee->is_gdpr_purged)
+                <div class="text-sm text-text">This record was purged on {{ $employee->gdpr_purged_at->format('j M Y, g:ia') }}. The Employee ID stays retired and can never be reissued.</div>
+            @else
+                <div class="mb-3 text-xs text-text-muted">Spec Section A6 — irreversibly anonymizes this employee's personal data (name, contact details, government ID, immigration/compensation/qualification records) while permanently preserving the Employee ID as "used" so it's never reassigned. This cannot be undone.</div>
+                @if(! $confirmingPurge)
+                    <button wire:click="$set('confirmingPurge', true)" class="rounded-sm border border-danger px-4 py-2 text-sm font-semibold text-danger hover:bg-danger/10">Purge this employee's data</button>
+                @else
+                    <div class="flex flex-wrap items-end gap-3">
+                        <div>
+                            <label class="mb-1.5 block text-xs font-semibold text-text">Type "{{ $employee->employee_id }}" to confirm</label>
+                            <input type="text" wire:model="purgeConfirmation" class="rounded-sm border border-danger bg-surface px-3 py-2 font-mono text-sm text-text outline-none">
+                        </div>
+                        <button wire:click="purge" class="rounded-sm bg-danger px-4 py-2 text-sm font-semibold text-white hover:opacity-90">Confirm purge</button>
+                        <button wire:click="$set('confirmingPurge', false)" class="rounded-sm border border-border px-4 py-2 text-sm font-semibold text-text-muted">Cancel</button>
+                    </div>
+                    @error('purgeConfirmation') <div class="mt-2 text-xs text-danger">{{ $message }}</div> @enderror
+                @endif
+            @endif
         </section>
     @endif
 
