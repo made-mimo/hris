@@ -29,6 +29,8 @@ class Setting extends Model implements HasMedia
         'mail_from_address', 'mail_from_name',
         'sso_enabled', 'sso_provider', 'sso_client_id', 'sso_client_secret', 'sso_endpoint', 'sso_domain',
         'health_check_hidden', 'show_optional_profile_fields',
+        'time_display_format',
+        'attendance_allow_backdate', 'attendance_allow_self_edit', 'attendance_allow_supervisor_proxy',
     ];
 
     protected function casts(): array
@@ -45,6 +47,9 @@ class Setting extends Model implements HasMedia
             'sso_client_secret' => 'encrypted',
             'health_check_hidden' => 'boolean',
             'show_optional_profile_fields' => 'boolean',
+            'attendance_allow_backdate' => 'boolean',
+            'attendance_allow_self_edit' => 'boolean',
+            'attendance_allow_supervisor_proxy' => 'boolean',
         ];
     }
 

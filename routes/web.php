@@ -42,6 +42,8 @@ Route::middleware(['auth', 'password_policy', 'two_factor'])->group(function () 
     Route::livewire('/timesheets', 'pages::timesheets')->name('timesheets')->middleware('screen:timesheets');
     Route::livewire('/timesheets/approvals', 'pages::timesheet-approvals')->name('timesheets.approvals')->middleware('screen:timesheets');
     Route::livewire('/timesheets/reports', 'pages::timesheet-reports')->name('timesheets.reports')->middleware('screen:admin.projects');
+    Route::livewire('/attendance', 'pages::attendance')->name('attendance')->middleware('screen:timesheets');
+    Route::livewire('/attendance/reports', 'pages::attendance-reports')->name('attendance.reports')->middleware('screen:admin.projects');
     Route::livewire('/admin/projects', 'pages::admin-projects')->name('admin.projects')->middleware('screen:admin.projects');
     Route::livewire('/profile', 'pages::profile')->name('profile')->middleware('screen:profile');
     Route::livewire('/approvals', 'pages::approvals')->name('approvals')->middleware('screen:approvals');

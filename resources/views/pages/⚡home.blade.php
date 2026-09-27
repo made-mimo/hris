@@ -54,6 +54,7 @@ new class extends Component
             'awaitingPayment' => $awaitingPayment,
             'outToday' => $outToday,
             'team' => $team,
+            'currentPunch' => $me->currentPunch(),
         ];
     }
 };
@@ -115,7 +116,7 @@ new class extends Component
             </a>
             <span class="quick-action-dark" style="opacity:.6;" title="Use the punch button at the top of the page">
                 <span style="width:34px;height:34px;border-radius:8px;background:var(--color-info);display:flex;align-items:center;justify-content:center;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg></span>
-                <span style="flex:1;">{{ $me->clocked_in ? 'Punched in '.$me->clocked_in_at->format('H:i') : 'Punch in above' }}</span>
+                <span style="flex:1;">{{ $currentPunch ? 'Punched in '.$currentPunch->punch_in_at_local->format('H:i') : 'Punch in above' }}</span>
             </span>
             <span class="quick-action-dark" style="opacity:.6;">
                 <span style="width:34px;height:34px;border-radius:8px;background:var(--color-warning);display:flex;align-items:center;justify-content:center;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v3a2 2 0 0 0 0 4v3a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-3a2 2 0 0 0 0-4z"></path></svg></span>

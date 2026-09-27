@@ -48,6 +48,11 @@ new class extends Component
     public bool $healthCheckHidden = false;
     public bool $showOptionalProfileFields = true;
 
+    public string $timeDisplayFormat = 'decimal';
+    public bool $attendanceAllowBackdate = false;
+    public bool $attendanceAllowSelfEdit = false;
+    public bool $attendanceAllowSupervisorProxy = false;
+
     public function mount(): void
     {
         $settings = Setting::current();
@@ -80,6 +85,10 @@ new class extends Component
         $this->ssoDomain = $settings->sso_domain;
         $this->healthCheckHidden = $settings->health_check_hidden;
         $this->showOptionalProfileFields = $settings->show_optional_profile_fields;
+        $this->timeDisplayFormat = $settings->time_display_format;
+        $this->attendanceAllowBackdate = $settings->attendance_allow_backdate;
+        $this->attendanceAllowSelfEdit = $settings->attendance_allow_self_edit;
+        $this->attendanceAllowSupervisorProxy = $settings->attendance_allow_supervisor_proxy;
     }
 
     public function getEmployeeIdPreviewProperty(): string
@@ -131,6 +140,35 @@ new class extends Component
         Setting::current()->update(['show_optional_profile_fields' => $value]);
         Setting::forget();
         session()->flash('status', $value ? 'Optional profile tabs are now shown.' : 'Optional profile tabs are now hidden project-wide.');
+    }
+
+    public function updatedTimeDisplayFormat($value): void
+    {
+        Setting::current()->update(['time_display_format' => $value]);
+        Setting::forget();
+        session()->flash('status', 'Time display format updated.');
+    }
+
+    /** Spec C3: three independently toggleable, Admin-configurable permissions — all off by default. */
+    public function updatedAttendanceAllowBackdate($value): void
+    {
+        Setting::current()->update(['attendance_allow_backdate' => $value]);
+        Setting::forget();
+        session()->flash('status', $value ? 'Employees may now back-date a punch they are about to record.' : 'Back-dating punches is now disabled.');
+    }
+
+    public function updatedAttendanceAllowSelfEdit($value): void
+    {
+        Setting::current()->update(['attendance_allow_self_edit' => $value]);
+        Setting::forget();
+        session()->flash('status', $value ? 'Employees may now edit/delete their own past punch records.' : 'Self-editing past punch records is now disabled.');
+    }
+
+    public function updatedAttendanceAllowSupervisorProxy($value): void
+    {
+        Setting::current()->update(['attendance_allow_supervisor_proxy' => $value]);
+        Setting::forget();
+        session()->flash('status', $value ? 'Supervisors may now edit/delete a subordinate\'s records or proxy-punch on their behalf.' : 'Supervisor proxy-punch/edit is now disabled.');
     }
 
     public function savePasswordPolicy(): void
@@ -562,6 +600,44 @@ new class extends Component
                     <span>
                         <span class="block text-sm font-semibold text-text">Show optional employee profile tabs</span>
                         <span class="mt-0.5 block text-xs text-text-muted">Spec B2 — when off, hides the non-required profile tabs (Family, Immigration, Compensation, Qualifications, Career, Attachments) for everyone. Job Details, Personal, Contact, Reporting, Termination, and Activity stay visible either way.</span>
+                    </span>
+                </label>
+            </div>
+        </section>
+
+        <section class="rounded-md border border-border bg-surface p-5 shadow-sm">
+            <div class="mb-3.5 flex items-center justify-between">
+                <h2 class="font-display text-base font-bold text-text">Time & Attendance</h2>
+            </div>
+            <div class="mb-3.5">
+                <label for="timeDisplayFormat" class="mb-1.5 block text-xs font-semibold text-text">Time display format</label>
+                <select id="timeDisplayFormat" wire:model.live="timeDisplayFormat" class="w-full max-w-xs rounded-sm border border-border bg-surface px-3 py-2 text-sm text-text outline-none focus:border-primary">
+                    <option value="decimal">Decimal hours (e.g. 7.50)</option>
+                    <option value="hhmm">HH:MM (e.g. 07:30)</option>
+                </select>
+                <div class="mt-1 text-xs text-text-muted">Spec C2 — how logged time displays across timesheets.</div>
+            </div>
+            <div class="flex flex-col gap-3.5">
+                <div class="text-xs text-text-muted">Spec C3 — three independently toggleable permissions, all off by default (only Admin has edit/delete/proxy rights until relaxed here).</div>
+                <label class="flex cursor-pointer items-start gap-3 rounded-[10px] border border-border p-3.5">
+                    <input type="checkbox" wire:model.live="attendanceAllowBackdate" class="mt-0.5 h-[18px] w-[18px] accent-primary">
+                    <span>
+                        <span class="block text-sm font-semibold text-text">Allow back-dating a punch</span>
+                        <span class="mt-0.5 block text-xs text-text-muted">An employee may adjust the time of a punch they are about to record.</span>
+                    </span>
+                </label>
+                <label class="flex cursor-pointer items-start gap-3 rounded-[10px] border border-border p-3.5">
+                    <input type="checkbox" wire:model.live="attendanceAllowSelfEdit" class="mt-0.5 h-[18px] w-[18px] accent-primary">
+                    <span>
+                        <span class="block text-sm font-semibold text-text">Allow employees to edit their own past punches</span>
+                        <span class="mt-0.5 block text-xs text-text-muted">Without this, only an Admin can edit or delete a past attendance record.</span>
+                    </span>
+                </label>
+                <label class="flex cursor-pointer items-start gap-3 rounded-[10px] border border-border p-3.5">
+                    <input type="checkbox" wire:model.live="attendanceAllowSupervisorProxy" class="mt-0.5 h-[18px] w-[18px] accent-primary">
+                    <span>
+                        <span class="block text-sm font-semibold text-text">Allow supervisor edit/proxy-punch</span>
+                        <span class="mt-0.5 block text-xs text-text-muted">A supervisor may edit/delete a subordinate's records, or punch in/out on their behalf.</span>
                     </span>
                 </label>
             </div>

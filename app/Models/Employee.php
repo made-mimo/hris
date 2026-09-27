@@ -32,8 +32,6 @@ class Employee extends Model implements HasMedia
         'sub_unit_id',
         'location_id',
         'hire_date',
-        'clocked_in',
-        'clocked_in_at',
         'preferred_name',
         'date_of_birth',
         'gender',
@@ -71,8 +69,6 @@ class Employee extends Model implements HasMedia
     {
         return [
             'hire_date' => 'date',
-            'clocked_in' => 'boolean',
-            'clocked_in_at' => 'datetime',
             'date_of_birth' => 'date',
             'government_id_number' => 'encrypted',
             'contract_start_date' => 'date',
@@ -240,6 +236,21 @@ class Employee extends Model implements HasMedia
     public function projectAssignments(): HasMany
     {
         return $this->hasMany(ProjectAssignment::class);
+    }
+
+    public function attendanceRecords(): HasMany
+    {
+        return $this->hasMany(AttendanceRecord::class);
+    }
+
+    public function currentPunch(): ?AttendanceRecord
+    {
+        return $this->attendanceRecords()->whereNull('punch_out_at_utc')->latest('punch_in_at_utc')->first();
+    }
+
+    public function isClockedIn(): bool
+    {
+        return $this->currentPunch() !== null;
     }
 
     public function onboardingTasks(): HasMany
