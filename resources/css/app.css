@@ -1,0 +1,6 @@
+@import "tailwindcss";
+@import "./theme.css";
+
+/* Tell Tailwind v4 which Blade files to scan for utility classes, since the
+   default heuristic only looks at files colocated with this one. */
+@source "../views";

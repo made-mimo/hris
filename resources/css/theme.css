@@ -1,0 +1,994 @@
+/* =========================================================
+   THEME.CSS — App Design System
+   A responsive admin/app UI theme: sidebar dashboard on
+   desktop, bottom-tab app shell on mobile.
+   Drop into resources/css and @import from app.css, or link
+   directly in your Blade layout.
+   ========================================================= */
+
+/* Google Fonts are loaded via <link> in both Blade layouts (guest/app), not
+   a CSS @import here — a same-file @import must precede every other rule
+   once Vite concatenates this into app.css, which fighting for isn't worth
+   it when the <link> tag already does the same job. */
+
+/* Tailwind v4 theme tokens (spec Section 3.5: "the color, spacing, and radius
+   tokens map directly onto Tailwind utility classes and a small
+   tailwind.config theme extension"). A `@theme` block IS that theme
+   extension in v4's CSS-first config — no separate tailwind.config.js
+   needed. Every token below both (a) generates real Tailwind utilities
+   (bg-primary, text-primary, font-display, rounded-lg, shadow-md, ...) for
+   any new Blade markup, and (b) keeps emitting the same `var(--color-primary)`
+   etc. custom properties the existing component classes below already use —
+   so nothing already built had to change to adopt this. */
+@theme {
+  /* ---- Color tokens ----
+     Systems Intelligenz brand: the red sampled directly from the real
+     logo (RGB 217,37,30 / #D9251E — see the PDF letterhead work), black,
+     and white. --color-danger stays a distinct red so "brand red" and
+     "something's wrong" read differently even though both are red. */
+  --color-primary: #D9251E;
+  --color-primary-dark: #B31C16;
+  --color-primary-light: #FBEAE9;
+  --color-accent: #1E9E63;
+  --color-accent-light: #E7F7EF;
+  --color-info: #2563EB;
+  --color-info-light: #EAF1FE;
+  --color-warning: #B45309;
+  --color-warning-light: #FDF3E0;
+  --color-danger: #DC2626;
+  --color-danger-light: #FDEAEA;
+
+  --color-bg: #F5F6F8;
+  --color-surface: #FFFFFF;
+  --color-border: #E7E8EC;
+
+  --color-text: #14151A;
+  --color-text-muted: #6B7280;
+  --color-text-faint: #9195A0;
+
+  /* ---- Type tokens ---- */
+  --font-display: 'Sora', 'Inter', sans-serif;
+  --font-body: 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  /* ---- Shape / elevation tokens ---- */
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-pill: 999px;
+
+  --shadow-sm: 0 1px 2px rgba(27, 29, 40, 0.04);
+  --shadow-md: 0 8px 24px rgba(27, 29, 40, 0.06);
+  --shadow-lg: 0 16px 40px rgba(27, 29, 40, 0.10);
+}
+
+:root {
+  /* ---- Layout tokens ----
+     Not a recognized Tailwind @theme namespace (no utility class needs
+     "sidebar width"), so these stay plain custom properties. */
+  --sidebar-w: 240px;
+  --topbar-h: 68px;
+  --bottomnav-h: 64px;
+}
+
+/* ---- Dark theme ----
+   Toggled via a `dark` class on <html> (same mechanism and localStorage
+   key, 'theme', as the Filament admin panel) rather than a media query
+   alone, so the user's explicit choice always wins over OS preference. */
+html.dark {
+  --color-primary: #E4433D;
+  --color-primary-dark: #F16560;
+  --color-primary-light: #3A1917;
+  --color-accent-light: #123829;
+  --color-info-light: #16233F;
+  --color-warning-light: #3A2A0E;
+  --color-danger-light: #3A1817;
+
+  --color-bg: #121214;
+  --color-surface: #1B1B1F;
+  --color-border: #2C2C32;
+
+  --color-text: #ECEDF6;
+  --color-text-muted: #9A9DBE;
+  --color-text-faint: #6C6F94;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.4);
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, h5, .font-display {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  margin: 0 0 4px;
+  color: var(--color-text);
+}
+
+h1 { font-size: 26px; }
+h2 { font-size: 21px; }
+h3 { font-size: 17px; }
+
+p { margin: 0 0 8px; }
+
+.text-muted { color: var(--color-text-muted); }
+.text-faint { color: var(--color-text-faint); }
+.font-mono  { font-family: var(--font-mono); }
+
+a { color: var(--color-primary); text-decoration: none; }
+/* Excludes .btn — a button rendered as <a tag="a"> (e.g. "New MRF") sets its
+   own hover color per variant (.btn-primary:hover etc.); this generic rule
+   has higher specificity (element+pseudo-class) than a bare .btn-primary
+   class selector, so without the exclusion it silently overrode the
+   button's white text to the same dark-red used for .btn-primary:hover's
+   background — text and background became identical, i.e. invisible. */
+a:not(.btn):hover { color: var(--color-primary-dark); }
+
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}
+
+/* =========================================================
+   APP SHELL
+   ========================================================= */
+
+.app-shell {
+  display: grid;
+  grid-template-columns: var(--sidebar-w) 1fr;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* ---- Sidebar (desktop) ----
+   The sidebar itself never scrolls as a whole — only .sidebar-nav does,
+   so the brand mark (top) and logout footer (bottom) stay fixed in place
+   while the nav list scrolls independently of the main content pane,
+   matching the Filament admin panel's shell behavior. */
+.sidebar {
+  background: var(--color-surface);
+  border-right: 1px solid var(--color-border);
+  padding: 20px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.sidebar-nav {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0 -4px;
+  padding: 0 4px;
+}
+
+/* ---- Main content pane ----
+   Scrolls independently of the sidebar; the topbar stays sticky within
+   this pane's own scroll context. */
+.app-content {
+  height: 100vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 10px 22px;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 18px;
+}
+
+.sidebar-brand .brand-mark {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+  flex-shrink: 0;
+}
+
+.nav-section-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-text-faint);
+  padding: 16px 12px 6px;
+}
+
+.nav-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  color: var(--color-text-muted);
+  font-weight: 500;
+  font-size: 14px;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.nav-link .nav-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+}
+
+.nav-link:hover {
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+.nav-link.active {
+  background: var(--color-primary-light);
+  color: var(--color-primary-dark);
+  font-weight: 600;
+}
+
+.sidebar-footer {
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px solid var(--color-border);
+}
+
+/* ---- Topbar ---- */
+.topbar {
+  height: var(--topbar-h);
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.topbar-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  padding: 8px 16px;
+  width: 320px;
+  max-width: 40vw;
+  color: var(--color-text-faint);
+  font-size: 14px;
+}
+
+.global-search-results {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  width: 420px;
+  max-width: 85vw;
+  max-height: 60vh;
+  overflow-y: auto;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  padding: 8px;
+  z-index: 40;
+  text-align: left;
+}
+
+.topbar-search input {
+  border: none;
+  background: none;
+  outline: none;
+  font-family: var(--font-body);
+  font-size: 14px;
+  width: 100%;
+  color: var(--color-text);
+}
+
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.icon-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-sm);
+  display: grid;
+  place-items: center;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  position: relative;
+}
+
+.icon-btn .dot {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-danger);
+  border: 2px solid var(--color-surface);
+}
+
+.avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-pill);
+  background: linear-gradient(135deg, var(--color-accent), var(--color-primary));
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 14px;
+}
+
+/* ---- Main content ---- */
+.main {
+  padding: 24px;
+  max-width: 1320px;
+  width: 100%;
+  flex: 1 0 auto;
+}
+
+/* ---- Footer ---- */
+.app-footer {
+  flex-shrink: 0;
+  padding: 14px 24px;
+  border-top: 1px solid var(--color-border);
+  color: var(--color-text-faint);
+  font-size: 12px;
+  text-align: center;
+}
+
+.page-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+/* =========================================================
+   GRID
+   ========================================================= */
+
+.grid { display: grid; gap: 18px; }
+.grid-4 { grid-template-columns: repeat(4, 1fr); }
+.grid-3 { grid-template-columns: repeat(3, 1fr); }
+.grid-2 { grid-template-columns: repeat(2, 1fr); }
+.col-span-2 { grid-column: span 2; }
+
+@media (max-width: 1100px) {
+  .grid-4 { grid-template-columns: repeat(2, 1fr); }
+  .grid-3 { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 640px) {
+  .grid-4, .grid-3, .grid-2 { grid-template-columns: 1fr; }
+  .col-span-2 { grid-column: span 1; }
+}
+
+/* Catalog filter sidebar + results layout — shared by every faceted-
+   filter list page (Products, Vendors, Projects, Clients, Forwarders). */
+.filter-layout { display: grid; grid-template-columns: 240px 1fr; gap: 16px; align-items: start; }
+@media (max-width: 900px) {
+  .filter-layout { grid-template-columns: 1fr; }
+}
+/* The filter toolbar spans the full width; collapsing the panel gives the
+   list the whole row instead of leaving an empty 240px column. */
+.filter-toolbar { grid-column: 1 / -1; display: flex; justify-content: flex-start; }
+.filter-toolbar .btn { display: inline-flex; align-items: center; gap: 6px; }
+.filter-layout--collapsed { grid-template-columns: 1fr; }
+.filter-count {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px;
+  background: var(--color-primary); color: #fff; font-size: 11px; font-weight: 600;
+}
+
+/* =========================================================
+   CARD
+   ========================================================= */
+
+.card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  padding: 20px;
+}
+
+/* A deliberately-always-dark card (e.g. the dashboard's "Quick Actions"
+   panel) — a fixed color, not var(--color-text), which flips to near-white
+   in dark mode and would make this go white-on-white. */
+.card-dark {
+  background: #14151A;
+  border: 1px solid #14151A;
+  border-radius: var(--radius-md);
+  padding: 20px;
+}
+
+.card-dark h2 { color: #fff; }
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+/* A nav-link-shaped row on a dark card (e.g. the dashboard's "Quick
+   Actions" panel) — .nav-link's own hover assumes a light surface, so
+   this gets its own, always-visible-text, always-legible hover. */
+.quick-action-dark {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  font-size: 13.5px;
+  font-weight: 600;
+  transition: background 0.15s ease;
+}
+
+.quick-action-dark:hover {
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+}
+
+/* ---- Signature component: stat card with floating badge ---- */
+.stat-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: 22px 20px 20px;
+  position: relative;
+  overflow: visible;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.stat-card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.stat-badge {
+  position: absolute;
+  top: -16px;
+  left: 20px;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  display: grid;
+  place-items: center;
+  box-shadow: var(--shadow-md);
+  color: #fff;
+}
+
+.stat-badge.is-primary { background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark)); }
+.stat-badge.is-accent  { background: linear-gradient(135deg, var(--color-accent), #1CA490); }
+.stat-badge.is-info    { background: linear-gradient(135deg, var(--color-info), #1D4ED8); }
+.stat-badge.is-warning { background: linear-gradient(135deg, var(--color-warning), #F59E0B); }
+.stat-badge.is-danger  { background: linear-gradient(135deg, var(--color-danger), #E14545); }
+
+/* A small pill overlapping the card's top-right corner (e.g. "+3.2%",
+   "Needs review") — distinct from .stat-delta, which sits inline below
+   the value. */
+.stat-card-flag {
+  position: absolute;
+  top: -12px;
+  right: 16px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--color-surface);
+  white-space: nowrap;
+}
+
+.stat-card-flag.is-primary { background: var(--color-primary-light); color: var(--color-primary); }
+.stat-card-flag.is-accent  { background: var(--color-accent-light); color: var(--color-accent); }
+.stat-card-flag.is-info    { background: var(--color-info-light); color: var(--color-info); }
+.stat-card-flag.is-warning { background: var(--color-warning-light); color: var(--color-warning); }
+.stat-card-flag.is-danger  { background: var(--color-danger-light); color: var(--color-danger); }
+.stat-card-flag.is-neutral { background: var(--color-bg); color: var(--color-text-muted); }
+
+.stat-card .stat-label {
+  margin-top: 20px;
+  font-size: 13px;
+  color: var(--color-text-muted);
+  font-weight: 500;
+}
+
+.stat-card .stat-value {
+  font-family: var(--font-mono);
+  font-size: 26px;
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+.stat-card .stat-delta {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-top: 8px;
+  padding: 3px 8px;
+  border-radius: var(--radius-pill);
+}
+
+.stat-delta.up { color: #1CA490; background: var(--color-accent-light); }
+.stat-delta.down { color: var(--color-danger); background: var(--color-danger-light); }
+
+/* =========================================================
+   BUTTONS
+   ========================================================= */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 14px;
+  padding: 10px 18px;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.btn-primary { background: var(--color-primary); color: #fff; }
+.btn-primary:hover { background: var(--color-primary-dark); }
+
+.btn-outline { background: transparent; border-color: var(--color-border); color: var(--color-text); }
+.btn-outline:hover { border-color: var(--color-primary); color: var(--color-primary); }
+
+.btn-ghost { background: transparent; color: var(--color-text-muted); }
+.btn-ghost:hover { background: var(--color-bg); color: var(--color-text); }
+
+.btn-sm { padding: 7px 12px; font-size: 13px; }
+
+/* =========================================================
+   BADGES / PILLS
+   ========================================================= */
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+}
+.pill-success { background: var(--color-accent-light); color: #1CA490; }
+.pill-warning { background: var(--color-warning-light); color: #B5730B; }
+.pill-danger  { background: var(--color-danger-light); color: var(--color-danger); }
+.pill-neutral { background: var(--color-bg); color: var(--color-text-muted); }
+
+/* =========================================================
+   TABLE
+   ========================================================= */
+
+.table-wrap { overflow-x: auto; }
+
+table.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.data-table th {
+  text-align: left;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-faint);
+  font-weight: 600;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.data-table td {
+  padding: 14px;
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-text);
+}
+
+.data-table tr:last-child td { border-bottom: none; }
+.data-table tr:hover td { background: var(--color-bg); }
+
+/* =========================================================
+   FORMS
+   ========================================================= */
+
+.field { margin-bottom: 16px; }
+
+.field label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: var(--color-text);
+}
+
+/* Excludes checkbox/radio — this rule was written for text/select fields,
+   but also matched every checkbox nested in a .field wrapper (e.g. each
+   facet-filter option), stretching the checkbox's layout box to 100% of
+   the row width and shoving the label text far to its right instead of
+   immediately beside it. */
+.field input:not([type="checkbox"]):not([type="radio"]),
+.field select,
+.field textarea {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body);
+  font-size: 14px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.field input[type="checkbox"],
+.field input[type="radio"] {
+  width: auto;
+}
+
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-light);
+}
+
+.field .hint { font-size: 12px; color: var(--color-text-muted); margin-top: 4px; }
+
+[x-cloak] { display: none !important; }
+
+/* =========================================================
+   SEARCHABLE SELECT
+   Type-to-filter dropdown for long option lists (e.g. 200+
+   products) — plain <select> becomes unusable at that scale.
+   ========================================================= */
+
+.searchable-select { position: relative; }
+
+.searchable-select-trigger {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body);
+  font-size: 14px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.searchable-select-trigger:hover { border-color: var(--color-primary); }
+.searchable-select-trigger .text-faint { font-weight: 400; }
+
+.searchable-select-dropdown {
+  /* position/top(or bottom)/left/width/max-height are set inline via
+     Alpine from the trigger's getBoundingClientRect() — fixed positioning
+     so the panel always escapes scrollable/overflow-clipped ancestors
+     (e.g. the horizontal scroll wrapper around <x-data-table>), and
+     flips above the trigger with a height capped to whichever side of
+     the viewport has more room, so it's never clipped off-screen. */
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+}
+
+.searchable-select-search {
+  width: 100%;
+  padding: 10px 14px;
+  border: none;
+  border-bottom: 1px solid var(--color-border);
+  font-family: var(--font-body);
+  font-size: 14px;
+  outline: none;
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.searchable-select-options {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 4px;
+}
+
+.searchable-select-option {
+  padding: 9px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.searchable-select-option:hover,
+.searchable-select-option.is-highlighted {
+  background: var(--color-bg);
+}
+
+.searchable-select-empty { padding: 12px; font-size: 13px; }
+
+/* =========================================================
+   MOBILE APP SHELL
+   ========================================================= */
+
+/* Below this, the sidebar hands off to the bottom-tab shell instead of
+   trying to survive as a squashed icon-only rail — a real icon-only rail
+   needs every nav item and label reflowed for it (this app's labels,
+   section headers, and expand/collapse controls don't), so the previous
+   1024–769px "collapsed" tier just rendered broken and unusable. Handing
+   that whole range to the already-correct mobile layout instead removes
+   the broken middle state entirely. */
+@media (max-width: 1024px) {
+  .app-shell { grid-template-columns: 1fr; }
+  .sidebar { display: none; }
+  .main { padding: 16px 16px calc(var(--bottomnav-h) + 24px); }
+  .topbar-search { display: none; }
+
+  .bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: var(--bottomnav-h);
+    background: var(--color-surface);
+    border-top: 1px solid var(--color-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    z-index: 20;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .bottom-nav .nav-link {
+    flex-direction: column;
+    gap: 3px;
+    font-size: 11px;
+    padding: 6px 10px;
+    border-radius: var(--radius-sm);
+  }
+
+  .mobile-more-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 40;
+    display: flex;
+    align-items: flex-end;
+  }
+
+  .mobile-more-panel {
+    background: var(--color-surface);
+    width: 100%;
+    max-height: 80vh;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    display: flex;
+    flex-direction: column;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .mobile-more-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 18px;
+    border-bottom: 1px solid var(--color-border);
+    flex-shrink: 0;
+  }
+
+  .mobile-more-body {
+    overflow-y: auto;
+    padding: 8px 14px 16px;
+  }
+
+  .mobile-more-body .nav-link {
+    flex-direction: row;
+    justify-content: flex-start;
+    font-size: 14px;
+    padding: 10px 12px;
+  }
+}
+
+@media (min-width: 1025px) {
+  .bottom-nav { display: none; }
+}
+
+/* =========================================================
+   AUTH SHELL (Login / 2FA)
+   Added to match the SI HRIS UI/UX artifact's split-screen
+   sign-in and verification screens (Main.dc.html, TwoFactor.dc.html).
+   ========================================================= */
+
+.auth-shell { display: flex; min-height: 100vh; background: var(--color-surface); }
+
+.auth-brand {
+  width: 43%;
+  min-width: 420px;
+  background: #14151A;
+  color: #fff;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 48px;
+}
+
+.auth-brand-grid {
+  position: absolute; inset: 0; opacity: 0.35;
+  background-image: linear-gradient(#2A2C34 1px, transparent 1px), linear-gradient(90deg, #2A2C34 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+.auth-brand-blob {
+  position: absolute; top: -120px; right: -120px; width: 360px; height: 360px;
+  border-radius: 50%; background: var(--color-primary); opacity: 0.18; filter: blur(10px);
+}
+
+.auth-brand-logo { position: relative; display: flex; align-items: flex-start; gap: 12px; }
+.auth-brand-mark {
+  width: 42px; height: 42px; min-width: 42px; border-radius: 11px;
+  background: var(--color-primary); display: flex; align-items: center; justify-content: center;
+}
+.auth-brand-word { font-family: var(--font-display); font-weight: 800; font-size: 16px; letter-spacing: 0.6px; color: #fff; line-height: 1.15; }
+.auth-brand-word.is-accent { color: #E4433D; }
+.auth-brand-sub { font-size: 9.5px; font-weight: 600; letter-spacing: 1.2px; color: #8A8D98; margin-top: 6px; }
+
+.auth-brand-art { position: relative; display: flex; align-items: center; justify-content: center; flex: 1; }
+.auth-brand-headline { position: relative; }
+.auth-brand-headline h1 { font-size: 27px; font-weight: 700; color: #fff; line-height: 1.3; }
+.auth-brand-headline p { margin: 10px 0 0; font-size: 13.5px; color: #9195A0; line-height: 1.55; max-width: 440px; }
+
+.auth-form-pane { flex: 1; display: flex; align-items: center; justify-content: center; padding: 48px; }
+.auth-form { width: 100%; max-width: 380px; }
+.auth-eyebrow { font-size: 11.5px; font-weight: 700; letter-spacing: 1.2px; color: var(--color-primary); margin-bottom: 14px; }
+.auth-footer { margin-top: 48px; text-align: center; font-size: 11.5px; color: var(--color-text-faint); }
+.auth-back-link { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: var(--color-text-muted); margin-bottom: 28px; }
+
+@media (max-width: 900px) {
+  .auth-brand { display: none; }
+  .auth-form-pane { padding: 32px 20px; }
+}
+
+/* =========================================================
+   SEGMENTED CONTROL
+   Method switch (2FA) and duration picker (Apply Leave).
+   ========================================================= */
+
+.seg-switch {
+  display: inline-flex; padding: 4px; background: var(--color-bg);
+  border: 1px solid var(--color-border); border-radius: 10px; gap: 4px;
+}
+.seg-btn {
+  flex: 1; height: 40px; padding: 0 16px; display: inline-flex; align-items: center;
+  justify-content: center; gap: 8px; border: none; border-radius: 7px; background: transparent;
+  color: var(--color-text-muted); font-family: var(--font-body); font-size: 13.5px; font-weight: 500;
+  cursor: pointer;
+}
+.seg-btn.is-active { background: var(--color-surface); color: var(--color-text); font-weight: 600; box-shadow: var(--shadow-sm); }
+
+/* =========================================================
+   OTP INPUT
+   ========================================================= */
+
+.otp-input {
+  width: 52px; height: 58px; text-align: center; font-family: var(--font-mono);
+  font-size: 22px; font-weight: 600; border: 1.5px solid var(--color-border);
+  border-radius: 10px; color: var(--color-text); background: var(--color-surface);
+}
+.otp-input:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 3px var(--color-primary-light); }
+
+/* =========================================================
+   LEAVE TYPE / OPTION CARDS (Apply Leave)
+   ========================================================= */
+
+.option-card {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 3px;
+  padding: 12px 14px; border-radius: 10px; border: 1.5px solid var(--color-border);
+  background: var(--color-surface); font-family: var(--font-body); text-align: left;
+  cursor: pointer; min-height: 64px; width: 100%;
+}
+.option-card .option-card-title { font-size: 14px; font-weight: 600; color: var(--color-text); }
+.option-card .option-card-hint { font-size: 12px; color: var(--color-text-muted); }
+.option-card.is-active { background: var(--color-primary-light); border-color: var(--color-primary); }
+
+/* =========================================================
+   TIMELINE (Apply Leave "what happens next", Expense Claim
+   "approval route", Approvals detail "approval trail")
+   ========================================================= */
+
+.timeline { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.timeline-step { display: flex; gap: 12px; }
+.timeline-rail { display: flex; flex-direction: column; align-items: center; }
+.timeline-dot {
+  width: 26px; height: 26px; border-radius: 999px; display: flex; align-items: center;
+  justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0;
+  background: var(--color-surface); border: 2px solid var(--color-border); color: var(--color-text-muted);
+}
+.timeline-dot.is-done { background: var(--color-accent); border-color: var(--color-accent); color: #fff; }
+.timeline-dot.is-current { background: var(--color-primary); border-color: var(--color-primary); color: #fff; }
+.timeline-line { width: 2px; flex: 1; min-height: 18px; background: var(--color-border); margin-top: 2px; }
+.timeline-body { padding-bottom: 14px; }
+.timeline-body .timeline-title { font-size: 14px; font-weight: 600; color: var(--color-text); }
+.timeline-body .timeline-note { font-size: 12.5px; color: var(--color-text-muted); }
+
+/* Small inline dot-timeline used inside the Approvals detail pane */
+.trail-dot { width: 12px; height: 12px; border-radius: 999px; flex-shrink: 0; background: var(--color-border); }
+.trail-dot.is-done { background: var(--color-accent); box-shadow: 0 0 0 4px var(--color-accent-light); }
+.trail-dot.is-current { background: var(--color-primary); box-shadow: 0 0 0 4px var(--color-primary-light); }
+
+/* Printing a document page (e.g. a Client profile) should show just the
+   page content — no nav chrome, no interactive controls. Elements the
+   printed page shouldn't include are marked [data-print-hide]. */
+@media print {
+  .sidebar,
+  .topbar,
+  .bottom-nav,
+  .app-footer,
+  [data-print-hide] {
+    display: none !important;
+  }
+
+  .app-content {
+    margin: 0 !important;
+  }
+
+  .main {
+    padding: 0 !important;
+  }
+}
