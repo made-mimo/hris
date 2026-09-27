@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Setting;
+use App\Services\EmployeeIdGenerator;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
@@ -20,6 +21,9 @@ new class extends Component
     public bool $passwordRequireSpecial = false;
     public bool $passwordAllowSpaces = true;
 
+    public string $employeeIdFormat = 'SIL{YY}{MM}{SEQ:3}';
+    public string $employeeIdSequenceScope = 'global';
+
     public function mount(): void
     {
         $settings = Setting::current();
@@ -32,6 +36,35 @@ new class extends Component
         $this->passwordRequireNumber = $settings->password_require_number;
         $this->passwordRequireSpecial = $settings->password_require_special;
         $this->passwordAllowSpaces = $settings->password_allow_spaces;
+        $this->employeeIdFormat = $settings->employee_id_format;
+        $this->employeeIdSequenceScope = $settings->employee_id_sequence_scope;
+    }
+
+    public function getEmployeeIdPreviewProperty(): string
+    {
+        try {
+            return app(EmployeeIdGenerator::class)->preview($this->employeeIdFormat);
+        } catch (\Throwable) {
+            return '—';
+        }
+    }
+
+    public function saveEmployeeIdFormat(): void
+    {
+        $this->validate([
+            'employeeIdFormat' => ['required', 'string', 'max:100', 'regex:/\{SEQ(:\d+)?\}/'],
+            'employeeIdSequenceScope' => ['required', 'in:global,per_year,per_month'],
+        ], [
+            'employeeIdFormat.regex' => 'The format must include a {SEQ} or {SEQ:n} token.',
+        ]);
+
+        Setting::current()->update([
+            'employee_id_format' => $this->employeeIdFormat,
+            'employee_id_sequence_scope' => $this->employeeIdSequenceScope,
+        ]);
+
+        Setting::forget();
+        session()->flash('status', 'Employee ID format updated — existing employees keep their current IDs; only new hires use the new format.');
     }
 
     public function updatedTwoFactorEnabled($value): void
@@ -201,6 +234,39 @@ new class extends Component
                 </div>
 
                 <button type="submit" class="self-start rounded-sm bg-primary px-4.5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-primary-dark">Save branding</button>
+            </form>
+        </section>
+
+        <section class="rounded-md border border-border bg-surface p-5 shadow-sm">
+            <div class="mb-3.5 flex items-center justify-between">
+                <h2 class="font-display text-base font-bold text-text">Employee ID format</h2>
+            </div>
+            <form wire:submit="saveEmployeeIdFormat" class="flex flex-col gap-3.5">
+                <div>
+                    <label for="employeeIdFormat" class="mb-1.5 block text-sm font-semibold text-text">Format template</label>
+                    <input id="employeeIdFormat" type="text" wire:model.live="employeeIdFormat"
+                        class="w-full rounded-sm border border-border bg-surface px-3.5 py-2.5 font-mono text-sm text-text outline-none focus:border-primary focus:ring-3 focus:ring-primary-light">
+                    @error('employeeIdFormat') <div class="mt-1 text-xs text-danger">{{ $message }}</div> @enderror
+                    <div class="mt-1 text-xs text-text-muted">Tokens: <code>{YY}</code>, <code>{MM}</code>, <code>{SEQ:n}</code> — literal text and order are otherwise up to you.</div>
+                </div>
+
+                <div class="rounded-sm border border-border bg-bg px-3.5 py-2.5 font-mono text-sm text-text">
+                    Preview: {{ $this->employeeIdPreview }}
+                </div>
+
+                <div>
+                    <label for="employeeIdSequenceScope" class="mb-1.5 block text-sm font-semibold text-text">Sequence counter</label>
+                    <select id="employeeIdSequenceScope" wire:model="employeeIdSequenceScope"
+                        class="w-full rounded-sm border border-border bg-surface px-3.5 py-2.5 font-body text-sm text-text outline-none focus:border-primary focus:ring-3 focus:ring-primary-light">
+                        <option value="global">Global — one continuous count, never resets (SI's confirmed policy)</option>
+                        <option value="per_year">Per year — resets to 1 every January</option>
+                        <option value="per_month">Per month — resets to 1 every month</option>
+                    </select>
+                </div>
+
+                <div class="text-xs text-text-muted">Forward-only: changing this only affects employees added after the change — every existing employee keeps their current ID.</div>
+
+                <button type="submit" class="self-start rounded-sm bg-primary px-4.5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-primary-dark">Save Employee ID format</button>
             </form>
         </section>
     </div>

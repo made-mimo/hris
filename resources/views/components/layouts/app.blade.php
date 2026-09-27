@@ -5,6 +5,7 @@
     $isSupervisor = $me && $me->subordinates()->exists();
     $permissions = app(\App\Services\PermissionService::class);
     $canApprovals = auth()->user()?->canView('approvals');
+    $canEmployees = auth()->user()?->canView('employees');
     $canSettings = auth()->user()?->canView('settings');
     $canRoles = auth()->user()?->canView('admin.roles');
     $canAuditLog = auth()->user()?->canView('admin.audit-log');
@@ -62,15 +63,23 @@
                 <span class="nav-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v3a2 2 0 0 0 0 4v3a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-3a2 2 0 0 0 0-4z"></path></svg></span>Helpdesk
             </span>
 
-            @if($canApprovals)
+            @if($canApprovals || $canEmployees)
                 <div class="nav-section-label">My team</div>
-                <a href="{{ route('approvals') }}" class="nav-link {{ request()->routeIs('approvals') ? 'active' : '' }}">
-                    <span class="nav-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3 8-8"></path><path d="M20 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h11"></path></svg></span>
-                    <span style="flex:1;">Approvals</span>
-                    @if($approvalsBadge > 0)
-                        <span class="pill" style="background:var(--color-primary);color:#fff;min-width:20px;justify-content:center;">{{ $approvalsBadge }}</span>
-                    @endif
-                </a>
+                @if($canApprovals)
+                    <a href="{{ route('approvals') }}" class="nav-link {{ request()->routeIs('approvals') ? 'active' : '' }}">
+                        <span class="nav-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3 8-8"></path><path d="M20 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h11"></path></svg></span>
+                        <span style="flex:1;">Approvals</span>
+                        @if($approvalsBadge > 0)
+                            <span class="pill" style="background:var(--color-primary);color:#fff;min-width:20px;justify-content:center;">{{ $approvalsBadge }}</span>
+                        @endif
+                    </a>
+                @endif
+                @if($canEmployees)
+                    <a href="{{ route('employees') }}" class="nav-link {{ request()->routeIs('employees*') ? 'active' : '' }}">
+                        <span class="nav-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg></span>
+                        Employees
+                    </a>
+                @endif
             @endif
 
             <div class="nav-section-label">Company</div>

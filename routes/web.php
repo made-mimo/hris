@@ -38,6 +38,9 @@ Route::middleware(['auth', 'password_policy', 'two_factor'])->group(function () 
     Route::livewire('/claims/create', 'pages::expense-claim')->name('claims.create')->middleware('screen:claims.create');
     Route::livewire('/profile', 'pages::profile')->name('profile')->middleware('screen:profile');
     Route::livewire('/approvals', 'pages::approvals')->name('approvals')->middleware('screen:approvals');
+    Route::livewire('/employees', 'pages::employees')->name('employees')->middleware('screen:employees');
+    Route::livewire('/employees/create', 'pages::employee-create')->name('employees.create')->middleware('screen:employees');
+    Route::livewire('/employees/{employee}', 'pages::employee-show')->name('employees.show')->middleware('screen:employees');
     Route::livewire('/settings', 'pages::settings')->name('settings')->middleware('screen:settings');
     Route::livewire('/admin/roles', 'pages::admin-roles')->name('admin.roles')->middleware('screen:admin.roles');
     Route::livewire('/admin/roles/{role}', 'pages::admin-role-edit')->name('admin.roles.edit')->middleware('screen:admin.roles');

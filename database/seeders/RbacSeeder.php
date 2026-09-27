@@ -24,6 +24,7 @@ class RbacSeeder extends Seeder
             ['key' => 'claims.create', 'label' => 'My Claims', 'nav_group' => 'Workspace', 'sort_order' => 3],
             ['key' => 'profile', 'label' => 'My Profile', 'nav_group' => 'Workspace', 'sort_order' => 4],
             ['key' => 'approvals', 'label' => 'Approvals', 'nav_group' => 'My Team', 'sort_order' => 5],
+            ['key' => 'employees', 'label' => 'Employees', 'nav_group' => 'My Team', 'sort_order' => 6],
             ['key' => 'settings', 'label' => 'Settings', 'nav_group' => 'Admin', 'sort_order' => 6],
             ['key' => 'admin.roles', 'label' => 'Roles & Permissions', 'nav_group' => 'Admin', 'sort_order' => 7],
             ['key' => 'admin.audit-log', 'label' => 'Audit Log', 'nav_group' => 'Admin', 'sort_order' => 8],
@@ -67,9 +68,9 @@ class RbacSeeder extends Seeder
 
         // ---- Screen grants per role ----
         $screenGrants = [
-            'admin' => ['home', 'leave.apply', 'claims.create', 'profile', 'approvals', 'settings', 'admin.roles', 'admin.audit-log', 'admin.signatures'],
-            'hr_admin' => ['home', 'leave.apply', 'claims.create', 'profile', 'approvals', 'admin.signatures'],
-            'hr_officer' => ['home', 'leave.apply', 'claims.create', 'profile', 'approvals'],
+            'admin' => ['home', 'leave.apply', 'claims.create', 'profile', 'approvals', 'employees', 'settings', 'admin.roles', 'admin.audit-log', 'admin.signatures'],
+            'hr_admin' => ['home', 'leave.apply', 'claims.create', 'profile', 'approvals', 'employees', 'admin.signatures'],
+            'hr_officer' => ['home', 'leave.apply', 'claims.create', 'profile', 'approvals', 'employees'],
             'ess' => ['home', 'leave.apply', 'claims.create', 'profile'],
             // Now that the workflow engine (WorkflowSeeder) gives supervisors
             // a real pending_manager stage to act on, they need the Approvals

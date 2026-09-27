@@ -20,6 +20,7 @@ class Setting extends Model implements HasMedia
         'password_min_length', 'password_max_length', 'password_require_uppercase',
         'password_require_lowercase', 'password_require_number', 'password_require_special',
         'password_allow_spaces', 'password_policy_version',
+        'employee_id_format', 'employee_id_sequence_scope',
     ];
 
     protected function casts(): array
