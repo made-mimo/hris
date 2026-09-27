@@ -2,6 +2,7 @@
 
 use App\Models\ExpenseClaim;
 use App\Models\LeaveRequest;
+use App\Services\LeaveRequestService;
 use App\Services\WorkflowEngine;
 use Livewire\Component;
 
@@ -13,9 +14,12 @@ new class extends Component
 
     protected WorkflowEngine $engine;
 
-    public function boot(WorkflowEngine $engine): void
+    protected LeaveRequestService $leaveRequests;
+
+    public function boot(WorkflowEngine $engine, LeaveRequestService $leaveRequests): void
     {
         $this->engine = $engine;
+        $this->leaveRequests = $leaveRequests;
     }
 
     public function pickTab(string $tab): void
@@ -64,6 +68,15 @@ new class extends Component
             ? ['manager_approved_by' => auth()->id(), 'manager_approved_at' => now()]
             : ['hr_approved_by' => auth()->id(), 'hr_approved_at' => now()]);
 
+        // Spec C1: final HR approval is the moment a leave request's days
+        // actually flip to scheduled/taken and draw down an entitlement
+        // batch — WorkflowEngine only knows about the generic `status`
+        // column, so this is the one place that reacts to a leave_request
+        // specifically reaching it.
+        if ($workflow === 'leave_request') {
+            $this->leaveRequests->syncAfterTransition($record);
+        }
+
         $this->selectedKey = null;
     }
 
@@ -73,6 +86,10 @@ new class extends Component
 
         $this->engine->apply($workflow, $record, auth()->user(), 'reject');
         $record->update(['rejected_at' => now(), 'rejection_reason' => $this->comment ?: 'No reason given.']);
+
+        if ($workflow === 'leave_request') {
+            $this->leaveRequests->syncAfterTransition($record);
+        }
 
         $this->selectedKey = null;
     }

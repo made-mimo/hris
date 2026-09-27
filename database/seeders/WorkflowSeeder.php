@@ -29,6 +29,14 @@ class WorkflowSeeder extends Seeder
             ['leave_request', 'pending_hr', 'hr_officer', 'reject', 'Reject', 'rejected'],
             ['leave_request', 'pending_manager', 'owner', 'cancel', 'Cancel request', 'cancelled'],
             ['leave_request', 'pending_hr', 'owner', 'cancel', 'Cancel request', 'cancelled'],
+            // Spec C1: cancelling an already-approved (scheduled, not yet
+            // taken) request, and the leave-type-deletion "restricted, cancel
+            // only" state (App\Models\LeaveType-deletion moves open requests
+            // here directly — never reached via a normal transition).
+            ['leave_request', 'approved', 'owner', 'cancel', 'Cancel request', 'cancelled'],
+            ['leave_request', 'approved', 'hr_admin', 'cancel', 'Cancel (admin)', 'cancelled'],
+            ['leave_request', 'restricted', 'owner', 'cancel', 'Cancel request', 'cancelled'],
+            ['leave_request', 'restricted', 'hr_admin', 'cancel', 'Cancel (admin)', 'cancelled'],
 
             // ---- expense_claim ----
             ['expense_claim', 'pending_manager', 'supervisor', 'approve', 'Approve', 'pending_hr'],

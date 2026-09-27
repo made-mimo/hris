@@ -1,10 +1,12 @@
 <?php
 
 use App\Models\Employee;
-use App\Models\LeaveRequest;
 use App\Models\LeaveType;
 use App\Models\Role;
+use App\Services\LeaveDayGeneratorService;
+use App\Services\LeaveRequestService;
 use App\Services\NotificationService;
+use Illuminate\Validation\ValidationException;
 use Livewire\Component;
 
 new class extends Component
@@ -16,7 +18,6 @@ new class extends Component
     public ?int $relieverId = null;
     public string $reason = '';
 
-    protected $durationFactors = ['full' => 1, 'am' => 0.5, 'pm' => 0.5, 'time' => 0.25];
     protected $durationLabels = ['full' => 'Full day', 'am' => 'Half day · AM', 'pm' => 'Half day · PM', 'time' => 'Specific time'];
 
     public function mount(): void
@@ -36,8 +37,7 @@ new class extends Component
         $this->duration = $key;
     }
 
-    /** Business-day count in the selected range × the duration factor — a simplified stand-in for
-     *  the spec's per-day work-shift/holiday-aware calculation (Section C1). */
+    /** Now Work-Week/Holiday-calendar-aware (LeaveCalendarService via LeaveDayGeneratorService), replacing the earlier flat "skip weekends" placeholder — see PLAN.md. */
     public function getRequestDaysProperty(): float
     {
         $start = \Carbon\Carbon::parse($this->startDate);
@@ -47,14 +47,7 @@ new class extends Component
             return 0;
         }
 
-        $businessDays = 0;
-        for ($d = $start->copy(); $d->lte($end); $d->addDay()) {
-            if (! $d->isWeekend()) {
-                $businessDays++;
-            }
-        }
-
-        return $this->duration === 'full' ? $businessDays : $businessDays * $this->durationFactors[$this->duration];
+        return app(LeaveDayGeneratorService::class)->generate($start, $end, $this->duration)['totalDays'];
     }
 
     public function submit(NotificationService $notifications): void
@@ -67,42 +60,26 @@ new class extends Component
 
         $me = auth()->user()->employee;
         $type = LeaveType::findOrFail($this->leaveTypeId);
-        $days = $this->requestDays;
 
-        if ($days <= 0) {
-            $this->addError('endDate', 'That range has no working days in it.');
+        try {
+            $request = app(LeaveRequestService::class)->apply(
+                $me,
+                $type,
+                \Carbon\Carbon::parse($this->startDate),
+                \Carbon\Carbon::parse($this->endDate),
+                $this->duration,
+                $this->relieverId,
+                $this->reason ?: null,
+            );
+        } catch (ValidationException $e) {
+            foreach ($e->errors() as $field => $messages) {
+                $this->addError($field, $messages[0]);
+            }
 
             return;
         }
 
-        $balance = $me->leaveBalance($type);
-        if ($days > $balance['available']) {
-            $this->addError('endDate', "Only {$balance['available']} days available for {$type->name} leave.");
-
-            return;
-        }
-
-        // Routes into the workflow engine's matrix (App\Services\WorkflowEngine,
-        // WorkflowSeeder) at whichever state the "supervisor" transitions
-        // actually start from. An employee with no supervisor_id has no one
-        // who could ever act on "pending_manager", so they skip straight to
-        // the HR queue — an explicit routing rule at submission time, not a
-        // bypass of the matrix itself (see PLAN.md §4.7).
         $hasSupervisor = (bool) $me->supervisor_id;
-
-        $request = LeaveRequest::create([
-            'reference' => 'LV-'.now()->year.'-'.str_pad((string) (LeaveRequest::max('id') + 1), 4, '0', STR_PAD_LEFT),
-            'employee_id' => $me->id,
-            'leave_type_id' => $type->id,
-            'reliever_employee_id' => $this->relieverId,
-            'start_date' => $this->startDate,
-            'end_date' => $this->endDate,
-            'duration_type' => $this->duration,
-            'days' => $days,
-            'reason' => $this->reason,
-            'status' => $hasSupervisor ? 'pending_manager' : 'pending_hr',
-            'manager_approved_at' => $hasSupervisor ? null : now(),
-        ]);
 
         // Spec's "every status change (apply/approve/reject/cancel/assign)
         // triggers... notification" — submission itself, not just later

@@ -16,14 +16,18 @@ class LeaveType extends Model
         'name',
         'slug',
         'minimum_tenure_months',
+        'standard_annual_days',
         'carries_over_at_year_end',
         'sort_order',
+        'exclude_from_reports_if_unentitled',
+        'carryover_cap_days',
     ];
 
     protected function casts(): array
     {
         return [
             'carries_over_at_year_end' => 'boolean',
+            'exclude_from_reports_if_unentitled' => 'boolean',
         ];
     }
 

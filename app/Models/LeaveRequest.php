@@ -7,6 +7,7 @@ use Database\Factories\LeaveRequestFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class LeaveRequest extends Model
 {
@@ -30,6 +31,8 @@ class LeaveRequest extends Model
         'hr_approved_at',
         'rejection_reason',
         'rejected_at',
+        'hr_comment',
+        'is_assigned',
     ];
 
     protected function casts(): array
@@ -41,6 +44,7 @@ class LeaveRequest extends Model
             'manager_approved_at' => 'datetime',
             'hr_approved_at' => 'datetime',
             'rejected_at' => 'datetime',
+            'is_assigned' => 'boolean',
         ];
     }
 
@@ -59,6 +63,17 @@ class LeaveRequest extends Model
         return $this->belongsTo(LeaveType::class);
     }
 
+    /** Named to avoid colliding with the `days` column (the cached total) — Eloquent would always resolve `$request->days` to the attribute, never this relation, if it were named the same. */
+    public function requestDays(): HasMany
+    {
+        return $this->hasMany(LeaveRequestDay::class);
+    }
+
+    public function workingDays(): HasMany
+    {
+        return $this->requestDays()->where('is_working_day', true);
+    }
+
     public function stageLabel(): string
     {
         return match ($this->status) {
@@ -67,6 +82,7 @@ class LeaveRequest extends Model
             'approved' => 'Taken',
             'rejected' => 'Rejected',
             'cancelled' => 'Cancelled',
+            'restricted' => 'Restricted (leave type deleted) — cancel only',
             default => $this->status,
         };
     }

@@ -10,6 +10,7 @@
     $canClaims = auth()->user()?->canView('claims.create');
     $canMasterData = auth()->user()?->canView('admin.master-data');
     $canOnboardingTemplates = auth()->user()?->canView('admin.onboarding-templates');
+    $canLeaveConfiguration = auth()->user()?->canView('admin.leave-configuration');
     $canSettings = auth()->user()?->canView('settings');
     $canRoles = auth()->user()?->canView('admin.roles');
     $canAuditLog = auth()->user()?->canView('admin.audit-log');
@@ -99,7 +100,7 @@
                 <span class="nav-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z"></path><path d="M14 3v5h5M9 13h6M9 17h6"></path></svg></span>Policies
             </span>
 
-            @if($canMasterData || $canOnboardingTemplates || $canSettings || $canRoles || $canAuditLog || $canSignatures || $canHealthCheck)
+            @if($canMasterData || $canOnboardingTemplates || $canLeaveConfiguration || $canSettings || $canRoles || $canAuditLog || $canSignatures || $canHealthCheck)
                 <div class="nav-section-label">Admin</div>
                 @if($canMasterData)
                     <a href="{{ route('admin.master-data') }}" class="nav-link {{ request()->routeIs('admin.master-data') ? 'active' : '' }}">
@@ -109,6 +110,11 @@
                 @if($canOnboardingTemplates)
                     <a href="{{ route('admin.onboarding-templates') }}" class="nav-link {{ request()->routeIs('admin.onboarding-templates') ? 'active' : '' }}">
                         <span class="nav-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3 8-8"></path><path d="M20 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h11"></path></svg></span>Onboarding Templates
+                    </a>
+                @endif
+                @if($canLeaveConfiguration)
+                    <a href="{{ route('admin.leave-configuration') }}" class="nav-link {{ request()->routeIs('admin.leave-configuration') ? 'active' : '' }}">
+                        <span class="nav-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18M8 3v4M16 3v4"></path></svg></span>Leave Configuration
                     </a>
                 @endif
                 @if($canSettings)

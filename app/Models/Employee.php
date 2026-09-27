@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\LeaveBalanceService;
 use App\Traits\Auditable;
 use Database\Factories\EmployeeFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -371,28 +372,9 @@ class Employee extends Model implements HasMedia
         return $this->getFirstMediaUrl('avatar') ?: null;
     }
 
-    /** Balance as of today: entitled minus taken/scheduled, per leave type, for the current leave year. Spec C1 — always computed on demand, never cached. */
+    /** Balance as of today: entitled minus taken/scheduled, per leave type, for the current leave year. Spec C1 — always computed on demand, never cached. Delegates to LeaveBalanceService, which reads the entitlement-consumption ledger rather than summing LeaveRequest.days directly. */
     public function leaveBalance(LeaveType $type, ?int $year = null): array
     {
-        $year ??= now()->year;
-
-        $entitled = (float) $this->leaveEntitlements()
-            ->where('leave_type_id', $type->id)
-            ->where('year', $year)
-            ->sum('entitled_days');
-
-        // Default policy (spec C1): only approved (taken + scheduled) leave counts against
-        // balance — a still-pending request does not, until it clears approval.
-        $used = (float) $this->leaveRequests()
-            ->where('leave_type_id', $type->id)
-            ->where('status', 'approved')
-            ->whereYear('start_date', $year)
-            ->sum('days');
-
-        return [
-            'entitled' => $entitled,
-            'used' => $used,
-            'available' => max(0, $entitled - $used),
-        ];
+        return app(LeaveBalanceService::class)->balance($this, $type, $year);
     }
 }

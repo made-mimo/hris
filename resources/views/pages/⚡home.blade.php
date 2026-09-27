@@ -22,9 +22,6 @@ new class extends Component
         $awaitingPayment = (float) $me->expenseClaims()->where('status', 'approved')
             ->get()->sum(fn ($c) => $c->total());
 
-        $recentLeave = $me->leaveRequests()->with('leaveType')->latest()->take(3)->get();
-        $recentClaims = $me->expenseClaims()->with('claimEvent')->latest()->take(3)->get();
-
         $today = now()->startOfDay();
         $outToday = LeaveRequest::with(['employee', 'leaveType'])
             ->where('status', 'approved')
@@ -55,8 +52,6 @@ new class extends Component
             'openLeave' => $openLeave,
             'openClaims' => $openClaims,
             'awaitingPayment' => $awaitingPayment,
-            'recentLeave' => $recentLeave,
-            'recentClaims' => $recentClaims,
             'outToday' => $outToday,
             'team' => $team,
         ];
@@ -106,47 +101,7 @@ new class extends Component
     </div>
 
     <div class="grid grid-3" style="margin-top:18px;">
-        <section class="card col-span-2">
-            <div class="card-header">
-                <h2>My recent requests</h2>
-            </div>
-            <div class="table-wrap">
-                <table class="data-table">
-                    <thead><tr><th>Request</th><th>Details</th><th>Stage</th><th>Status</th></tr></thead>
-                    <tbody>
-                        @forelse($recentLeave->concat($recentClaims)->sortByDesc('created_at')->take(4) as $item)
-                            @php $isLeave = $item instanceof \App\Models\LeaveRequest; @endphp
-                            <tr>
-                                <td>
-                                    <div style="font-weight:600;">{{ $isLeave ? $item->leaveType->name.' leave' : 'Expense claim' }}</div>
-                                    <div class="text-muted font-mono" style="font-size:12px;">{{ $item->reference }}</div>
-                                </td>
-                                <td class="text-muted">
-                                    @if($isLeave)
-                                        {{ $item->start_date->format('j M') }} – {{ $item->end_date->format('j M') }} · <span class="font-mono">{{ $item->days }}</span> days
-                                    @else
-                                        {{ $item->claimEvent->name }} · <span class="font-mono">₦{{ number_format($item->total()) }}</span>
-                                    @endif
-                                </td>
-                                <td class="text-muted">{{ $item->stageLabel() }}</td>
-                                <td>
-                                    @php $status = $item->status; @endphp
-                                    <span class="pill {{ match(true) {
-                                        str_contains($status,'pending') => 'pill-warning',
-                                        $status === 'approved' => 'pill-neutral',
-                                        $status === 'paid' => 'pill-success',
-                                        $status === 'rejected' => 'pill-danger',
-                                        default => 'pill-neutral',
-                                    } }}">{{ ucfirst(str_replace('_',' ',$status)) }}</span>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr><td colspan="4" class="text-muted">No requests yet — try Apply for leave or Submit a claim.</td></tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-        </section>
+        <livewire:my-recent-requests-table />
 
         <section class="card-dark">
             <h2>Quick actions</h2>

@@ -47,6 +47,7 @@ Route::middleware(['auth', 'password_policy', 'two_factor'])->group(function () 
     Route::livewire('/org-chart', 'pages::org-chart')->name('org-chart')->middleware('screen:employees');
     Route::livewire('/admin/master-data', 'pages::admin-master-data')->name('admin.master-data')->middleware('screen:admin.master-data');
     Route::livewire('/admin/onboarding-templates', 'pages::admin-onboarding-templates')->name('admin.onboarding-templates')->middleware('screen:admin.onboarding-templates');
+    Route::livewire('/admin/leave-configuration', 'pages::admin-leave-configuration')->name('admin.leave-configuration')->middleware('screen:admin.leave-configuration');
     Route::livewire('/settings', 'pages::settings')->name('settings')->middleware('screen:settings');
     Route::livewire('/admin/roles', 'pages::admin-roles')->name('admin.roles')->middleware('screen:admin.roles');
     Route::livewire('/admin/roles/{role}', 'pages::admin-role-edit')->name('admin.roles.edit')->middleware('screen:admin.roles');

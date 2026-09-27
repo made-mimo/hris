@@ -9,6 +9,12 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 // Spec Section 3.2's scheduled-job registry: module-declared cron schedules
-// defined once in code, not external crontab entries. The first (and so
-// far only) real entry — see App\Console\Commands\SweepRenewals.
+// defined once in code, not external crontab entries.
 Schedule::command('renewals:sweep')->daily();
+
+// Spec C1's Accrual & Carry-Over Engine — all three run daily and are each
+// individually idempotent (see their own command/service doc comments), so
+// running them once a day at the same time is both correct and simple.
+Schedule::command('leave:grant-new-hire-prorations')->daily();
+Schedule::command('leave:run-year-end-carryover')->daily();
+Schedule::command('leave:mark-past-days-taken')->daily();
