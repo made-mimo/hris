@@ -116,6 +116,9 @@
                     <a href="{{ route('admin.leave-configuration') }}" class="nav-link {{ request()->routeIs('admin.leave-configuration') ? 'active' : '' }}">
                         <span class="nav-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18M8 3v4M16 3v4"></path></svg></span>Leave Configuration
                     </a>
+                    <a href="{{ route('leave.reports') }}" class="nav-link {{ request()->routeIs('leave.reports') ? 'active' : '' }}">
+                        <span class="nav-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"></path><path d="M18 17V9M13 17V5M8 17v-4"></path></svg></span>Leave Reports
+                    </a>
                 @endif
                 @if($canSettings)
                     <a href="{{ route('settings') }}" class="nav-link {{ request()->routeIs('settings') ? 'active' : '' }}">
