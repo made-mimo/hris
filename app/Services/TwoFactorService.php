@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Mail\TwoFactorCodeMail;
+use App\Models\SecurityEvent;
 use App\Models\Setting;
 use App\Models\TrustedDevice;
 use App\Models\TwoFactorBackupCode;
@@ -109,11 +110,15 @@ class TwoFactorService
             return false;
         }
 
+        $event = $user->hasTwoFactorEnrolled() ? 'two_factor_method_changed' : 'two_factor_enrolled';
+
         $user->forceFill([
             'two_factor_method' => 'totp',
             'two_factor_secret' => $secret,
             'two_factor_confirmed_at' => now(),
         ])->save();
+
+        SecurityEvent::record($event, $user, 'totp');
 
         return true;
     }
@@ -135,6 +140,8 @@ class TwoFactorService
                 'code_hash' => Hash::make($plain),
             ]);
         }
+
+        SecurityEvent::record('two_factor_backup_codes_regenerated', $user);
 
         return $codes;
     }
@@ -219,6 +226,8 @@ class TwoFactorService
     /** Switching to email needs no secret; switching to TOTP is handled by confirmTotpEnrollment() instead. */
     public function switchToEmail(User $user): void
     {
+        $event = $user->hasTwoFactorEnrolled() ? 'two_factor_method_changed' : 'two_factor_enrolled';
+
         $user->forceFill([
             'two_factor_method' => 'email',
             'two_factor_secret' => null,
@@ -226,6 +235,8 @@ class TwoFactorService
         ])->save();
 
         $user->backupCodes()->delete();
+
+        SecurityEvent::record($event, $user, 'email');
     }
 
     public function disable(User $user): void
@@ -238,6 +249,8 @@ class TwoFactorService
 
         $user->backupCodes()->delete();
         $this->revokeAllTrustedDevices($user);
+
+        SecurityEvent::record('two_factor_disenrolled', $user);
     }
 
     /** Issues a new trusted device, persists only its hash (mirrors Laravel's own remember-token pattern), and returns the raw token for the caller to set as a cookie. */
@@ -253,6 +266,8 @@ class TwoFactorService
             'trusted_at' => now(),
             'expires_at' => now()->addDays($this->trustedDeviceDaysFor($user)),
         ]);
+
+        SecurityEvent::record('device_trusted', $user);
 
         return $raw;
     }
@@ -281,11 +296,16 @@ class TwoFactorService
 
     public function revokeTrustedDevice(User $user, int $id): void
     {
-        $user->trustedDevices()->where('id', $id)->delete();
+        if ($user->trustedDevices()->where('id', $id)->delete()) {
+            SecurityEvent::record('device_revoked', $user);
+        }
     }
 
     public function revokeAllTrustedDevices(User $user): void
     {
-        $user->trustedDevices()->delete();
+        if ($user->trustedDevices()->count() > 0) {
+            $user->trustedDevices()->delete();
+            SecurityEvent::record('device_revoked', $user, metadata: ['all' => true]);
+        }
     }
 }

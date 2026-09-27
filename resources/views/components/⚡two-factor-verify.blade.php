@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\SecurityEvent;
 use App\Services\TwoFactorService;
 use Livewire\Component;
 
@@ -59,10 +60,13 @@ new class extends Component
         };
 
         if (! $ok) {
+            SecurityEvent::record('two_factor_verify_failed', $user, $this->useBackupCode ? 'backup_code' : $this->method);
             $this->addError('code', 'That code is invalid or has expired.');
 
             return;
         }
+
+        SecurityEvent::record('two_factor_verified', $user, $this->useBackupCode ? 'backup_code' : $this->method);
 
         session(['two_factor_verified' => true]);
 

@@ -7,6 +7,7 @@
     $canApprovals = auth()->user()?->canView('approvals');
     $canSettings = auth()->user()?->canView('settings');
     $canRoles = auth()->user()?->canView('admin.roles');
+    $canAuditLog = auth()->user()?->canView('admin.audit-log');
     $approvalsBadge = $canApprovals ? \App\Models\LeaveRequest::where('status', 'pending_hr')->count()
         + \App\Models\ExpenseClaim::where('status', 'pending_hr')->count() : 0;
     $settings = \App\Models\Setting::current();
@@ -79,7 +80,7 @@
                 <span class="nav-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z"></path><path d="M14 3v5h5M9 13h6M9 17h6"></path></svg></span>Policies
             </span>
 
-            @if($canSettings || $canRoles)
+            @if($canSettings || $canRoles || $canAuditLog)
                 <div class="nav-section-label">Admin</div>
                 @if($canSettings)
                     <a href="{{ route('settings') }}" class="nav-link {{ request()->routeIs('settings') ? 'active' : '' }}">
@@ -89,6 +90,11 @@
                 @if($canRoles)
                     <a href="{{ route('admin.roles') }}" class="nav-link {{ request()->routeIs('admin.roles*') ? 'active' : '' }}">
                         <span class="nav-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8z"></path><path d="M4.5 20.5c1-4 4-6.5 7.5-6.5s6.5 2.5 7.5 6.5"></path><path d="m17 8 1.5 1.5L21.5 6.5"></path></svg></span>Roles &amp; Permissions
+                    </a>
+                @endif
+                @if($canAuditLog)
+                    <a href="{{ route('admin.audit-log') }}" class="nav-link {{ request()->routeIs('admin.audit-log') ? 'active' : '' }}">
+                        <span class="nav-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12h6M9 16h6M9 8h1"></path><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z"></path><path d="M14 3v5h5"></path></svg></span>Audit Log
                     </a>
                 @endif
             @endif

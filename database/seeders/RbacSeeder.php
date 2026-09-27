@@ -26,6 +26,7 @@ class RbacSeeder extends Seeder
             ['key' => 'approvals', 'label' => 'Approvals', 'nav_group' => 'My Team', 'sort_order' => 5],
             ['key' => 'settings', 'label' => 'Settings', 'nav_group' => 'Admin', 'sort_order' => 6],
             ['key' => 'admin.roles', 'label' => 'Roles & Permissions', 'nav_group' => 'Admin', 'sort_order' => 7],
+            ['key' => 'admin.audit-log', 'label' => 'Audit Log', 'nav_group' => 'Admin', 'sort_order' => 8],
         ];
         foreach ($screens as $s) {
             Screen::updateOrCreate(['key' => $s['key']], $s);
@@ -65,7 +66,7 @@ class RbacSeeder extends Seeder
 
         // ---- Screen grants per role ----
         $screenGrants = [
-            'admin' => ['home', 'leave.apply', 'claims.create', 'profile', 'approvals', 'settings', 'admin.roles'],
+            'admin' => ['home', 'leave.apply', 'claims.create', 'profile', 'approvals', 'settings', 'admin.roles', 'admin.audit-log'],
             'hr_admin' => ['home', 'leave.apply', 'claims.create', 'profile', 'approvals'],
             'hr_officer' => ['home', 'leave.apply', 'claims.create', 'profile', 'approvals'],
             'ess' => ['home', 'leave.apply', 'claims.create', 'profile'],

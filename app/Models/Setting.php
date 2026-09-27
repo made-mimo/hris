@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Model;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
@@ -12,7 +13,7 @@ use Spatie\MediaLibrary\InteractsWithMedia;
  */
 class Setting extends Model implements HasMedia
 {
-    use InteractsWithMedia;
+    use InteractsWithMedia, Auditable;
 
     protected $fillable = ['company_name', 'two_factor_enabled'];
 

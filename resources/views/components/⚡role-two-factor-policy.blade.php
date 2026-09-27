@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Role;
+use App\Models\SecurityEvent;
 use Livewire\Component;
 
 /**
@@ -58,6 +59,11 @@ new class extends Component
             'two_factor_trusted_device_allowed' => $this->trustedDeviceAllowed,
             'two_factor_trusted_device_days' => $this->trustedDeviceDays,
         ]);
+
+        // Spec A1: "2FA required by policy change" is a named 2FA lifecycle
+        // event in its own right, on top of the generic field-diff that
+        // Role's Auditable trait already records for this same update.
+        SecurityEvent::record('two_factor_policy_changed', auth()->user(), metadata: ['role' => $this->role->slug]);
 
         session()->flash('status', 'Two-factor policy updated for this role.');
     }

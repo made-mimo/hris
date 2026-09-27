@@ -31,4 +31,5 @@ Route::middleware(['auth', 'two_factor'])->group(function () {
     Route::livewire('/settings', 'pages::settings')->name('settings')->middleware('screen:settings');
     Route::livewire('/admin/roles', 'pages::admin-roles')->name('admin.roles')->middleware('screen:admin.roles');
     Route::livewire('/admin/roles/{role}', 'pages::admin-role-edit')->name('admin.roles.edit')->middleware('screen:admin.roles');
+    Route::livewire('/admin/audit-log', 'pages::admin-audit-log')->name('admin.audit-log')->middleware('screen:admin.audit-log');
 });

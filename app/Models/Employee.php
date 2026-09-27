@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -12,7 +13,7 @@ use Spatie\MediaLibrary\InteractsWithMedia;
 class Employee extends Model implements HasMedia
 {
     /** @use HasFactory<\Database\Factories\EmployeeFactory> */
-    use HasFactory, InteractsWithMedia;
+    use HasFactory, InteractsWithMedia, Auditable;
 
     protected $fillable = [
         'user_id',
