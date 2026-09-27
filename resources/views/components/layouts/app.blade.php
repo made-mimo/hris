@@ -144,7 +144,7 @@
                     </div>
                     <div style="display:flex;flex-direction:column;line-height:1.25;">
                         <span style="font-size:13.5px;font-weight:600;">{{ $me?->fullName() ?? auth()->user()->name }}</span>
-                        <span class="text-muted" style="font-size:12px;">{{ $me?->job_title ?? auth()->user()->role?->name }}{{ $isSupervisor ? ' · Line Manager' : '' }}</span>
+                        <span class="text-muted" style="font-size:12px;">{{ $me?->jobTitleName() ?? auth()->user()->role?->name }}{{ $isSupervisor ? ' · Line Manager' : '' }}</span>
                     </div>
                 </div>
             </div>

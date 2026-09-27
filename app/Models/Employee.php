@@ -23,9 +23,9 @@ class Employee extends Model implements HasMedia
         'first_name',
         'last_name',
         'initials',
-        'job_title',
-        'department',
-        'location',
+        'job_title_id',
+        'sub_unit_id',
+        'location_id',
         'hire_date',
         'clocked_in',
         'clocked_in_at',
@@ -56,6 +56,21 @@ class Employee extends Model implements HasMedia
         return $this->belongsTo(User::class);
     }
 
+    public function jobTitle(): BelongsTo
+    {
+        return $this->belongsTo(JobTitle::class);
+    }
+
+    public function subUnit(): BelongsTo
+    {
+        return $this->belongsTo(SubUnit::class);
+    }
+
+    public function location(): BelongsTo
+    {
+        return $this->belongsTo(Location::class);
+    }
+
     public function supervisor(): BelongsTo
     {
         return $this->belongsTo(Employee::class, 'supervisor_id');
@@ -84,6 +99,21 @@ class Employee extends Model implements HasMedia
     public function fullName(): string
     {
         return "{$this->first_name} {$this->last_name}";
+    }
+
+    public function jobTitleName(): ?string
+    {
+        return $this->jobTitle?->name;
+    }
+
+    public function departmentName(): ?string
+    {
+        return $this->subUnit?->name;
+    }
+
+    public function locationName(): ?string
+    {
+        return $this->location?->name;
     }
 
     public function avatarUrl(): ?string

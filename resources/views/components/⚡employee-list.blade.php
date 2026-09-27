@@ -29,6 +29,7 @@ new class extends Component
     public function with(): array
     {
         $employees = Employee::query()
+            ->with(['jobTitle', 'subUnit'])
             ->when($this->search, fn ($q) => $q->where(fn ($q2) => $q2
                 ->where('first_name', 'like', "%{$this->search}%")
                 ->orWhere('last_name', 'like', "%{$this->search}%")
@@ -56,8 +57,8 @@ new class extends Component
         <a href="{{ route('employees.show', $employee) }}" wire:navigate style="display:grid;grid-template-columns:130px minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) 110px;gap:12px;align-items:center;padding:12px 18px;border-bottom:1px solid var(--color-border);text-decoration:none;color:inherit;">
             <span class="font-mono text-muted" style="font-size:12.5px;">{{ $employee->employee_id }}</span>
             <span style="font-size:13.5px;font-weight:600;">{{ $employee->fullName() }}</span>
-            <span style="font-size:13px;" class="text-muted">{{ $employee->job_title ?? '—' }}</span>
-            <span style="font-size:13px;" class="text-muted">{{ $employee->department ?? '—' }}</span>
+            <span style="font-size:13px;" class="text-muted">{{ $employee->jobTitleName() ?? '—' }}</span>
+            <span style="font-size:13px;" class="text-muted">{{ $employee->departmentName() ?? '—' }}</span>
             <span class="font-mono text-muted" style="font-size:12.5px;">{{ $employee->hire_date->format('j M Y') }}</span>
         </a>
     @empty

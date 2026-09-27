@@ -41,6 +41,7 @@ Route::middleware(['auth', 'password_policy', 'two_factor'])->group(function () 
     Route::livewire('/employees', 'pages::employees')->name('employees')->middleware('screen:employees');
     Route::livewire('/employees/create', 'pages::employee-create')->name('employees.create')->middleware('screen:employees');
     Route::livewire('/employees/{employee}', 'pages::employee-show')->name('employees.show')->middleware('screen:employees');
+    Route::livewire('/admin/master-data', 'pages::admin-master-data')->name('admin.master-data')->middleware('screen:admin.master-data');
     Route::livewire('/settings', 'pages::settings')->name('settings')->middleware('screen:settings');
     Route::livewire('/admin/roles', 'pages::admin-roles')->name('admin.roles')->middleware('screen:admin.roles');
     Route::livewire('/admin/roles/{role}', 'pages::admin-role-edit')->name('admin.roles.edit')->middleware('screen:admin.roles');

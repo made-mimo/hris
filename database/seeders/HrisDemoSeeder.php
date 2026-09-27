@@ -7,11 +7,14 @@ use App\Models\Employee;
 use App\Models\ExpenseClaim;
 use App\Models\ExpenseClaimLine;
 use App\Models\ExpenseType;
+use App\Models\JobTitle;
 use App\Models\LeaveEntitlement;
 use App\Models\LeaveRequest;
 use App\Models\LeaveType;
+use App\Models\Location;
 use App\Models\Role;
 use App\Models\Setting;
+use App\Models\SubUnit;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
@@ -26,6 +29,13 @@ class HrisDemoSeeder extends Seeder
     public function run(): void
     {
         $today = now()->startOfDay();
+
+        // Spec Section B1's master lists — resolved/created by name here so
+        // this seeder stays self-contained (no separate master-data seeder
+        // to run first) and idempotent (firstOrCreate, safe to re-run).
+        $jobTitle = fn (string $name) => JobTitle::firstOrCreate(['name' => $name])->id;
+        $subUnit = fn (string $name) => SubUnit::firstOrCreate(['name' => $name])->id;
+        $location = fn (string $name) => Location::firstOrCreate(['name' => $name])->id;
 
         // 2FA defaults OFF project-wide for local dev/testing, per explicit request.
         // Toggle it back on from /settings once real delivery (Section A1) exists.
@@ -65,7 +75,7 @@ class HrisDemoSeeder extends Seeder
         ]);
         Employee::create([
             'user_id' => $adminUser->id, 'employee_id' => 'SIL2201001', 'first_name' => 'Chuka', 'last_name' => 'Okoro',
-            'initials' => 'CO', 'job_title' => 'IT & Systems Admin', 'department' => 'IT', 'location' => 'Lagos',
+            'initials' => 'CO', 'job_title_id' => $jobTitle('IT & Systems Admin'), 'sub_unit_id' => $subUnit('IT'), 'location_id' => $location('Lagos'),
             'hire_date' => $today->copy()->subYears(4),
         ]);
 
@@ -78,7 +88,7 @@ class HrisDemoSeeder extends Seeder
         ]);
         $hr = Employee::create([
             'user_id' => $hrUser->id, 'employee_id' => 'SIL2401001', 'first_name' => 'Ngozi', 'last_name' => 'Chukwu',
-            'initials' => 'NC', 'job_title' => 'HR & Admin Manager', 'department' => 'HR & Admin', 'location' => 'Lagos',
+            'initials' => 'NC', 'job_title_id' => $jobTitle('HR & Admin Manager'), 'sub_unit_id' => $subUnit('HR & Admin'), 'location_id' => $location('Lagos'),
             'hire_date' => $today->copy()->subYears(4),
         ]);
 
@@ -96,15 +106,15 @@ class HrisDemoSeeder extends Seeder
         $emeka = Employee::create([
             'user_id' => $emekaUser->id,
             'employee_id' => 'SIL2201004', 'first_name' => 'Emeka', 'last_name' => 'Nwosu', 'initials' => 'EN',
-            'job_title' => 'Line Manager', 'department' => 'AV Integration', 'location' => 'Lagos', 'hire_date' => $today->copy()->subYears(5),
+            'job_title_id' => $jobTitle('Line Manager'), 'sub_unit_id' => $subUnit('AV Integration'), 'location_id' => $location('Lagos'), 'hire_date' => $today->copy()->subYears(5),
         ]);
         $kunle = Employee::create([
             'employee_id' => 'SIL2201005', 'first_name' => 'Kunle', 'last_name' => 'Ade', 'initials' => 'KA',
-            'job_title' => 'Line Manager', 'department' => 'Service & Support', 'location' => 'Lagos', 'hire_date' => $today->copy()->subYears(6),
+            'job_title_id' => $jobTitle('Line Manager'), 'sub_unit_id' => $subUnit('Service & Support'), 'location_id' => $location('Lagos'), 'hire_date' => $today->copy()->subYears(6),
         ]);
         $bola = Employee::create([
             'employee_id' => 'SIL2201006', 'first_name' => 'Bola', 'last_name' => 'Martins', 'initials' => 'BM',
-            'job_title' => 'Head of Sales', 'department' => 'Sales', 'location' => 'Lagos', 'hire_date' => $today->copy()->subYears(7),
+            'job_title_id' => $jobTitle('Head of Sales'), 'sub_unit_id' => $subUnit('Sales'), 'location_id' => $location('Lagos'), 'hire_date' => $today->copy()->subYears(7),
         ]);
 
         // ---- The logged-in ESS/Supervisor demo user: Adaeze Okafor ----
@@ -119,46 +129,46 @@ class HrisDemoSeeder extends Seeder
         ]);
         $adaeze = Employee::create([
             'user_id' => $adaezeUser->id, 'supervisor_id' => $emeka->id, 'employee_id' => 'SIL2603001',
-            'first_name' => 'Adaeze', 'last_name' => 'Okafor', 'initials' => 'AO', 'job_title' => 'Project Engineer',
-            'department' => 'AV Integration', 'location' => 'Lagos', 'hire_date' => $today->copy()->subYears(3),
+            'first_name' => 'Adaeze', 'last_name' => 'Okafor', 'initials' => 'AO', 'job_title_id' => $jobTitle('Project Engineer'),
+            'sub_unit_id' => $subUnit('AV Integration'), 'location_id' => $location('Lagos'), 'hire_date' => $today->copy()->subYears(3),
         ]);
 
         // ---- Adaeze's direct reports ----
         $tunde = Employee::create([
             'supervisor_id' => $adaeze->id, 'employee_id' => 'SIL2402002', 'first_name' => 'Tunde', 'last_name' => 'Bakare',
-            'initials' => 'TB', 'job_title' => 'Project Engineer', 'department' => 'AV Integration', 'location' => 'Lagos',
+            'initials' => 'TB', 'job_title_id' => $jobTitle('Project Engineer'), 'sub_unit_id' => $subUnit('AV Integration'), 'location_id' => $location('Lagos'),
             'hire_date' => $today->copy()->subYears(2),
         ]);
         $chidi = Employee::create([
             'supervisor_id' => $adaeze->id, 'employee_id' => 'SIL2402003', 'first_name' => 'Chidi', 'last_name' => 'Eze',
-            'initials' => 'CE', 'job_title' => 'Field Technician', 'department' => 'AV Integration', 'location' => 'Lagos',
+            'initials' => 'CE', 'job_title_id' => $jobTitle('Field Technician'), 'sub_unit_id' => $subUnit('AV Integration'), 'location_id' => $location('Lagos'),
             'hire_date' => $today->copy()->subYears(2),
         ]);
         $ngozi = Employee::create([
             'supervisor_id' => $adaeze->id, 'employee_id' => 'SIL2402004', 'first_name' => 'Ngozi', 'last_name' => 'Obi',
-            'initials' => 'NO', 'job_title' => 'Field Technician', 'department' => 'AV Integration', 'location' => 'Lagos',
+            'initials' => 'NO', 'job_title_id' => $jobTitle('Field Technician'), 'sub_unit_id' => $subUnit('AV Integration'), 'location_id' => $location('Lagos'),
             'hire_date' => $today->copy()->subYears(1),
         ]);
         $yusuf = Employee::create([
             'supervisor_id' => $adaeze->id, 'employee_id' => 'SIL2402005', 'first_name' => 'Yusuf', 'last_name' => 'Abubakar',
-            'initials' => 'YA', 'job_title' => 'Field Technician', 'department' => 'AV Integration', 'location' => 'Lagos',
+            'initials' => 'YA', 'job_title_id' => $jobTitle('Field Technician'), 'sub_unit_id' => $subUnit('AV Integration'), 'location_id' => $location('Lagos'),
             'hire_date' => $today->copy()->subYears(1),
         ]);
 
         // ---- Other employees referenced by the Approvals queue mockup ----
         $ibrahim = Employee::create([
             'supervisor_id' => $kunle->id, 'employee_id' => 'SIL2402006', 'first_name' => 'Ibrahim', 'last_name' => 'Musa',
-            'initials' => 'IM', 'job_title' => 'Support Engineer', 'department' => 'Service & Support', 'location' => 'Lagos',
+            'initials' => 'IM', 'job_title_id' => $jobTitle('Support Engineer'), 'sub_unit_id' => $subUnit('Service & Support'), 'location_id' => $location('Lagos'),
             'hire_date' => $today->copy()->subYears(2),
         ]);
         $seyi = Employee::create([
             'supervisor_id' => $emeka->id, 'employee_id' => 'SIL2402007', 'first_name' => 'Seyi', 'last_name' => 'Ogunleye',
-            'initials' => 'SO', 'job_title' => 'Project Coordinator', 'department' => 'Projects', 'location' => 'Lagos',
+            'initials' => 'SO', 'job_title_id' => $jobTitle('Project Coordinator'), 'sub_unit_id' => $subUnit('Projects'), 'location_id' => $location('Lagos'),
             'hire_date' => $today->copy()->subYears(2),
         ]);
         $chioma = Employee::create([
             'supervisor_id' => $bola->id, 'employee_id' => 'SIL2402008', 'first_name' => 'Chioma', 'last_name' => 'Nnaji',
-            'initials' => 'CN', 'job_title' => 'Sales Executive', 'department' => 'Sales', 'location' => 'Lagos',
+            'initials' => 'CN', 'job_title_id' => $jobTitle('Sales Executive'), 'sub_unit_id' => $subUnit('Sales'), 'location_id' => $location('Lagos'),
             'hire_date' => $today->copy()->subYears(1),
         ]);
 

@@ -21,6 +21,7 @@ class Setting extends Model implements HasMedia
         'password_require_lowercase', 'password_require_number', 'password_require_special',
         'password_allow_spaces', 'password_policy_version',
         'employee_id_format', 'employee_id_sequence_scope',
+        'tax_id', 'registration_number', 'address', 'contact_email', 'contact_phone',
     ];
 
     protected function casts(): array

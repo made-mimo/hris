@@ -82,13 +82,13 @@ new class extends Component
         $user = auth()->user();
 
         $leave = $this->engine->pendingFor($user, 'leave_request', LeaveRequest::class, ['pending_manager', 'pending_hr'])
-            ->load(['employee.supervisor', 'leaveType', 'relieverEmployee'])
+            ->load(['employee.supervisor', 'employee.subUnit', 'leaveType', 'relieverEmployee'])
             ->map(function (LeaveRequest $r) use ($user) {
                 $stageLabel = $r->status === 'pending_manager' ? 'Line Manager approval' : 'HR final approval';
 
                 return [
                     'key' => "leave-{$r->id}", 'kind' => 'leave', 'kindLabel' => 'Leave',
-                    'who' => $r->employee->fullName(), 'initials' => $r->employee->initials, 'dept' => $r->employee->department,
+                    'who' => $r->employee->fullName(), 'initials' => $r->employee->initials, 'dept' => $r->employee->departmentName(),
                     'ref' => $r->reference, 'title' => "{$r->leaveType->name} leave · {$r->days} days",
                     'summary' => $r->start_date->format('j M').' – '.$r->end_date->format('j M').($r->relieverEmployee ? ' · reliever '.$r->relieverEmployee->fullName() : ''),
                     'stage' => $stageLabel, 'age' => ($r->status === 'pending_manager' ? $r->created_at : $r->manager_approved_at)?->diffForHumans(null, true) ?? '—',
@@ -108,13 +108,13 @@ new class extends Component
             });
 
         $claims = $this->engine->pendingFor($user, 'expense_claim', ExpenseClaim::class, ['pending_manager', 'pending_hr'])
-            ->load(['employee.supervisor', 'claimEvent', 'lines'])
+            ->load(['employee.supervisor', 'employee.subUnit', 'claimEvent', 'lines'])
             ->map(function (ExpenseClaim $c) use ($user) {
                 $stageLabel = $c->status === 'pending_manager' ? 'Line Manager approval' : 'HR review';
 
                 return [
                     'key' => "claim-{$c->id}", 'kind' => 'claim', 'kindLabel' => 'Claim',
-                    'who' => $c->employee->fullName(), 'initials' => $c->employee->initials, 'dept' => $c->employee->department,
+                    'who' => $c->employee->fullName(), 'initials' => $c->employee->initials, 'dept' => $c->employee->departmentName(),
                     'ref' => $c->reference, 'title' => "{$c->claimEvent->name} · ₦".number_format($c->total()),
                     'summary' => '₦'.number_format($c->total()).' · '.$c->lines->count().' item'.($c->lines->count() === 1 ? '' : 's'),
                     'stage' => $stageLabel, 'age' => ($c->status === 'pending_manager' ? $c->submitted_at : $c->manager_approved_at)?->diffForHumans(null, true) ?? '—',

@@ -1,6 +1,9 @@
 <?php
 
 use App\Models\Employee;
+use App\Models\JobTitle;
+use App\Models\Location;
+use App\Models\SubUnit;
 use App\Services\EmployeeIdGenerator;
 use Livewire\Component;
 
@@ -19,11 +22,11 @@ new class extends Component
 
     public string $lastName;
 
-    public string $jobTitle;
+    public ?int $jobTitleId;
 
-    public string $department;
+    public ?int $subUnitId;
 
-    public string $location;
+    public ?int $locationId;
 
     public string $hireDate;
 
@@ -38,9 +41,9 @@ new class extends Component
         $this->employee = $employee;
         $this->firstName = $employee->first_name;
         $this->lastName = $employee->last_name;
-        $this->jobTitle = $employee->job_title ?? '';
-        $this->department = $employee->department ?? '';
-        $this->location = $employee->location ?? '';
+        $this->jobTitleId = $employee->job_title_id;
+        $this->subUnitId = $employee->sub_unit_id;
+        $this->locationId = $employee->location_id;
         $this->hireDate = $employee->hire_date->toDateString();
         $this->supervisorId = $employee->supervisor_id;
     }
@@ -50,9 +53,9 @@ new class extends Component
         $data = $this->validate([
             'firstName' => ['required', 'string', 'max:100'],
             'lastName' => ['required', 'string', 'max:100'],
-            'jobTitle' => ['nullable', 'string', 'max:150'],
-            'department' => ['nullable', 'string', 'max:150'],
-            'location' => ['nullable', 'string', 'max:150'],
+            'jobTitleId' => ['nullable', 'exists:job_titles,id'],
+            'subUnitId' => ['nullable', 'exists:sub_units,id'],
+            'locationId' => ['nullable', 'exists:locations,id'],
             'hireDate' => ['required', 'date'],
             'supervisorId' => ['nullable', 'exists:employees,id'],
         ]);
@@ -66,9 +69,9 @@ new class extends Component
         $this->employee->update([
             'first_name' => $data['firstName'],
             'last_name' => $data['lastName'],
-            'job_title' => $data['jobTitle'] ?: null,
-            'department' => $data['department'] ?: null,
-            'location' => $data['location'] ?: null,
+            'job_title_id' => $data['jobTitleId'],
+            'sub_unit_id' => $data['subUnitId'],
+            'location_id' => $data['locationId'],
             'hire_date' => $data['hireDate'],
             'supervisor_id' => $data['supervisorId'],
         ]);
@@ -99,6 +102,9 @@ new class extends Component
     {
         return [
             'supervisors' => Employee::where('id', '!=', $this->employee->id)->orderBy('last_name')->get(),
+            'jobTitles' => JobTitle::where('is_active', true)->orderBy('name')->get(),
+            'subUnits' => SubUnit::where('is_active', true)->orderBy('name')->get(),
+            'locations' => Location::where('is_active', true)->orderBy('name')->get(),
             'canOverrideId' => auth()->user()->isAdmin() || auth()->user()->isHr(),
         ];
     }
@@ -128,19 +134,34 @@ new class extends Component
 
             <div class="grid grid-2">
                 <div class="field" style="margin:0;">
-                    <label for="jobTitle">Job title</label>
-                    <input id="jobTitle" type="text" wire:model="jobTitle">
+                    <label for="jobTitleId">Job title</label>
+                    <select id="jobTitleId" wire:model="jobTitleId">
+                        <option value="">— none —</option>
+                        @foreach($jobTitles as $jt)
+                            <option value="{{ $jt->id }}">{{ $jt->name }}</option>
+                        @endforeach
+                    </select>
                 </div>
                 <div class="field" style="margin:0;">
-                    <label for="department">Department</label>
-                    <input id="department" type="text" wire:model="department">
+                    <label for="subUnitId">Department</label>
+                    <select id="subUnitId" wire:model="subUnitId">
+                        <option value="">— none —</option>
+                        @foreach($subUnits as $su)
+                            <option value="{{ $su->id }}">{{ $su->name }}</option>
+                        @endforeach
+                    </select>
                 </div>
             </div>
 
             <div class="grid grid-2">
                 <div class="field" style="margin:0;">
-                    <label for="location">Location</label>
-                    <input id="location" type="text" wire:model="location">
+                    <label for="locationId">Location</label>
+                    <select id="locationId" wire:model="locationId">
+                        <option value="">— none —</option>
+                        @foreach($locations as $loc)
+                            <option value="{{ $loc->id }}">{{ $loc->name }}</option>
+                        @endforeach
+                    </select>
                 </div>
                 <div class="field" style="margin:0;">
                     <label for="hireDate">Hire date</label>

@@ -3,6 +3,9 @@
 namespace Database\Factories;
 
 use App\Models\Employee;
+use App\Models\JobTitle;
+use App\Models\Location;
+use App\Models\SubUnit;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -25,9 +28,9 @@ class EmployeeFactory extends Factory
             'first_name' => $first,
             'last_name' => $last,
             'initials' => mb_strtoupper(mb_substr($first, 0, 1).mb_substr($last, 0, 1)),
-            'job_title' => fake()->jobTitle(),
-            'department' => fake()->randomElement(['AV Integration', 'Service & Support', 'Projects', 'Sales', 'Finance']),
-            'location' => 'Lagos',
+            'job_title_id' => JobTitle::firstOrCreate(['name' => fake()->jobTitle()])->id,
+            'sub_unit_id' => SubUnit::firstOrCreate(['name' => fake()->randomElement(['AV Integration', 'Service & Support', 'Projects', 'Sales', 'Finance'])])->id,
+            'location_id' => Location::firstOrCreate(['name' => 'Lagos'])->id,
             'hire_date' => fake()->dateTimeBetween('-5 years', '-1 month'),
         ];
     }

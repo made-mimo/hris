@@ -68,7 +68,7 @@ new class extends Component
     <div class="page-header">
         <div>
             <h1>{{ $viewerNow->hour < 12 ? 'Good morning' : ($viewerNow->hour < 17 ? 'Good afternoon' : 'Good evening') }}, {{ $me->first_name }}</h1>
-            <p class="text-muted">{{ $viewerNow->format('l, j F Y') }} · {{ $me->job_title }}{{ $me->department ? ', '.$me->department : '' }}</p>
+            <p class="text-muted">{{ $viewerNow->format('l, j F Y') }} · {{ $me->jobTitleName() }}{{ $me->departmentName() ? ', '.$me->departmentName() : '' }}</p>
         </div>
         <livewire:clock-toggle />
     </div>

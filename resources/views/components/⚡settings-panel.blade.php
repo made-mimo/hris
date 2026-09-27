@@ -24,6 +24,12 @@ new class extends Component
     public string $employeeIdFormat = 'SIL{YY}{MM}{SEQ:3}';
     public string $employeeIdSequenceScope = 'global';
 
+    public ?string $orgTaxId = null;
+    public ?string $orgRegistrationNumber = null;
+    public ?string $orgAddress = null;
+    public ?string $orgContactEmail = null;
+    public ?string $orgContactPhone = null;
+
     public function mount(): void
     {
         $settings = Setting::current();
@@ -38,6 +44,11 @@ new class extends Component
         $this->passwordAllowSpaces = $settings->password_allow_spaces;
         $this->employeeIdFormat = $settings->employee_id_format;
         $this->employeeIdSequenceScope = $settings->employee_id_sequence_scope;
+        $this->orgTaxId = $settings->tax_id;
+        $this->orgRegistrationNumber = $settings->registration_number;
+        $this->orgAddress = $settings->address;
+        $this->orgContactEmail = $settings->contact_email;
+        $this->orgContactPhone = $settings->contact_phone;
     }
 
     public function getEmployeeIdPreviewProperty(): string
@@ -116,6 +127,28 @@ new class extends Component
         Setting::forget();
         $this->reset('logo');
         session()->flash('status', 'Branding updated.');
+    }
+
+    public function saveOrgProfile(): void
+    {
+        $this->validate([
+            'orgTaxId' => ['nullable', 'string', 'max:100'],
+            'orgRegistrationNumber' => ['nullable', 'string', 'max:100'],
+            'orgAddress' => ['nullable', 'string', 'max:1000'],
+            'orgContactEmail' => ['nullable', 'email', 'max:255'],
+            'orgContactPhone' => ['nullable', 'string', 'max:50'],
+        ]);
+
+        Setting::current()->update([
+            'tax_id' => $this->orgTaxId ?: null,
+            'registration_number' => $this->orgRegistrationNumber ?: null,
+            'address' => $this->orgAddress ?: null,
+            'contact_email' => $this->orgContactEmail ?: null,
+            'contact_phone' => $this->orgContactPhone ?: null,
+        ]);
+
+        Setting::forget();
+        session()->flash('status', 'Organization profile updated.');
     }
 
     public function with(): array
@@ -267,6 +300,52 @@ new class extends Component
                 <div class="text-xs text-text-muted">Forward-only: changing this only affects employees added after the change — every existing employee keeps their current ID.</div>
 
                 <button type="submit" class="self-start rounded-sm bg-primary px-4.5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-primary-dark">Save Employee ID format</button>
+            </form>
+        </section>
+
+        <section class="rounded-md border border-border bg-surface p-5 shadow-sm">
+            <div class="mb-3.5 flex items-center justify-between">
+                <h2 class="font-display text-base font-bold text-text">Organization profile</h2>
+            </div>
+            <form wire:submit="saveOrgProfile" class="flex flex-col gap-3.5">
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label for="orgTaxId" class="mb-1.5 block text-xs font-semibold text-text">Tax ID</label>
+                        <input id="orgTaxId" type="text" wire:model="orgTaxId"
+                            class="w-full rounded-sm border border-border bg-surface px-3 py-2 font-body text-sm text-text outline-none focus:border-primary focus:ring-3 focus:ring-primary-light">
+                        @error('orgTaxId') <div class="mt-1 text-xs text-danger">{{ $message }}</div> @enderror
+                    </div>
+                    <div>
+                        <label for="orgRegistrationNumber" class="mb-1.5 block text-xs font-semibold text-text">Registration number</label>
+                        <input id="orgRegistrationNumber" type="text" wire:model="orgRegistrationNumber"
+                            class="w-full rounded-sm border border-border bg-surface px-3 py-2 font-body text-sm text-text outline-none focus:border-primary focus:ring-3 focus:ring-primary-light">
+                        @error('orgRegistrationNumber') <div class="mt-1 text-xs text-danger">{{ $message }}</div> @enderror
+                    </div>
+                </div>
+
+                <div>
+                    <label for="orgAddress" class="mb-1.5 block text-sm font-semibold text-text">Address</label>
+                    <textarea id="orgAddress" wire:model="orgAddress" rows="2"
+                        class="w-full rounded-sm border border-border bg-surface px-3.5 py-2.5 font-body text-sm text-text outline-none focus:border-primary focus:ring-3 focus:ring-primary-light"></textarea>
+                    @error('orgAddress') <div class="mt-1 text-xs text-danger">{{ $message }}</div> @enderror
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label for="orgContactEmail" class="mb-1.5 block text-xs font-semibold text-text">Contact email</label>
+                        <input id="orgContactEmail" type="email" wire:model="orgContactEmail"
+                            class="w-full rounded-sm border border-border bg-surface px-3 py-2 font-body text-sm text-text outline-none focus:border-primary focus:ring-3 focus:ring-primary-light">
+                        @error('orgContactEmail') <div class="mt-1 text-xs text-danger">{{ $message }}</div> @enderror
+                    </div>
+                    <div>
+                        <label for="orgContactPhone" class="mb-1.5 block text-xs font-semibold text-text">Contact phone</label>
+                        <input id="orgContactPhone" type="text" wire:model="orgContactPhone"
+                            class="w-full rounded-sm border border-border bg-surface px-3 py-2 font-body text-sm text-text outline-none focus:border-primary focus:ring-3 focus:ring-primary-light">
+                        @error('orgContactPhone') <div class="mt-1 text-xs text-danger">{{ $message }}</div> @enderror
+                    </div>
+                </div>
+
+                <button type="submit" class="self-start rounded-sm bg-primary px-4.5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-primary-dark">Save organization profile</button>
             </form>
         </section>
     </div>

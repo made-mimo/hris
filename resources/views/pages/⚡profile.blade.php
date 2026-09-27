@@ -26,8 +26,8 @@ new class extends Component
             <div class="card-header"><h2>Details</h2></div>
             <div style="display:flex;flex-direction:column;gap:10px;font-size:13.5px;">
                 <div style="display:flex;justify-content:space-between;"><span class="text-muted">Employee ID</span><span class="font-mono" style="font-weight:600;">{{ $me->employee_id }}</span></div>
-                <div style="display:flex;justify-content:space-between;"><span class="text-muted">Job title</span><span style="font-weight:600;">{{ $me->job_title }}</span></div>
-                <div style="display:flex;justify-content:space-between;"><span class="text-muted">Department</span><span style="font-weight:600;">{{ $me->department }}</span></div>
+                <div style="display:flex;justify-content:space-between;"><span class="text-muted">Job title</span><span style="font-weight:600;">{{ $me->jobTitleName() }}</span></div>
+                <div style="display:flex;justify-content:space-between;"><span class="text-muted">Department</span><span style="font-weight:600;">{{ $me->departmentName() }}</span></div>
                 <div style="display:flex;justify-content:space-between;"><span class="text-muted">Supervisor</span><span style="font-weight:600;">{{ $me->supervisor?->fullName() ?? '—' }}</span></div>
                 <div style="display:flex;justify-content:space-between;"><span class="text-muted">Hire date</span><span style="font-weight:600;">{{ $me->hire_date->format('j M Y') }}</span></div>
             </div>

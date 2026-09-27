@@ -141,7 +141,7 @@ new class extends Component
         $balance = $selectedType ? $me->leaveBalance($selectedType) : ['entitled' => 0, 'used' => 0, 'available' => 0];
         $afterDays = max(0, $balance['available'] - $this->requestDays);
 
-        $colleagues = Employee::where('department', $me->department)->where('id', '!=', $me->id)->get();
+        $colleagues = Employee::where('sub_unit_id', $me->sub_unit_id)->where('id', '!=', $me->id)->with('jobTitle')->get();
 
         return [
             'me' => $me,
@@ -201,7 +201,7 @@ new class extends Component
                 <select id="reliever" wire:model="relieverId">
                     <option value="">— none —</option>
                     @foreach($colleagues as $c)
-                        <option value="{{ $c->id }}">{{ $c->fullName() }} · {{ $c->job_title }}</option>
+                        <option value="{{ $c->id }}">{{ $c->fullName() }} · {{ $c->jobTitleName() }}</option>
                     @endforeach
                 </select>
                 <div class="hint">Your reliever is notified as soon as you submit.</div>
