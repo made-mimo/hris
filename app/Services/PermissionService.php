@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\ModuleToggle;
 use App\Models\Role;
 use App\Models\RoleDataGroupPermission;
 use App\Models\Screen;
@@ -39,18 +40,26 @@ class PermissionService
         return $roles->unique('id')->values();
     }
 
+    /** Also enforces spec B1's module enable/disable toggles: a screen tied to a disabled module is unreachable regardless of RBAC grant. */
     public function canViewScreen(User $user, string $screenKey): bool
     {
+        $screen = Screen::where('key', $screenKey)->first();
+
+        if ($screen?->module_key && ! ModuleToggle::isEnabled($screen->module_key)) {
+            return false;
+        }
+
         return $this->effectiveRoles($user)
             ->contains(fn (Role $role) => $role->screens->contains('key', $screenKey));
     }
 
-    /** @return Collection<int, Screen> every screen visible to this user, nav-ordered */
+    /** @return Collection<int, Screen> every screen visible to this user, nav-ordered, module-toggle-filtered */
     public function visibleScreens(User $user): Collection
     {
         return $this->effectiveRoles($user)
             ->flatMap(fn (Role $role) => $role->screens)
             ->unique('id')
+            ->reject(fn (Screen $screen) => $screen->module_key && ! ModuleToggle::isEnabled($screen->module_key))
             ->sortBy('sort_order')
             ->values();
     }

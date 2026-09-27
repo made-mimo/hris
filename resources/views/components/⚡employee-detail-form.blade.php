@@ -3,16 +3,18 @@
 use App\Models\Employee;
 use App\Models\JobTitle;
 use App\Models\Location;
+use App\Models\MasterListItem;
 use App\Models\SubUnit;
 use App\Services\EmployeeIdGenerator;
 use Livewire\Component;
 
 /**
  * Spec B2: "minimal-friction creation... followed by a tabbed profile
- * editor" — this is the first tab (core job/identity basics); personal,
- * contact, emergency-contact, immigration, compensation, qualifications,
- * multi-supervisor reporting, termination, and attachments tabs are
- * follow-up work (see PLAN.md).
+ * editor" — this is the Job Details tab (core job/identity basics + the
+ * employment relationship fields); every other tab lives in
+ * employee-profile-tabs (see PLAN.md Section 10). Primary supervisor is
+ * managed on the Reporting tab now (the real multi-supervisor graph), not
+ * here, to avoid two screens racing to set the same `supervisor_id` column.
  */
 new class extends Component
 {
@@ -24,13 +26,19 @@ new class extends Component
 
     public ?int $jobTitleId;
 
+    public ?int $jobCategoryId;
+
     public ?int $subUnitId;
 
     public ?int $locationId;
 
+    public ?int $employmentStatusId;
+
     public string $hireDate;
 
-    public ?int $supervisorId;
+    public ?string $contractStartDate;
+
+    public ?string $contractEndDate;
 
     public bool $overridingId = false;
 
@@ -42,10 +50,13 @@ new class extends Component
         $this->firstName = $employee->first_name;
         $this->lastName = $employee->last_name;
         $this->jobTitleId = $employee->job_title_id;
+        $this->jobCategoryId = $employee->job_category_id;
         $this->subUnitId = $employee->sub_unit_id;
         $this->locationId = $employee->location_id;
+        $this->employmentStatusId = $employee->employment_status_id;
         $this->hireDate = $employee->hire_date->toDateString();
-        $this->supervisorId = $employee->supervisor_id;
+        $this->contractStartDate = $employee->contract_start_date?->toDateString();
+        $this->contractEndDate = $employee->contract_end_date?->toDateString();
     }
 
     public function save(): void
@@ -54,26 +65,26 @@ new class extends Component
             'firstName' => ['required', 'string', 'max:100'],
             'lastName' => ['required', 'string', 'max:100'],
             'jobTitleId' => ['nullable', 'exists:job_titles,id'],
+            'jobCategoryId' => ['nullable', 'exists:master_list_items,id'],
             'subUnitId' => ['nullable', 'exists:sub_units,id'],
             'locationId' => ['nullable', 'exists:locations,id'],
+            'employmentStatusId' => ['nullable', 'exists:master_list_items,id'],
             'hireDate' => ['required', 'date'],
-            'supervisorId' => ['nullable', 'exists:employees,id'],
+            'contractStartDate' => ['nullable', 'date'],
+            'contractEndDate' => ['nullable', 'date', 'after_or_equal:contractStartDate'],
         ]);
-
-        if ($data['supervisorId'] === $this->employee->id) {
-            $this->addError('supervisorId', 'An employee cannot be their own supervisor.');
-
-            return;
-        }
 
         $this->employee->update([
             'first_name' => $data['firstName'],
             'last_name' => $data['lastName'],
             'job_title_id' => $data['jobTitleId'],
+            'job_category_id' => $data['jobCategoryId'],
             'sub_unit_id' => $data['subUnitId'],
             'location_id' => $data['locationId'],
+            'employment_status_id' => $data['employmentStatusId'],
             'hire_date' => $data['hireDate'],
-            'supervisor_id' => $data['supervisorId'],
+            'contract_start_date' => $data['contractStartDate'] ?: null,
+            'contract_end_date' => $data['contractEndDate'] ?: null,
         ]);
 
         session()->flash('status', 'Employee details updated.');
@@ -101,10 +112,11 @@ new class extends Component
     public function with(): array
     {
         return [
-            'supervisors' => Employee::where('id', '!=', $this->employee->id)->orderBy('last_name')->get(),
             'jobTitles' => JobTitle::where('is_active', true)->orderBy('name')->get(),
+            'jobCategories' => MasterListItem::ofType(MasterListItem::TYPE_JOB_CATEGORY)->where('is_active', true)->orderBy('sort_order')->get(),
             'subUnits' => SubUnit::where('is_active', true)->orderBy('name')->get(),
             'locations' => Location::where('is_active', true)->orderBy('name')->get(),
+            'employmentStatuses' => MasterListItem::ofType(MasterListItem::TYPE_EMPLOYMENT_STATUS)->where('is_active', true)->orderBy('sort_order')->get(),
             'canOverrideId' => auth()->user()->isAdmin() || auth()->user()->isHr(),
         ];
     }
@@ -164,22 +176,46 @@ new class extends Component
                     </select>
                 </div>
                 <div class="field" style="margin:0;">
+                    <label for="jobCategoryId">Job category</label>
+                    <select id="jobCategoryId" wire:model="jobCategoryId">
+                        <option value="">— none —</option>
+                        @foreach($jobCategories as $jc)
+                            <option value="{{ $jc->id }}">{{ $jc->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+            </div>
+
+            <div class="grid grid-2">
+                <div class="field" style="margin:0;">
+                    <label for="employmentStatusId">Employment status</label>
+                    <select id="employmentStatusId" wire:model="employmentStatusId">
+                        <option value="">— none —</option>
+                        @foreach($employmentStatuses as $status)
+                            <option value="{{ $status->id }}">{{ $status->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="field" style="margin:0;">
                     <label for="hireDate">Hire date</label>
                     <input id="hireDate" type="date" wire:model="hireDate">
                     @error('hireDate') <div class="hint" style="color:var(--color-danger);">{{ $message }}</div> @enderror
                 </div>
             </div>
 
-            <div class="field" style="margin:0;">
-                <label for="supervisorId">Supervisor</label>
-                <select id="supervisorId" wire:model="supervisorId">
-                    <option value="">— none —</option>
-                    @foreach($supervisors as $s)
-                        <option value="{{ $s->id }}">{{ $s->fullName() }}</option>
-                    @endforeach
-                </select>
-                @error('supervisorId') <div class="hint" style="color:var(--color-danger);">{{ $message }}</div> @enderror
+            <div class="grid grid-2">
+                <div class="field" style="margin:0;">
+                    <label for="contractStartDate">Contract start</label>
+                    <input id="contractStartDate" type="date" wire:model="contractStartDate">
+                </div>
+                <div class="field" style="margin:0;">
+                    <label for="contractEndDate">Contract end</label>
+                    <input id="contractEndDate" type="date" wire:model="contractEndDate">
+                    @error('contractEndDate') <div class="hint" style="color:var(--color-danger);">{{ $message }}</div> @enderror
+                </div>
             </div>
+
+            <div class="hint">Supervisors are managed on the Reporting tab.</div>
 
             <div><button type="submit" class="btn btn-primary btn-sm">Save changes</button></div>
         </form>

@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\DataGroup;
+use App\Models\ModuleToggle;
 use App\Models\Role;
 use App\Models\Screen;
 use Illuminate\Database\Seeder;
@@ -20,8 +21,8 @@ class RbacSeeder extends Seeder
         // ---- Screens (one per route this app actually has) ----
         $screens = [
             ['key' => 'home', 'label' => 'Home', 'nav_group' => 'Workspace', 'sort_order' => 1],
-            ['key' => 'leave.apply', 'label' => 'My Leave', 'nav_group' => 'Workspace', 'sort_order' => 2],
-            ['key' => 'claims.create', 'label' => 'My Claims', 'nav_group' => 'Workspace', 'sort_order' => 3],
+            ['key' => 'leave.apply', 'label' => 'My Leave', 'nav_group' => 'Workspace', 'sort_order' => 2, 'module_key' => 'leave'],
+            ['key' => 'claims.create', 'label' => 'My Claims', 'nav_group' => 'Workspace', 'sort_order' => 3, 'module_key' => 'claims'],
             ['key' => 'profile', 'label' => 'My Profile', 'nav_group' => 'Workspace', 'sort_order' => 4],
             ['key' => 'approvals', 'label' => 'Approvals', 'nav_group' => 'My Team', 'sort_order' => 5],
             ['key' => 'employees', 'label' => 'Employees', 'nav_group' => 'My Team', 'sort_order' => 6],
@@ -32,7 +33,17 @@ class RbacSeeder extends Seeder
             ['key' => 'admin.signatures', 'label' => 'Signature Verification', 'nav_group' => 'Admin', 'sort_order' => 10],
         ];
         foreach ($screens as $s) {
-            Screen::updateOrCreate(['key' => $s['key']], $s);
+            Screen::updateOrCreate(['key' => $s['key']], $s + ['module_key' => null]);
+        }
+
+        // ---- Module toggles (spec B1) — only modules with a screen tagged
+        // module_key above actually gate anything yet; the rest are listed
+        // for completeness and future screens to tag themselves against.
+        foreach ([
+            ['key' => 'leave', 'label' => 'Leave Management'],
+            ['key' => 'claims', 'label' => 'Expense Claims'],
+        ] as $m) {
+            ModuleToggle::updateOrCreate(['key' => $m['key']], $m);
         }
 
         // ---- Data groups (the logical resources modules actually expose) ----

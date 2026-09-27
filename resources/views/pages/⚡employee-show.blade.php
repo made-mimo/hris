@@ -22,8 +22,11 @@ new class extends Component
             </div>
             <h1>{{ $employee->fullName() }}</h1>
             <p class="text-muted font-mono">{{ $employee->employee_id }}</p>
+            @if($employee->isTerminated())
+                <span class="mt-1 inline-block rounded-pill bg-danger/10 px-2.5 py-1 text-xs font-semibold text-danger">Terminated</span>
+            @endif
         </div>
     </div>
 
-    <livewire:employee-detail-form :employee="$employee" :key="'employee-'.$employee->id" />
+    <livewire:employee-profile-tabs :employee="$employee" :key="'employee-tabs-'.$employee->id" />
 </x-layouts.app>
