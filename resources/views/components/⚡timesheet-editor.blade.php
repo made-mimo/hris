@@ -206,7 +206,7 @@ new class extends Component
             <div class="divide-y divide-border">
                 @foreach($timesheet->actionLogs as $log)
                     <div class="py-2 text-xs text-text-muted">
-                        <span class="font-semibold text-text">{{ ucfirst($log->action) }}</span> by {{ $log->actor?->name ?? 'System' }} — {{ $log->created_at->format('j M Y, g:ia') }}
+                        <span class="font-semibold text-text">{{ ucfirst($log->action) }}</span> by {{ $log->actor?->name ?? 'System' }} — {{ $log->created_at->format(\App\Support\Dates::DATE_TIME) }}
                         @if($log->note) · {{ $log->note }} @endif
                     </div>
                 @endforeach

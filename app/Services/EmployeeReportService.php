@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Employee;
+use App\Support\Dates;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
@@ -47,7 +48,7 @@ class EmployeeReportService
             'job_title' => $employee->jobTitleName() ?? '',
             'sub_unit' => $employee->departmentName() ?? '',
             'location' => $employee->locationName() ?? '',
-            'hire_date' => $employee->hire_date->toDateString(),
+            'hire_date' => $employee->hire_date->format(Dates::DATE),
             default => (string) ($employee->{$field} ?? ''),
         };
     }

@@ -223,7 +223,7 @@ new class extends Component
                     @else
                         <div class="flex items-center justify-between text-sm">
                             <span class="text-text">
-                                {{ $record->punch_in_at_local->format('D j M Y, H:i') }}
+                                {{ $record->punch_in_at_local->format(\App\Support\Dates::DATE_TIME) }}
                                 –
                                 {{ $record->punch_out_at_local?->format('H:i') ?? 'still clocked in' }}
                                 @if($record->durationHours() !== null)

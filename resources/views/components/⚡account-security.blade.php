@@ -229,7 +229,7 @@ new class extends Component
                         <div class="hint">
                             Trusted {{ $device->trusted_at->format('j M Y') }} ·
                             {{ $device->expires_at->isPast() ? 'Expired' : 'Expires '.$device->expires_at->format('j M Y') }}
-                            @if($device->last_used_at) · Last used {{ $device->last_used_at->diffForHumans() }} @endif
+                            @if($device->last_used_at) · Last used <span title="{{ $device->last_used_at->format(\App\Support\Dates::DATE_TIME) }}">{{ $device->last_used_at->diffForHumans() }}</span> @endif
                         </div>
                     </div>
                     <button type="button" wire:click="revokeDevice({{ $device->id }})" class="btn btn-outline btn-sm">Revoke</button>

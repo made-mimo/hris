@@ -61,7 +61,7 @@ new class extends Component
     @forelse($events as $event)
         <div style="border-bottom:1px solid var(--color-border);">
             <div style="display:grid;grid-template-columns:150px 1fr 160px 100px 40px;gap:12px;align-items:center;padding:12px 18px;">
-                <span class="font-mono text-muted" style="font-size:12.5px;">{{ $event->signed_at->format('j M Y H:i') }}</span>
+                <span class="font-mono text-muted" style="font-size:12.5px;">{{ $event->signed_at->format(\App\Support\Dates::DATE_TIME) }}</span>
                 <span style="font-size:13px;">
                     <span style="font-weight:600;">{{ $event->purpose }}</span>
                     <span class="text-muted"> · {{ class_basename($event->signable_type) }} #{{ $event->signable_id }}</span>

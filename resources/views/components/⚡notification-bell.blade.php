@@ -72,7 +72,7 @@ new class extends Component
                 <a href="{{ $item->deep_link ?? '#' }}" wire:navigate style="flex:1;text-decoration:none;color:inherit;" wire:click="markAsRead({{ $item->id }})">
                     <div class="notif-title" style="font-size:13px;font-weight:600;">{{ $item->title }}</div>
                     <div style="font-size:12.5px;color:var(--color-text-muted);margin-top:2px;">{{ $item->body }}</div>
-                    <div class="hint" style="margin-top:4px;">{{ $item->created_at->diffForHumans() }}</div>
+                    <div class="hint" style="margin-top:4px;" title="{{ $item->created_at->format(\App\Support\Dates::DATE_TIME) }}">{{ $item->created_at->diffForHumans() }}</div>
                 </a>
                 <button type="button" wire:click="clear({{ $item->id }})" aria-label="Clear" style="background:none;border:none;cursor:pointer;color:var(--color-text-faint);align-self:flex-start;">&times;</button>
             </div>

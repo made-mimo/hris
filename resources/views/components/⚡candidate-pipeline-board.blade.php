@@ -299,7 +299,7 @@ new class extends Component
                         <div>
                             <div class="mb-1 text-xs font-semibold text-text">History</div>
                             @foreach($app->history as $entry)
-                                <div class="text-xs text-text-muted">{{ $entry->created_at->format('j M Y, H:i') }} — {{ $entry->performedBy->name }}: {{ ucfirst(str_replace('_', ' ', $entry->action)) }}{{ $entry->note ? " ({$entry->note})" : '' }}</div>
+                                <div class="text-xs text-text-muted">{{ $entry->created_at->format(\App\Support\Dates::DATE_TIME) }} — {{ $entry->performedBy->name }}: {{ ucfirst(str_replace('_', ' ', $entry->action)) }}{{ $entry->note ? " ({$entry->note})" : '' }}</div>
                             @endforeach
                             @if($app->history->isEmpty())
                                 <div class="text-xs text-text-muted">No history yet.</div>

@@ -102,7 +102,7 @@ new class extends Component
             <div style="display:flex;align-items:flex-end;gap:4px;height:60px;">
                 @php $maxHeadcount = $metricsTrend->max('active_headcount') ?: 1; @endphp
                 @foreach($metricsTrend as $point)
-                    <div title="{{ $point->snapshot_date->format('M Y') }}: {{ $point->active_headcount }}" style="flex:1;background:var(--color-primary);border-radius:3px 3px 0 0;height:{{ max(4, round($point->active_headcount / $maxHeadcount * 60)) }}px;"></div>
+                    <div title="{{ $point->snapshot_date->format('F Y') }}: {{ $point->active_headcount }}" style="flex:1;background:var(--color-primary);border-radius:3px 3px 0 0;height:{{ max(4, round($point->active_headcount / $maxHeadcount * 60)) }}px;"></div>
                 @endforeach
             </div>
             <div class="text-muted" style="font-size:11px;margin-top:4px;">Active headcount, last {{ $metricsTrend->count() }} month{{ $metricsTrend->count() === 1 ? '' : 's' }}</div>

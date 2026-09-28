@@ -120,7 +120,7 @@ new class extends Component
         @forelse($changeRows as $row)
             <div style="border-bottom:1px solid var(--color-border);">
                 <div style="display:grid;grid-template-columns:150px 100px 160px minmax(0,1fr) 40px;gap:12px;align-items:center;padding:12px 18px;">
-                    <span class="font-mono text-muted" style="font-size:12.5px;">{{ $row->created_at->format('j M Y H:i') }}</span>
+                    <span class="font-mono text-muted" style="font-size:12.5px;">{{ $row->created_at->format(\App\Support\Dates::DATE_TIME) }}</span>
                     <span class="pill {{ match($row->action) { 'created' => 'pill-success', 'deleted' => 'pill-danger', default => 'pill-neutral' } }}">{{ $row->action }}</span>
                     <span style="font-size:13px;font-weight:600;">{{ $row->subjectLabel() }}</span>
                     <span style="font-size:13px;">{{ $row->actor_label ?? 'System' }}</span>
@@ -156,7 +156,7 @@ new class extends Component
 
         @forelse($securityRows as $row)
             <div style="display:grid;grid-template-columns:150px 200px minmax(0,1fr) 100px 130px;gap:12px;align-items:center;padding:12px 18px;border-bottom:1px solid var(--color-border);">
-                <span class="font-mono text-muted" style="font-size:12.5px;">{{ $row->created_at->format('j M Y H:i') }}</span>
+                <span class="font-mono text-muted" style="font-size:12.5px;">{{ $row->created_at->format(\App\Support\Dates::DATE_TIME) }}</span>
                 <span class="pill {{ str($row->event)->contains('failed') ? 'pill-danger' : 'pill-neutral' }}">{{ $row->label() }}</span>
                 <span style="font-size:13px;">{{ $row->user_label ?? $row->metadata['email'] ?? '—' }}</span>
                 <span style="font-size:12.5px;color:var(--color-text-muted);">{{ $row->method ?? '—' }}</span>

@@ -147,7 +147,7 @@ new class extends Component
                                 —
                             @endif
                         </td>
-                        <td class="px-4 py-2.5 text-text">{{ $goal->due_date?->format('j M Y') ?? '—' }}</td>
+                        <td class="px-4 py-2.5 text-text">{{ $goal->due_date?->format(\App\Support\Dates::DATE) ?? '—' }}</td>
                         <td class="px-4 py-2.5">
                             <select wire:change="updateStatus({{ $goal->id }}, $event.target.value)" class="rounded-sm border border-border bg-surface px-2 py-1 text-xs text-text outline-none focus:border-primary">
                                 @foreach(\App\Models\Goal::STATUSES as $status)

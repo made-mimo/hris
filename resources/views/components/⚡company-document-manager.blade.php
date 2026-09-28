@@ -187,7 +187,7 @@ new class extends Component
                         <div>
                             <div class="mb-1 text-xs font-semibold text-text">Access history (audit log)</div>
                             @forelse($auditLogs as $log)
-                                <div class="text-xs text-text-muted">{{ $log->created_at->format('j M Y, g:ia') }} — {{ $log->actor_label }} {{ $log->action }}</div>
+                                <div class="text-xs text-text-muted">{{ $log->created_at->format(\App\Support\Dates::DATE_TIME) }} — {{ $log->actor_label }} {{ $log->action }}</div>
                             @empty
                                 <div class="text-xs text-text-muted">No recorded access yet.</div>
                             @endforelse

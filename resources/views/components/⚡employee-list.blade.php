@@ -305,7 +305,7 @@ new class extends Component
             <span style="font-size:13.5px;font-weight:600;">{{ $employee->fullName() }}</span>
             <span style="font-size:13px;" class="text-muted">{{ $employee->jobTitleName() ?? '—' }}</span>
             <span style="font-size:13px;" class="text-muted">{{ $employee->departmentName() ?? '—' }}</span>
-            <span class="font-mono text-muted" style="font-size:12.5px;">{{ $employee->hire_date->format('j M Y') }}</span>
+            <span class="font-mono text-muted" style="font-size:12.5px;">{{ $employee->hire_date->format(\App\Support\Dates::DATE) }}</span>
         </a>
     @empty
         <div class="hint" style="padding:24px 18px;">No employees match this search.</div>

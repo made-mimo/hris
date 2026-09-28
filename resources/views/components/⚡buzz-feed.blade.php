@@ -183,7 +183,7 @@ new class extends Component
                 <div class="flex items-start justify-between gap-2">
                     <div>
                         <div class="text-sm font-semibold text-text">{{ $share->sharedBy->fullName() }}</div>
-                        <div class="text-xs text-text-muted">{{ $share->created_at->diffForHumans() }}{{ $share->post->employee_id !== $share->employee_id ? ' · shared a post' : '' }}</div>
+                        <div class="text-xs text-text-muted" title="{{ $share->created_at->format(\App\Support\Dates::DATE_TIME) }}">{{ $share->created_at->diffForHumans() }}{{ $share->post->employee_id !== $share->employee_id ? ' · shared a post' : '' }}</div>
                     </div>
                     @if($buzzService->canManageShare($share, $user, $permissions))
                         <button wire:click="deleteShare({{ $share->id }})" wire:confirm="Delete this?" class="text-xs font-semibold text-danger">Delete</button>

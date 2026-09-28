@@ -40,7 +40,11 @@ class HrisDemoSeeder extends Seeder
 
         // 2FA defaults OFF project-wide for local dev/testing, per explicit request.
         // Toggle it back on from /settings once real delivery (Section A1) exists.
-        Setting::create(['id' => 1, 'company_name' => 'Systems Intelligenz', 'two_factor_enabled' => false]);
+        // updateOrCreate rather than create: the singleton row may already
+        // exist (Setting::current()'s own firstOrCreate elsewhere can beat
+        // this seeder to it), and this seeder is documented as safe to
+        // re-run like its other master-list lookups above.
+        Setting::updateOrCreate(['id' => 1], ['company_name' => 'Systems Intelligenz', 'two_factor_enabled' => false]);
 
         // ---- Leave types (spec Section C1) ----
         $annual = LeaveType::create(['name' => 'Annual', 'slug' => 'annual', 'minimum_tenure_months' => 12, 'standard_annual_days' => 20, 'carries_over_at_year_end' => true, 'carryover_cap_days' => 10, 'sort_order' => 1]);

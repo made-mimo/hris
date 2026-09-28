@@ -23,7 +23,7 @@ new class extends Component
         @foreach($vacancies as $v)
             <a href="{{ route('careers.show', $v) }}" class="rounded-md border border-border bg-surface p-5 shadow-sm" style="display:block;text-decoration:none;">
                 <h2 class="font-display text-base font-bold text-text">{{ $v->title }}</h2>
-                <div class="text-xs text-text-muted" style="margin-top:4px;">{{ $v->position_count }} position(s) · Posted {{ $v->created_at->diffForHumans() }}</div>
+                <div class="text-xs text-text-muted" style="margin-top:4px;">{{ $v->position_count }} position(s) · Posted <span title="{{ $v->created_at->format(\App\Support\Dates::DATE) }}">{{ $v->created_at->diffForHumans() }}</span></div>
                 @if($v->description)
                     <p class="text-sm text-text" style="margin-top:8px;">{{ \Illuminate\Support\Str::limit($v->description, 200) }}</p>
                 @endif

@@ -89,7 +89,7 @@ class RecruitmentService
                 'interview_id' => $interview->id,
                 'performed_by' => $user->id,
                 'action' => 'schedule_interview',
-                'note' => "Interview \"{$interview->name}\" scheduled for {$interview->interview_date->toDateString()}.",
+                'note' => "Interview \"{$interview->name}\" scheduled for {$interview->interview_date->format('j M Y')}.",
             ]);
 
             return $interview;

@@ -137,7 +137,7 @@ new class extends Component
         <section class="rounded-md border border-danger/30 bg-danger/5 p-5 shadow-sm">
             <h2 class="mb-2 font-display text-base font-bold text-danger">GDPR purge</h2>
             @if($employee->is_gdpr_purged)
-                <div class="text-sm text-text">This record was purged on {{ $employee->gdpr_purged_at->format('j M Y, g:ia') }}. The Employee ID stays retired and can never be reissued.</div>
+                <div class="text-sm text-text">This record was purged on {{ $employee->gdpr_purged_at->format('j M Y, H:i') }}. The Employee ID stays retired and can never be reissued.</div>
             @else
                 <div class="mb-3 text-xs text-text-muted">Spec Section A6 — irreversibly anonymizes this employee's personal data (name, contact details, government ID, immigration/compensation/qualification records) while permanently preserving the Employee ID as "used" so it's never reassigned. This cannot be undone.</div>
                 @if(! $confirmingPurge)

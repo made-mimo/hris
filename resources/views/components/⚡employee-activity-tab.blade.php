@@ -37,7 +37,7 @@ new class extends Component
                     <div class="flex items-center gap-2.5">
                         <span class="font-medium text-text">{{ ucfirst($entry->action) }}</span>
                         <span class="text-text-muted">by {{ $entry->actor_label ?? $entry->actor?->name ?? 'System' }}</span>
-                        <span class="text-xs text-text-faint">{{ $entry->created_at->format('j M Y, g:ia') }}</span>
+                        <span class="text-xs text-text-faint">{{ $entry->created_at->format(\App\Support\Dates::DATE_TIME) }}</span>
                     </div>
                     @if($entry->action === 'updated' && ! empty($entry->changes))
                         <div class="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs text-text-muted">
