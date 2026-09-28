@@ -3,6 +3,7 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CareersFeedController;
 use App\Http\Controllers\EmployeeCsvTemplateController;
+use App\Http\Controllers\PolicyDocumentFileController;
 use App\Http\Controllers\PushSubscriptionController;
 use App\Http\Controllers\TimezoneController;
 use Illuminate\Support\Facades\Route;
@@ -65,6 +66,8 @@ Route::middleware(['auth', 'password_policy', 'two_factor'])->group(function () 
     Route::livewire('/discipline', 'pages::discipline')->name('discipline')->middleware('screen:discipline');
     Route::livewire('/assets', 'pages::assets')->name('assets')->middleware('screen:assets');
     Route::livewire('/vehicles', 'pages::vehicles')->name('vehicles')->middleware('screen:vehicles');
+    Route::livewire('/policies', 'pages::policies')->name('policies')->middleware('screen:policies');
+    Route::get('/policies/versions/{version}/file', PolicyDocumentFileController::class)->name('policies.file')->middleware('screen:policies');
     Route::livewire('/profile', 'pages::profile')->name('profile')->middleware('screen:profile');
     Route::livewire('/account/settings', 'pages::account-settings')->name('account.settings')->middleware('screen:profile');
     Route::livewire('/approvals', 'pages::approvals')->name('approvals')->middleware('screen:approvals');
@@ -80,6 +83,7 @@ Route::middleware(['auth', 'password_policy', 'two_factor'])->group(function () 
     Route::livewire('/admin/performance-configuration', 'pages::admin-performance-configuration')->name('admin.performance-configuration')->middleware('screen:admin.performance-configuration');
     Route::livewire('/admin/asset-configuration', 'pages::admin-asset-configuration')->name('admin.asset-configuration')->middleware('screen:admin.asset-configuration');
     Route::livewire('/admin/vehicle-configuration', 'pages::admin-vehicle-configuration')->name('admin.vehicle-configuration')->middleware('screen:admin.vehicle-configuration');
+    Route::livewire('/admin/policy-configuration', 'pages::admin-policy-configuration')->name('admin.policy-configuration')->middleware('screen:admin.policy-configuration');
     Route::livewire('/settings', 'pages::settings')->name('settings')->middleware('screen:settings');
     Route::livewire('/admin/roles', 'pages::admin-roles')->name('admin.roles')->middleware('screen:admin.roles');
     Route::livewire('/admin/roles/{role}', 'pages::admin-role-edit')->name('admin.roles.edit')->middleware('screen:admin.roles');
