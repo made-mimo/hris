@@ -1279,6 +1279,11 @@ S3/transactional email (Section 8): real third-party credentials stay local-only
 deployment supplies them, at which point this config layer is what an engineer fills in to make the
 button real.
 
+**Superseded post-completion** (see "Google Workspace and Microsoft 365 SSO" in the post-completion
+section near the end of this file): the generic OIDC/LDAP config card above was replaced with real
+Google Workspace and Microsoft 365 sign-in via Laravel Socialite, on request. The button is no longer
+a stub.
+
 ### A5 — System Health Check + branding
 
 New Admin-only screen (`/admin/health-check`) checks database connectivity, storage disk
@@ -1342,7 +1347,8 @@ before moving on, not just read back as "looks right":
 - The optional-profile-fields toggle hides whole tabs, not individual fields within a tab — spec's
   literal wording is per-field, but implementing that would mean gating dozens of individual field
   renders across eight components for comparatively little demonstrated value in a prototype.
-- SSO is configuration-only — no real OIDC/LDAP protocol implementation, per the A3 section above.
+- ~~SSO is configuration-only — no real OIDC/LDAP protocol implementation, per the A3 section
+  above.~~ Superseded post-completion — see the SSO section near the end of this file.
 - B3's offboarding hard block on assets/vehicles — expected to wait for Phase 4, per spec's own
   words, not a gap in this phase.
 - Employee Custom Fields render together in one place on the Attachments tab rather than inline on
@@ -2338,3 +2344,89 @@ before editing, matching this project's own versioning convention. Edited progra
 (python-docx) rather than via a text round-trip, to preserve the original document's styling; verified
 by converting the result to PDF and visually confirming both the title-page revision note and the new
 section render correctly with matching heading/bullet formatting.
+
+## Phase 7 — Post-launch requests
+
+Four small, discrete requests handled after the Phase 6 hardening pass and its documentation update,
+each committed and pushed separately.
+
+### Sign-in/verify illustrations restored, demo credentials removed
+
+The login and 2FA-verify screens had drifted from the original UI/UX artifact (`Main.dc.html`,
+`TwoFactor.dc.html`): both illustration slots held a simplified placeholder icon instead of the
+artifact's org-chart-with-pulse and laptop/phone/shield graphics. Restored the exact SVG markup from
+the artifact files into `⚡login.blade.php` and `⚡login-verify.blade.php`. Separately, the login
+form's "Demo logins (password `password`): admin@…, hr@…, emeka@…, adaeze@…" block — a onboarding/dev
+convenience with no place on a screen anyone could reach — was removed from `⚡login-form.blade.php`.
+Verified visually in the browser against the two reference images. Commit `f285134`.
+
+### Google Workspace and Microsoft 365 SSO
+
+The Section A3 SSO button had been a stub since Phase 1 (config fields that were never read, a login
+button that just showed a JS alert) — see the A3 section earlier in this file. Replaced it with real
+OAuth login via Laravel Socialite: Google is a Socialite core driver; Microsoft 365 (Entra ID v2) uses
+`socialiteproviders/microsoft`, registered via an `Event::listen(SocialiteWasCalled::class, ...)` call
+in `AppServiceProvider::boot()` since Socialite doesn't ship it directly. A new `SsoController` handles
+`/auth/{provider}/redirect` and `/auth/{provider}/callback` (both `guest`-gated, provider constrained
+to `google`/`microsoft` at the route and controller level).
+
+The old generic `sso_enabled`/`sso_provider`/`sso_client_id`/`sso_client_secret`/`sso_endpoint`/
+`sso_domain` columns (added in Phase 1, never wired to anything) were dropped and replaced with
+per-provider columns — `sso_google_*` and `sso_microsoft_*` — so both providers can be configured and
+enabled independently. Client secrets are encrypted at rest and stored in the `settings` table, not
+`.env` — the same pattern already used for SMTP credentials — so an admin can enable/disable a
+provider or rotate a secret from the Settings screen with no redeploy. Each provider's Settings card
+shows the exact redirect URI to register with that IdP. The sign-in page only renders a provider's
+button once it's both enabled and has credentials saved (`Setting::googleSsoReady()` /
+`microsoftSsoReady()`).
+
+Deliberately does not auto-provision accounts: a successful IdP sign-in is matched against an
+*existing* `User` by email (case-insensitive); no match means the same rejection UX as a wrong
+password, with a `sso_login_rejected` `SecurityEvent` recorded. A successful SSO login also marks the
+session `two_factor_verified` — the identity provider is itself the strong-auth factor, the same
+reasoning already applied to a trusted-device cookie. Google additionally supports an optional
+Workspace-domain restriction (`hd` parameter as a UX hint on Google's own account chooser, plus a
+real server-side domain check on the returned email — the actual access control); Microsoft supports
+an optional tenant restriction, defaulting to `organizations` (any work/school tenant, excluding
+personal Microsoft accounts) when no specific tenant ID is set.
+
+**Bug found and fixed in the same pass**: `EnsurePasswordPolicyMet` forces a "type your current
+password" change whenever the org's password policy has tightened since an account was created —
+correct for password-based accounts, but a genuine lockout for a user who signs in only via SSO and
+may never have known or used a local password (the `users.password` column is `NOT NULL`, so every
+account has *some* hash, just not necessarily one its owner knows). Fixed by having the SSO callback
+also flag the session `sso_authenticated`, and having the middleware skip its redirect when that flag
+is present.
+
+Verified via `tests/Feature/SsoLoginTest.php` (7 tests: unconfigured-provider 404, unknown-provider
+404, no-matching-account rejection, successful login with session flags, Google Workspace domain
+restriction, and the password-policy exemption both with and without the flag — the latter two as
+direct middleware unit tests rather than full HTTP round-trips, since going through the real
+`screen:home` RBAC gate would need a seeded Role/Screen the test isn't otherwise exercising) plus a
+live browser round-trip against the real `accounts.google.com` (a saved test Client ID correctly
+produced Google's own "OAuth client was not found" error, confirming the redirect and config wiring
+end-to-end without needing a real registered app). `composer audit` found no advisories in the two new
+dependencies. Commit `c99f83f` (feature), `61a3d09` (the lockout fix + tests).
+
+### Notification bell: unread count badge
+
+Requested by a peer Claude session working on the SI PIM portal, so both apps present the same way —
+PIM's bell already showed an unread count instead of a dot. Changed `⚡notification-bell.blade.php`
+and the matching `theme.css` rules: the dot became a count badge capped at "9+"; the bell's
+`aria-label` states the unread count; the panel header shows "Notifications · N unread" and only
+shows "Mark all read"/"Clear all" when there's something to act on; unread rows gained a small dot
+before the title; and the panel pins to the viewport on screens ≤1024px instead of risking overflow.
+Added `tests/Feature/NotificationBellTest.php` (3 tests: badge count, "9+" cap, badge disappearing
+after mark-all-read). Checked with the user before pushing, per the requesting session's own ask, and
+confirmed back to that session once live. Commit `a5dff34`.
+
+### Full-codebase review
+
+Requested directly: re-reviewed every file touched since the Phase 6 hardening commit (`28349d9`) for
+regressions and security issues — `SsoController`, `Setting`, `AppServiceProvider`, the login/settings
+Livewire components, `theme.css`, and the new migration — rather than repeating the full Phase 6 audit
+from scratch. Found and fixed the SSO/password-policy lockout above; otherwise: `composer audit` clean,
+a from-scratch `migrate:fresh` against a throwaway SQLite file to confirm CI parity (CI runs on SQLite,
+not this project's MariaDB dev database), `vendor/bin/pint` clean, and the full test suite (12 tests
+across both new files plus the pre-existing two) green. No stray references to the dropped generic SSO
+columns or the old unread-dot CSS class remained anywhere in the codebase.
