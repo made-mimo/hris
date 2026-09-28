@@ -38,6 +38,7 @@ class Setting extends Model implements HasMedia
         'help_provider_base_url',
         'audit_log_retention_days', 'security_event_retention_days', 'notification_retention_days',
         'password_min_zxcvbn_score',
+        'idle_session_timeout_minutes',
     ];
 
     protected function casts(): array

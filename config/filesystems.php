@@ -33,7 +33,13 @@ return [
         'local' => [
             'driver' => 'local',
             'root' => storage_path('app/private'),
-            'serve' => true,
+            // PIM/HRIS alignment §3C item 13 — this disk holds everything
+            // PrivateMediaController gates (spec's Section 10.2.2 fix);
+            // Laravel 12's built-in `/storage/{path}` route for it needs a
+            // signed URL regardless, but nothing here generates one, so
+            // leaving `serve` on on just adds an unused, easy-to-misread
+            // route with no matching call site.
+            'serve' => false,
             'throw' => false,
             'report' => false,
         ],

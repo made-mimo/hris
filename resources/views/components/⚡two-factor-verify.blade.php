@@ -2,7 +2,7 @@
 
 use App\Models\SecurityEvent;
 use App\Services\TwoFactorService;
-use App\Traits\ThrottlesAttempts;
+use Livewire\Attributes\Locked;
 use Livewire\Component;
 
 /**
@@ -13,12 +13,14 @@ use Livewire\Component;
  */
 new class extends Component
 {
-    use ThrottlesAttempts;
-
+    /** Server-decided at mount() from the account's own enrollment, never a user choice — locked so a tampered request can't pick a different method than the one this account actually verifies against. */
+    #[Locked]
     public string $method = 'totp';
 
     public string $code = '';
 
+    /** Only ever flipped by toggleBackupCode(), never wire:model'd. */
+    #[Locked]
     public bool $useBackupCode = false;
 
     public bool $trustDevice = true;
@@ -55,9 +57,9 @@ new class extends Component
 
         $user = auth()->user();
 
-        if ($this->tooManyAttempts('2fa-verify', $user->email, 5)) {
-            $seconds = $this->rateLimitSecondsRemaining('2fa-verify', $user->email);
-            $this->addError('code', "Too many attempts. Try again in {$seconds} second".($seconds === 1 ? '' : 's').'.');
+        if ($twoFactor->tooManyVerifyAttempts($user)) {
+            $minutes = (int) ceil($twoFactor->verifyAttemptsSecondsRemaining($user) / 60);
+            $this->addError('code', "Too many attempts. This account's two-factor verification is paused for {$minutes} more minute".($minutes === 1 ? '' : 's').'.');
 
             return;
         }
@@ -70,14 +72,14 @@ new class extends Component
         };
 
         if (! $ok) {
-            $this->hitRateLimit('2fa-verify', $user->email, 300);
+            $twoFactor->recordVerifyFailure($user);
             SecurityEvent::record('two_factor_verify_failed', $user, $this->useBackupCode ? 'backup_code' : $this->method);
             $this->addError('code', 'That code is invalid or has expired.');
 
             return;
         }
 
-        $this->clearRateLimit('2fa-verify', $user->email);
+        $twoFactor->clearVerifyAttempts($user);
         SecurityEvent::record('two_factor_verified', $user, $this->useBackupCode ? 'backup_code' : $this->method);
 
         session(['two_factor_verified' => true]);

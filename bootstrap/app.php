@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\AddContentSecurityPolicy;
 use App\Http\Middleware\AddSecurityHeaders;
 use App\Http\Middleware\EnsurePasswordPolicyMet;
 use App\Http\Middleware\EnsureScreenAccess;
@@ -12,6 +13,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use Illuminate\Session\Middleware\AuthenticateSession;
 use Illuminate\Validation\ValidationException;
 use Laravel\Sanctum\Http\Middleware\CheckAbilities;
 use Laravel\Sanctum\Http\Middleware\CheckForAnyAbility;
@@ -40,6 +42,14 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         $middleware->append(AddSecurityHeaders::class);
+        $middleware->append(AddContentSecurityPolicy::class);
+
+        // PIM/HRIS alignment §3C item 12 — signs a user's other browser
+        // sessions out the next time they're used, once their password
+        // changes (User::setOwnPassword() handles Sanctum tokens and
+        // trusted devices for the same event). No-ops for guests and for
+        // any session whose stored password hash still matches.
+        $middleware->web(append: [AuthenticateSession::class]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

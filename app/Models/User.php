@@ -42,6 +42,7 @@ class User extends Authenticatable
             // encrypt/decrypt transparently using APP_KEY.
             'two_factor_secret' => 'encrypted',
             'two_factor_confirmed_at' => 'datetime',
+            'locked_until' => 'datetime',
         ];
     }
 
@@ -84,6 +85,32 @@ class User extends Authenticatable
     public function hasTwoFactorEnrolled(): bool
     {
         return ! is_null($this->two_factor_confirmed_at);
+    }
+
+    /**
+     * The one place either self-service password change or the forgot-
+     * password reset should set a new password — PIM/HRIS alignment §3C
+     * item 12: a new password revokes every existing API token and trusted
+     * device, since any of them may have been issued to whoever knew the
+     * old one. Other browser *sessions* are handled separately, by
+     * AuthenticateSession (see bootstrap/app.php) noticing the password
+     * hash changed on their next request.
+     */
+    public function setOwnPassword(string $plain): void
+    {
+        $this->forceFill([
+            'password' => $plain,
+            'password_policy_version' => Setting::current()->password_policy_version,
+        ])->save();
+
+        $revoked = $this->tokens()->count() > 0 || $this->trustedDevices()->count() > 0;
+
+        $this->tokens()->delete();
+        $this->trustedDevices()->delete();
+
+        if ($revoked) {
+            SecurityEvent::record('tokens_and_devices_revoked', $this, metadata: ['reason' => 'password_changed']);
+        }
     }
 
     /**

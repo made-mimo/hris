@@ -2,6 +2,7 @@
 
 use App\Models\Setting;
 use App\Rules\PasswordPolicy;
+use App\Services\AccountLockoutService;
 use Illuminate\Support\Facades\Hash;
 use Livewire\Component;
 
@@ -21,7 +22,7 @@ new class extends Component
 
     public string $newPassword_confirmation = '';
 
-    public function save(): void
+    public function save(AccountLockoutService $lockout): void
     {
         $this->validate([
             'currentPassword' => ['required', 'string'],
@@ -34,10 +35,8 @@ new class extends Component
             return;
         }
 
-        auth()->user()->update([
-            'password' => $this->newPassword,
-            'password_policy_version' => Setting::current()->password_policy_version,
-        ]);
+        auth()->user()->setOwnPassword($this->newPassword);
+        $lockout->clear(auth()->user());
 
         $this->reset(['currentPassword', 'newPassword', 'newPassword_confirmation']);
 

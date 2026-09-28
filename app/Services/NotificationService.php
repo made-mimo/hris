@@ -83,6 +83,10 @@ class NotificationService
         $payload = json_encode(['title' => $title, 'body' => $body, 'deepLink' => $deepLink]);
 
         foreach ($subscriptions as $subscription) {
+            if (! PushEndpointValidator::isAllowed($subscription->endpoint)) {
+                continue;
+            }
+
             $webPush->queueNotification(
                 new Subscription($subscription->endpoint, $subscription->public_key, $subscription->auth_token, $subscription->content_encoding),
                 $payload

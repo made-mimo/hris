@@ -3,9 +3,12 @@
 namespace App\Http\Controllers\Api;
 
 use App\Models\SecurityEvent;
+use App\Models\User;
+use App\Services\AccountLockoutService;
 use App\Services\TwoFactorService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 
 /**
  * Token issuance for the REST API (spec Section 3.2/F6 — the mobile/API
@@ -26,7 +29,16 @@ use Illuminate\Support\Facades\Auth;
  */
 class AuthController extends ApiController
 {
-    public function login(Request $request, TwoFactorService $twoFactor)
+    /**
+     * A precomputed bcrypt hash with no corresponding real password — burned
+     * against an unknown email so this endpoint takes roughly as long either
+     * way. Auth::attempt() on the web guard gets this for free from
+     * Laravel's own Timebox; Auth::once() below does not, since it skips the
+     * session guard's attempt() wrapper entirely.
+     */
+    private const DUMMY_HASH = '$2y$12$LfKPN.CmH1bdYlDjX2AwmufvPFkaWV32C38EdwOz8eWhb2pnJ9K1u';
+
+    public function login(Request $request, TwoFactorService $twoFactor, AccountLockoutService $lockout)
     {
         $credentials = $request->validate([
             'email' => ['required', 'email'],
@@ -34,13 +46,30 @@ class AuthController extends ApiController
             'device_token' => ['nullable', 'string'],
         ]);
 
+        $target = User::where('email', $credentials['email'])->first();
+
+        if ($target && $lockout->isLocked($target)) {
+            SecurityEvent::record('login_failed', $target, metadata: ['reason' => 'locked', 'channel' => 'api']);
+
+            return $this->failure(423, "This account is locked for {$lockout->minutesRemaining($target)} more minute".($lockout->minutesRemaining($target) === 1 ? '' : 's').'.');
+        }
+
+        if (! $target) {
+            Hash::check($credentials['password'], self::DUMMY_HASH);
+        }
+
         if (! Auth::once(['email' => $credentials['email'], 'password' => $credentials['password']])) {
-            SecurityEvent::record('login_failed', metadata: ['email' => $credentials['email'], 'channel' => 'api']);
+            if ($target) {
+                $lockout->recordFailure($target);
+            }
+
+            SecurityEvent::record('login_failed', $target, metadata: ['email' => $credentials['email'], 'channel' => 'api']);
 
             return $this->failure(401, 'Those credentials don\'t match our records.');
         }
 
         $user = Auth::user();
+        $lockout->clear($user);
         SecurityEvent::record('login_succeeded', $user, metadata: ['channel' => 'api']);
 
         $deviceTrusted = $twoFactor->isTrustedDeviceCookieValid($user, $credentials['device_token'] ?? null);
@@ -84,6 +113,12 @@ class AuthController extends ApiController
         $user = $request->user();
         $useBackupCode = $data['use_backup_code'] ?? false;
 
+        if ($twoFactor->tooManyVerifyAttempts($user)) {
+            $minutes = (int) ceil($twoFactor->verifyAttemptsSecondsRemaining($user) / 60);
+
+            return $this->failure(429, "Too many attempts. This account's two-factor verification is paused for {$minutes} more minute".($minutes === 1 ? '' : 's').'.');
+        }
+
         $ok = match (true) {
             $useBackupCode => $twoFactor->verifyBackupCode($user, $data['code']),
             $user->two_factor_method === 'totp' => $twoFactor->verifyTotp($user, $data['code']),
@@ -92,11 +127,13 @@ class AuthController extends ApiController
         };
 
         if (! $ok) {
+            $twoFactor->recordVerifyFailure($user);
             SecurityEvent::record('two_factor_verify_failed', $user, $useBackupCode ? 'backup_code' : $user->two_factor_method, ['channel' => 'api']);
 
             return $this->failure(422, 'That code is invalid or has expired.');
         }
 
+        $twoFactor->clearVerifyAttempts($user);
         SecurityEvent::record('two_factor_verified', $user, $useBackupCode ? 'backup_code' : $user->two_factor_method, ['channel' => 'api']);
 
         // The pending token's only job was to get here — it's replaced by a

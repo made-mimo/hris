@@ -11,6 +11,7 @@ use App\Models\TwoFactorEmailCode;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use PragmaRX\Google2FAQRCode\Google2FA;
 
@@ -329,5 +330,38 @@ class TwoFactorService
             $user->trustedDevices()->delete();
             SecurityEvent::record('device_revoked', $user, metadata: ['all' => true]);
         }
+    }
+
+    /**
+     * PIM/HRIS alignment §3C item 6 — keyed by user ID alone (no session, no
+     * IP), so 5 wrong codes of any method pauses verification for that
+     * account everywhere (web and API) for 15 minutes, and doesn't reset
+     * just because the attacker signs in again with the (already-known)
+     * password. Deliberately separate from ThrottlesAttempts, which keys on
+     * IP too — exactly the gap this item closes.
+     */
+    private function verifyAttemptsKey(User $user): string
+    {
+        return "two-factor-verify:{$user->id}";
+    }
+
+    public function tooManyVerifyAttempts(User $user): bool
+    {
+        return RateLimiter::tooManyAttempts($this->verifyAttemptsKey($user), 5);
+    }
+
+    public function verifyAttemptsSecondsRemaining(User $user): int
+    {
+        return RateLimiter::availableIn($this->verifyAttemptsKey($user));
+    }
+
+    public function recordVerifyFailure(User $user): void
+    {
+        RateLimiter::hit($this->verifyAttemptsKey($user), 900);
+    }
+
+    public function clearVerifyAttempts(User $user): void
+    {
+        RateLimiter::clear($this->verifyAttemptsKey($user));
     }
 }

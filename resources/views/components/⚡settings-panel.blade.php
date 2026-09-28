@@ -70,6 +70,8 @@ new class extends Component
 
     public string $notificationRetentionDays = '';
 
+    public int $idleSessionTimeoutMinutes = 120;
+
     public function mount(): void
     {
         $settings = Setting::current();
@@ -115,6 +117,7 @@ new class extends Component
         $this->auditLogRetentionDays = $settings->audit_log_retention_days !== null ? (string) $settings->audit_log_retention_days : '';
         $this->securityEventRetentionDays = $settings->security_event_retention_days !== null ? (string) $settings->security_event_retention_days : '';
         $this->notificationRetentionDays = $settings->notification_retention_days !== null ? (string) $settings->notification_retention_days : '';
+        $this->idleSessionTimeoutMinutes = $settings->idle_session_timeout_minutes;
     }
 
     /** Spec E1: "an Admin-configurable claim-amount threshold (unset by default — single-level approval until an Admin sets one)." */
@@ -227,6 +230,16 @@ new class extends Component
 
         Setting::forget();
         session()->flash('status', 'Data retention settings updated.');
+    }
+
+    /** PIM/HRIS alignment §3C item 2 — applied to config('session.lifetime') on the next request via AppServiceProvider::boot(). */
+    public function saveSecuritySettings(): void
+    {
+        $this->validate(['idleSessionTimeoutMinutes' => ['required', 'integer', 'min:5', 'max:1440']]);
+
+        Setting::current()->update(['idle_session_timeout_minutes' => $this->idleSessionTimeoutMinutes]);
+        Setting::forget();
+        session()->flash('status', 'Security settings updated.');
     }
 
     /** Spec C3: three independently toggleable, Admin-configurable permissions — all off by default. */
@@ -788,6 +801,21 @@ new class extends Component
                     @error('notificationRetentionDays') <div class="mt-1 text-xs text-danger">{{ $message }}</div> @enderror
                 </div>
                 <button type="submit" class="rounded-sm bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-dark">Save retention settings</button>
+            </form>
+        </section>
+
+        <section class="rounded-md border border-border bg-surface p-5 shadow-sm">
+            <div class="mb-3.5 flex items-center justify-between">
+                <h2 class="font-display text-base font-bold text-text">Security</h2>
+            </div>
+            <div class="mb-3.5 text-xs text-text-muted">PIM/HRIS alignment §3C item 2. Applies to every session on its next request — an already-open tab picks it up the moment it next talks to the server. A signed-in user sees a warning 10 seconds before this fires, with the option to stay signed in.</div>
+            <form wire:submit="saveSecuritySettings" class="flex flex-wrap items-end gap-4">
+                <div>
+                    <label for="idleSessionTimeoutMinutes" class="mb-1.5 block text-xs font-semibold text-text">Idle session timeout (minutes)</label>
+                    <input type="number" id="idleSessionTimeoutMinutes" wire:model="idleSessionTimeoutMinutes" min="5" max="1440" class="w-36 rounded-sm border border-border bg-surface px-3 py-2 text-sm text-text outline-none focus:border-primary">
+                    @error('idleSessionTimeoutMinutes') <div class="mt-1 text-xs text-danger">{{ $message }}</div> @enderror
+                </div>
+                <button type="submit" class="rounded-sm bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-dark">Save security settings</button>
             </form>
         </section>
 

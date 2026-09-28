@@ -423,5 +423,6 @@
 @livewireScripts
 <x-timezone-capture />
 <x-push-notifications />
+<x-idle-session-timeout :timeout-minutes="$settings->idle_session_timeout_minutes" />
 </body>
 </html>

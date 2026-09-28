@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\PushSubscription;
+use App\Services\PushEndpointValidator;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 /**
  * Spec Section A7's Web Push subscription lifecycle: "created when
@@ -21,6 +23,10 @@ class PushSubscriptionController extends Controller
             'keys.p256dh' => ['required', 'string'],
             'keys.auth' => ['required', 'string'],
         ]);
+
+        if (! PushEndpointValidator::isAllowed($data['endpoint'])) {
+            throw ValidationException::withMessages(['endpoint' => 'That push endpoint is not a recognized browser push service.']);
+        }
 
         PushSubscription::updateOrCreate(
             ['user_id' => $request->user()->id, 'endpoint' => $data['endpoint']],

@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\AssetController;
 use App\Http\Controllers\Api\AttendanceController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\CspReportController;
 use App\Http\Controllers\Api\DirectoryController;
 use App\Http\Controllers\Api\ExpenseClaimController;
 use App\Http\Controllers\Api\LeaveRequestController;
@@ -37,6 +38,11 @@ use Illuminate\Support\Facades\Route;
 // App\Traits\ThrottlesAttempts (route middleware isn't available to them
 // since Livewire actions don't have their own routable path).
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
+
+// PIM/HRIS alignment §3C item 4's CSP report-uri target — unauthenticated,
+// no session, no CSRF exemption needed since it's outside the 'web'
+// middleware group entirely. Throttled against log-flooding.
+Route::post('/csp-report', [CspReportController::class, 'store'])->middleware('throttle:30,1');
 
 // A `2fa-pending` token (see AuthController::login()'s doc comment) can
 // reach this one endpoint and nothing else.

@@ -1,6 +1,7 @@
 <?php
 
 use App\Services\TwoFactorService;
+use Livewire\Attributes\Locked;
 use Livewire\Component;
 
 /**
@@ -15,13 +16,17 @@ new class extends Component
 {
     public bool $switchingToTotp = false;
 
+    /** #[Locked] — confirmTotpSwitch() confirms enrollment against this exact value; see ⚡two-factor-setup.blade.php's identical fix for why. */
+    #[Locked]
     public string $secret = '';
 
+    #[Locked]
     public string $qrDataUri = '';
 
     public string $code = '';
 
     /** @var string[] */
+    #[Locked]
     public array $newBackupCodes = [];
 
     public function startTotpSwitch(TwoFactorService $twoFactor): void

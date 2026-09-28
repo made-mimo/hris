@@ -1,9 +1,9 @@
 <?php
 
 use App\Mail\PasswordResetCodeMail;
-use App\Models\Setting;
 use App\Models\User;
 use App\Rules\PasswordPolicy;
+use App\Services\AccountLockoutService;
 use App\Traits\ThrottlesAttempts;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -64,7 +64,7 @@ new class extends Component
         $this->step = 'reset';
     }
 
-    public function resetPassword(): void
+    public function resetPassword(AccountLockoutService $lockout): void
     {
         $this->validate([
             'email' => ['required', 'email'],
@@ -104,10 +104,8 @@ new class extends Component
             return;
         }
 
-        $user->update([
-            'password' => $this->newPassword,
-            'password_policy_version' => Setting::current()->password_policy_version,
-        ]);
+        $user->setOwnPassword($this->newPassword);
+        $lockout->clear($user);
 
         DB::table('password_reset_tokens')->where('email', $this->email)->delete();
 

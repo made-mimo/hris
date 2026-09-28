@@ -1,6 +1,7 @@
 <?php
 
 use App\Services\TwoFactorService;
+use Livewire\Attributes\Locked;
 use Livewire\Component;
 
 /**
@@ -11,20 +12,31 @@ use Livewire\Component;
  */
 new class extends Component
 {
-    public string $step = 'choose'; // choose | totp | email | backup_codes
+    #[Locked]
+    public string $step = 'choose'; // choose | totp_email_gate | totp | email | backup_codes
 
+    /**
+     * #[Locked] matters here specifically: confirmTotp() reads this property
+     * (not a fresh server-side value) when confirming enrollment, so an
+     * unlocked property would let a tampered request substitute a secret
+     * the account owner never actually saw on the QR code.
+     */
+    #[Locked]
     public string $secret = '';
 
+    #[Locked]
     public string $qrDataUri = '';
 
     public string $code = '';
 
     /** @var string[] */
+    #[Locked]
     public array $backupCodes = [];
 
     public bool $trustDevice = true;
 
     /** @var string[] */
+    #[Locked]
     public array $allowedMethods = [];
 
     public function mount(TwoFactorService $twoFactor): void
@@ -54,15 +66,57 @@ new class extends Component
         }
     }
 
+    /**
+     * PIM/HRIS alignment §3C item 7 — a stolen password alone must not be
+     * enough to scan an attacker's own QR code at this account's first TOTP
+     * enrollment (or re-enrollment after an Admin 2FA reset, which lands on
+     * this same screen — see mount()'s needsReEnrollment() check). Proving
+     * mailbox access first closes that gap; a voluntary method switch from
+     * an already-2FA-verified session (⚡account-security.blade.php) isn't
+     * gated the same way, since that threat doesn't apply there.
+     */
     public function chooseTotp(TwoFactorService $twoFactor): void
     {
         if (! in_array('totp', $twoFactor->allowedMethodsFor(auth()->user()), true)) {
             return;
         }
 
+        $twoFactor->sendEmailCode(auth()->user());
+        $this->step = 'totp_email_gate';
+    }
+
+    public function confirmTotpEmailGate(TwoFactorService $twoFactor): void
+    {
+        $this->validate(['code' => ['required', 'digits:6']]);
+
+        $user = auth()->user();
+
+        if ($twoFactor->tooManyVerifyAttempts($user)) {
+            $minutes = (int) ceil($twoFactor->verifyAttemptsSecondsRemaining($user) / 60);
+            $this->addError('code', "Too many attempts. Try again in {$minutes} more minute".($minutes === 1 ? '' : 's').'.');
+
+            return;
+        }
+
+        if (! $twoFactor->verifyEmailCode($user, $this->code)) {
+            $twoFactor->recordVerifyFailure($user);
+            $this->addError('code', 'That code is invalid or has expired.');
+
+            return;
+        }
+
+        $twoFactor->clearVerifyAttempts($user);
+        $this->code = '';
         $this->secret = $twoFactor->generateSecretKey();
-        $this->qrDataUri = $twoFactor->qrCodeSvgDataUri(auth()->user()->email, $this->secret);
+        $this->qrDataUri = $twoFactor->qrCodeSvgDataUri($user->email, $this->secret);
         $this->step = 'totp';
+    }
+
+    public function resendTotpEmailGate(TwoFactorService $twoFactor): void
+    {
+        if ($twoFactor->canResendEmailCode(auth()->user())) {
+            $twoFactor->sendEmailCode(auth()->user());
+        }
     }
 
     public function chooseEmail(TwoFactorService $twoFactor): void
@@ -171,6 +225,31 @@ new class extends Component
                 </span>
             </button>
         @endif
+    @endif
+
+    @if($step === 'totp_email_gate')
+        @if(count($allowedMethods) > 1)
+            <button type="button" wire:click="backToChoice" class="auth-back-link" style="background:none;border:none;padding:0;cursor:pointer;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"></path></svg>
+                Choose a different method
+            </button>
+        @endif
+
+        <h1 style="font-size:26px;">Confirm it's you first</h1>
+        <p class="text-muted" style="margin:8px 0 22px;font-size:14px;line-height:1.55;">
+            Before showing your authenticator QR code, we need to confirm you have access to {{ auth()->user()->email }}. We sent a 6-digit code there — it expires in {{ config('twofactor.email_code_ttl_minutes') }} minutes.
+        </p>
+
+        <form wire:submit="confirmTotpEmailGate">
+            <label for="code" style="font-size:13px;font-weight:600;display:block;margin-bottom:8px;">6-digit code</label>
+            <input id="code" wire:model="code" inputmode="numeric" maxlength="6" autocomplete="one-time-code"
+                   class="otp-input" style="width:100%;letter-spacing:0.4em;font-size:22px;margin-bottom:8px;" placeholder="••••••">
+            @error('code') <div class="hint" style="color:var(--color-danger);margin-bottom:10px;">{{ $message }}</div> @enderror
+
+            <button type="button" wire:click="resendTotpEmailGate" class="btn btn-outline btn-sm" style="margin:6px 0 18px;">Resend code</button>
+
+            <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;height:46px;">Confirm and continue</button>
+        </form>
     @endif
 
     @if($step === 'totp')

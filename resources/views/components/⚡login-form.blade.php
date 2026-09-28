@@ -2,6 +2,8 @@
 
 use App\Models\SecurityEvent;
 use App\Models\Setting;
+use App\Models\User;
+use App\Services\AccountLockoutService;
 use App\Services\TwoFactorService;
 use App\Traits\ThrottlesAttempts;
 use Illuminate\Support\Facades\Auth;
@@ -39,7 +41,7 @@ new class extends Component
         }
     }
 
-    public function login(TwoFactorService $twoFactor): void
+    public function login(TwoFactorService $twoFactor, AccountLockoutService $lockout): void
     {
         $credentials = $this->validate([
             'email' => ['required', 'email'],
@@ -53,9 +55,34 @@ new class extends Component
             return;
         }
 
-        if (! Auth::attempt($credentials, $this->remember)) {
+        // Per-account lockout (PIM/HRIS alignment §3C item 1) — separate from
+        // the per-(email, IP) throttle above, so rotating source IPs can't
+        // defeat it. Looked up before Auth::attempt() since a locked account
+        // must not even have its password checked.
+        $target = User::where('email', $credentials['email'])->first();
+
+        if ($target && $lockout->isLocked($target)) {
+            SecurityEvent::record('login_failed', $target, metadata: ['reason' => 'locked']);
+            $this->addError('email', "Too many failed attempts. This account is locked for {$lockout->minutesRemaining($target)} more minute".($lockout->minutesRemaining($target) === 1 ? '' : 's').'.');
+
+            return;
+        }
+
+        // A role that must re-verify 2FA at every sign-in (no trusted
+        // devices) shouldn't get a remember-me cookie either — that cookie
+        // would silently re-establish a session on a later visit the same
+        // way a trusted-device cookie does, defeating the point of denying
+        // it one (PIM/HRIS alignment §3C item 9).
+        $remember = $this->remember && (! $target || $twoFactor->trustedDeviceAllowedFor($target));
+
+        if (! Auth::attempt($credentials, $remember)) {
             $this->hitRateLimit('login', $credentials['email'], 60);
-            SecurityEvent::record('login_failed', metadata: ['email' => $this->email]);
+
+            if ($target) {
+                $lockout->recordFailure($target);
+            }
+
+            SecurityEvent::record('login_failed', $target, metadata: ['email' => $this->email]);
             $this->addError('email', 'Those credentials don\'t match our records.');
 
             return;
@@ -65,6 +92,7 @@ new class extends Component
         request()->session()->regenerate();
 
         $user = Auth::user();
+        $lockout->clear($user);
         SecurityEvent::record('login_succeeded', $user);
         $trusted = $twoFactor->isTrustedDeviceCookieValid($user, request()->cookie('trusted_device'));
 

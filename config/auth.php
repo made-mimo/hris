@@ -41,6 +41,11 @@ return [
         'web' => [
             'driver' => 'session',
             'provider' => 'users',
+            // PIM/HRIS alignment §3C item 9 — Laravel's own default is 5
+            // years; capped to 30 days here. A role that may not use
+            // trusted devices never gets this cookie in the first place
+            // (see ⚡login-form.blade.php).
+            'remember' => 60 * 24 * 30,
         ],
     ],
 

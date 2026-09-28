@@ -19,6 +19,11 @@ Route::post('/timezone', TimezoneController::class)->name('timezone.set');
 Route::post('/push/subscribe', [PushSubscriptionController::class, 'store'])->name('push.subscribe')->middleware('auth');
 Route::post('/push/unsubscribe', [PushSubscriptionController::class, 'destroy'])->name('push.unsubscribe')->middleware('auth');
 
+// PIM/HRIS alignment §3C item 2's "Stay signed in" keep-alive — the fact
+// that an authenticated request reached here at all is the keep-alive;
+// Laravel's own session middleware refreshes last-activity on any request.
+Route::post('/session/keep-alive', fn () => response()->noContent())->name('session.keep-alive')->middleware('auth');
+
 Route::livewire('/login', 'pages::login')->name('login')->middleware('guest');
 Route::livewire('/forgot-password', 'pages::forgot-password')->name('password.request')->middleware('guest');
 
