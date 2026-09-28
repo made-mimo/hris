@@ -9,6 +9,7 @@
     $canRecruitmentScreen = auth()->user()?->canView('recruitment');
     $isHiringManager = $me && \App\Models\Vacancy::where('hiring_manager_id', $me->id)->exists();
     $canRecruitment = $canRecruitmentScreen && (in_array($permissions->scopeFor(auth()->user(), 'recruitment'), ['all'], true) || $isHiringManager);
+    $canDiscipline = auth()->user()?->canView('discipline');
     $canLeave = auth()->user()?->canView('leave.apply');
     $canClaims = auth()->user()?->canView('claims.create');
     $canTimesheets = auth()->user()?->canView('timesheets');
@@ -117,7 +118,7 @@
             </span>
             </div>
 
-            @if($canApprovals || $canEmployees || $canRecruitment)
+            @if($canApprovals || $canEmployees || $canRecruitment || $canDiscipline)
                 <button type="button" @click="toggle('myteam')" class="nav-section-label" style="display:flex;width:100%;align-items:center;justify-content:space-between;background:none;border:none;cursor:pointer;font:inherit;text-align:left;">
                     <span>My team</span>
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" :style="sections.myteam ? '' : 'transform:rotate(-90deg)'" style="transition:transform .15s ease;"><path d="m6 9 6 6 6-6"></path></svg>
@@ -147,6 +148,12 @@
                     <a href="{{ route('recruitment') }}" class="nav-link {{ request()->routeIs('recruitment') ? 'active' : '' }}">
                         <span class="nav-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle><path d="M16 3.5a4 4 0 0 1 0 7"></path></svg></span>
                         Recruitment
+                    </a>
+                @endif
+                @if($canDiscipline)
+                    <a href="{{ route('discipline') }}" class="nav-link {{ request()->routeIs('discipline') ? 'active' : '' }}">
+                        <span class="nav-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01"></path><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path></svg></span>
+                        Discipline Cases
                     </a>
                 @endif
                 </div>

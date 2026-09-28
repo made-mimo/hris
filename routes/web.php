@@ -60,6 +60,7 @@ Route::middleware(['auth', 'password_policy', 'two_factor'])->group(function () 
     Route::livewire('/admin/projects', 'pages::admin-projects')->name('admin.projects')->middleware('screen:admin.projects');
     Route::livewire('/recruitment', 'pages::recruitment')->name('recruitment')->middleware('screen:recruitment');
     Route::livewire('/performance', 'pages::performance')->name('performance')->middleware('screen:performance');
+    Route::livewire('/discipline', 'pages::discipline')->name('discipline')->middleware('screen:discipline');
     Route::livewire('/profile', 'pages::profile')->name('profile')->middleware('screen:profile');
     Route::livewire('/account/settings', 'pages::account-settings')->name('account.settings')->middleware('screen:profile');
     Route::livewire('/approvals', 'pages::approvals')->name('approvals')->middleware('screen:approvals');

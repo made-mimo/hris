@@ -125,6 +125,18 @@ class WorkflowSeeder extends Seeder
             ['candidate_pipeline', 'job_offered', 'hiring_manager', 'decline_offer', 'Offer declined', 'offer_declined'],
             ['candidate_pipeline', 'job_offered', 'hr_admin', 'decline_offer', 'Offer declined', 'offer_declined'],
             ['candidate_pipeline', 'job_offered', 'hr_officer', 'decline_offer', 'Offer declined', 'offer_declined'],
+
+            // ---- disciplinary_case (spec D3) — 'owner' here is the case's
+            // SUBJECT (the employee the case is about), matching
+            // WorkflowEngine's built-in employee_id-based resolution exactly
+            // (no workflowActorTags extension needed, unlike Recruitment's
+            // hiring-manager). Deliberately no hr_officer rows anywhere in
+            // this workflow — spec's "no access at all."
+            ['disciplinary_case', 'open', 'owner', 'respond', 'Respond', 'responded'],
+            ['disciplinary_case', 'responded', 'hr_admin', 'resolve', 'Resolve', 'resolved'],
+            ['disciplinary_case', 'responded', 'admin', 'resolve', 'Resolve', 'resolved'],
+            ['disciplinary_case', 'resolved', 'hr_admin', 'follow_up', 'Follow up', 'open'],
+            ['disciplinary_case', 'resolved', 'admin', 'follow_up', 'Follow up', 'open'],
         ];
 
         foreach ($rows as [$workflow, $from, $actor, $action, $label, $to]) {

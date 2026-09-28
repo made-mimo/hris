@@ -135,6 +135,16 @@ class Employee extends Model implements HasMedia
         return $this->belongsToMany(Employee::class, 'performance_tracker_reviewers', 'employee_id', 'reviewer_id');
     }
 
+    public function disciplinaryCases(): HasMany
+    {
+        return $this->hasMany(DisciplinaryCase::class);
+    }
+
+    public function casesRaised(): HasMany
+    {
+        return $this->hasMany(DisciplinaryCase::class, 'raised_by');
+    }
+
     public function interviews(): BelongsToMany
     {
         return $this->belongsToMany(Interview::class, 'interview_interviewer');

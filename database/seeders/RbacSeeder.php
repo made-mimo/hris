@@ -29,6 +29,10 @@ class RbacSeeder extends Seeder
             ['key' => 'approvals', 'label' => 'Approvals', 'nav_group' => 'My Team', 'sort_order' => 6],
             ['key' => 'employees', 'label' => 'Employees', 'nav_group' => 'My Team', 'sort_order' => 7],
             ['key' => 'recruitment', 'label' => 'Recruitment', 'nav_group' => 'My Team', 'sort_order' => 8, 'module_key' => 'recruitment'],
+            // Spec D3: "HR Officer has no access to Discipline case data at
+            // all" — this screen is simply never granted to that role below,
+            // a route-level block stronger than data-group scoping alone.
+            ['key' => 'discipline', 'label' => 'Discipline Cases', 'nav_group' => 'My Team', 'sort_order' => 9],
             ['key' => 'admin.projects', 'label' => 'Customers & Projects', 'nav_group' => 'Admin', 'sort_order' => 6],
             ['key' => 'admin.master-data', 'label' => 'Organization & Master Data', 'nav_group' => 'Admin', 'sort_order' => 6],
             ['key' => 'admin.onboarding-templates', 'label' => 'Onboarding/Offboarding Templates', 'nav_group' => 'Admin', 'sort_order' => 7],
@@ -105,17 +109,21 @@ class RbacSeeder extends Seeder
 
         // ---- Screen grants per role ----
         $screenGrants = [
-            'admin' => ['home', 'leave.apply', 'claims.create', 'timesheets', 'performance', 'profile', 'approvals', 'employees', 'recruitment', 'admin.master-data', 'admin.onboarding-templates', 'admin.leave-configuration', 'admin.performance-configuration', 'admin.projects', 'settings', 'admin.roles', 'admin.audit-log', 'admin.signatures', 'admin.health-check'],
-            'hr_admin' => ['home', 'leave.apply', 'claims.create', 'timesheets', 'performance', 'profile', 'approvals', 'employees', 'recruitment', 'admin.master-data', 'admin.onboarding-templates', 'admin.leave-configuration', 'admin.performance-configuration', 'admin.projects', 'admin.signatures'],
+            'admin' => ['home', 'leave.apply', 'claims.create', 'timesheets', 'performance', 'discipline', 'profile', 'approvals', 'employees', 'recruitment', 'admin.master-data', 'admin.onboarding-templates', 'admin.leave-configuration', 'admin.performance-configuration', 'admin.projects', 'settings', 'admin.roles', 'admin.audit-log', 'admin.signatures', 'admin.health-check'],
+            'hr_admin' => ['home', 'leave.apply', 'claims.create', 'timesheets', 'performance', 'discipline', 'profile', 'approvals', 'employees', 'recruitment', 'admin.master-data', 'admin.onboarding-templates', 'admin.leave-configuration', 'admin.performance-configuration', 'admin.projects', 'admin.signatures'],
+            // HR Officer deliberately does NOT get 'discipline' — spec's own
+            // "no access...at all," a route-level block, not just a data
+            // scope of 'none'.
             'hr_officer' => ['home', 'leave.apply', 'claims.create', 'timesheets', 'performance', 'profile', 'approvals', 'employees', 'recruitment'],
-            // Recruitment/Performance are also granted at the base ESS level
-            // (like 'profile') since a hiring manager may be any employee
-            // regardless of role, and every employee has their own
-            // performance records to view — each screen scopes its own
-            // content down via its data group's self/self_subordinates/all
-            // scope (or, for Recruitment, the per-record hiring-manager
-            // fact) rather than a route-level block.
-            'ess' => ['home', 'leave.apply', 'claims.create', 'timesheets', 'performance', 'profile', 'recruitment'],
+            // Recruitment/Performance/Discipline are also granted at the base
+            // ESS level (like 'profile') since a hiring manager may be any
+            // employee regardless of role, every employee has their own
+            // performance records, and spec D3 gives a plain employee real
+            // (self-scoped) access to their own case — each screen scopes
+            // its own content down via its data group's
+            // self/self_subordinates/all scope (or, for Recruitment, the
+            // per-record hiring-manager fact) rather than a route-level block.
+            'ess' => ['home', 'leave.apply', 'claims.create', 'timesheets', 'performance', 'discipline', 'profile', 'recruitment'],
             // Now that the workflow engine (WorkflowSeeder) gives supervisors
             // a real pending_manager stage to act on, they need the Approvals
             // screen too — layered on top of their base role same as any
@@ -188,7 +196,11 @@ class RbacSeeder extends Seeder
                 'compensation' => ['self', 'view'],
                 'leave_requests' => ['self', 'view_edit'],
                 'expense_claims' => ['self', 'view_edit'],
-                'disciplinary_case' => ['none', 'none'],
+                // Spec D3: "a plain employee sees only cases about
+                // themselves" — this is real access (respond, attach a
+                // statement, acknowledge an outcome), just self-scoped, not
+                // the same as HR Officer's total exclusion below.
+                'disciplinary_case' => ['self', 'view_edit'],
                 'approvals_queue' => ['none', 'none'],
                 'timesheets' => ['self', 'view_edit'],
                 'recruitment' => ['none', 'none'],
