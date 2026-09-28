@@ -25,3 +25,6 @@ Schedule::command('reports:run-scheduled')->daily();
 
 // Spec F1's Buzz denormalized-count reconciliation backstop.
 Schedule::command('buzz:reconcile-counts')->daily();
+
+// Spec F8's Pulse Survey lifecycle: scheduled -> open, midpoint reminders, open -> closed (+ recurring spawn).
+Schedule::command('pulse-surveys:process')->daily();

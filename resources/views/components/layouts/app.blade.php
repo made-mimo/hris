@@ -6,6 +6,7 @@
     $permissions = app(\App\Services\PermissionService::class);
     $canBuzz = auth()->user()?->canView('buzz');
     $canHelpdesk = auth()->user()?->canView('helpdesk');
+    $canPulseSurveys = auth()->user()?->canView('pulse-surveys');
     $canApprovals = auth()->user()?->canView('approvals');
     $canEmployees = auth()->user()?->canView('employees');
     $canRecruitmentScreen = auth()->user()?->canView('recruitment');
@@ -30,6 +31,7 @@
     $canPolicyConfiguration = auth()->user()?->canView('admin.policy-configuration');
     $canCompanyDocuments = auth()->user()?->canView('admin.company-documents');
     $canHelpdeskConfiguration = auth()->user()?->canView('admin.helpdesk-configuration');
+    $canPulseSurveyConfiguration = auth()->user()?->canView('admin.pulse-survey-configuration');
     $canClaimsManagement = auth()->user()?->canView('admin.claims-management');
     $canProjects = auth()->user()?->canView('admin.projects');
     $canSettings = auth()->user()?->canView('settings');
@@ -148,6 +150,11 @@
                     <span class="nav-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v3a2 2 0 0 0 0 4v3a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-3a2 2 0 0 0 0-4z"></path></svg></span>Helpdesk
                 </a>
             @endif
+            @if($canPulseSurveys)
+                <a href="{{ route('pulse-surveys') }}" class="nav-link {{ request()->routeIs('pulse-surveys') ? 'active' : '' }}">
+                    <span class="nav-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"></path><path d="M7 12l3-3 3 3 5-6"></path></svg></span>Pulse Surveys
+                </a>
+            @endif
             </div>
 
             @if($canApprovals || $canEmployees || $canRecruitment || $canDiscipline)
@@ -208,7 +215,7 @@
             @endif
             </div>
 
-            @if($canMasterData || $canOnboardingTemplates || $canLeaveConfiguration || $canPerformanceConfiguration || $canAssetConfiguration || $canVehicleConfiguration || $canPolicyConfiguration || $canCompanyDocuments || $canHelpdeskConfiguration || $canClaimsManagement || $canProjects || $canSettings || $canRoles || $canAuditLog || $canSignatures || $canHealthCheck)
+            @if($canMasterData || $canOnboardingTemplates || $canLeaveConfiguration || $canPerformanceConfiguration || $canAssetConfiguration || $canVehicleConfiguration || $canPolicyConfiguration || $canCompanyDocuments || $canHelpdeskConfiguration || $canPulseSurveyConfiguration || $canClaimsManagement || $canProjects || $canSettings || $canRoles || $canAuditLog || $canSignatures || $canHealthCheck)
                 <button type="button" @click="toggle('admin')" class="nav-section-label" style="display:flex;width:100%;align-items:center;justify-content:space-between;background:none;border:none;cursor:pointer;font:inherit;text-align:left;">
                     <span>Admin</span>
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" :style="sections.admin ? '' : 'transform:rotate(-90deg)'" style="transition:transform .15s ease;"><path d="m6 9 6 6 6-6"></path></svg>
@@ -260,6 +267,11 @@
                 @if($canHelpdeskConfiguration)
                     <a href="{{ route('admin.helpdesk-configuration') }}" class="nav-link {{ request()->routeIs('admin.helpdesk-configuration') ? 'active' : '' }}">
                         <span class="nav-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v3a2 2 0 0 0 0 4v3a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-3a2 2 0 0 0 0-4z"></path></svg></span>Helpdesk Configuration
+                    </a>
+                @endif
+                @if($canPulseSurveyConfiguration)
+                    <a href="{{ route('admin.pulse-survey-configuration') }}" class="nav-link {{ request()->routeIs('admin.pulse-survey-configuration') ? 'active' : '' }}">
+                        <span class="nav-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"></path><path d="M7 12l3-3 3 3 5-6"></path></svg></span>Pulse Survey Configuration
                     </a>
                 @endif
                 @if($canClaimsManagement)

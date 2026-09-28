@@ -31,6 +31,10 @@ class RbacSeeder extends Seeder
             // 'helpdesk_tickets' data group below (plus the per-category
             // confidential handler list for Grievance/Whistleblower).
             ['key' => 'helpdesk', 'label' => 'Helpdesk', 'nav_group' => 'Workspace', 'sort_order' => 3, 'module_key' => 'helpdesk'],
+            // Spec F8: every employee participates in pulse surveys; results
+            // reporting (with the anonymization threshold) is a separate
+            // Admin-only screen below.
+            ['key' => 'pulse-surveys', 'label' => 'Pulse Surveys', 'nav_group' => 'Workspace', 'sort_order' => 4, 'module_key' => 'pulse_surveys'],
             ['key' => 'leave.apply', 'label' => 'My Leave', 'nav_group' => 'Workspace', 'sort_order' => 2, 'module_key' => 'leave'],
             ['key' => 'claims.create', 'label' => 'My Claims', 'nav_group' => 'Workspace', 'sort_order' => 3, 'module_key' => 'claims'],
             ['key' => 'timesheets', 'label' => 'My Timesheets', 'nav_group' => 'Workspace', 'sort_order' => 4, 'module_key' => 'timesheets'],
@@ -78,6 +82,11 @@ class RbacSeeder extends Seeder
             ['key' => 'admin.company-documents', 'label' => 'Company Registration Documents', 'nav_group' => 'Admin', 'sort_order' => 7],
             // Spec F4: "category management is HR/Admin only."
             ['key' => 'admin.helpdesk-configuration', 'label' => 'Helpdesk Configuration', 'nav_group' => 'Admin', 'sort_order' => 7],
+            // Spec F8: "an aggregated Results snapshot per run...is what
+            // HR/Admin ever sees" — Admin/HR Admin manage templates/runs and
+            // view results here; raw responses are never individually
+            // exposed anywhere, including this screen.
+            ['key' => 'admin.pulse-survey-configuration', 'label' => 'Pulse Survey Configuration', 'nav_group' => 'Admin', 'sort_order' => 7],
             ['key' => 'settings', 'label' => 'Settings', 'nav_group' => 'Admin', 'sort_order' => 8],
             ['key' => 'admin.roles', 'label' => 'Roles & Permissions', 'nav_group' => 'Admin', 'sort_order' => 9],
             ['key' => 'admin.audit-log', 'label' => 'Audit Log', 'nav_group' => 'Admin', 'sort_order' => 10],
@@ -103,6 +112,7 @@ class RbacSeeder extends Seeder
             ['key' => 'directory', 'label' => 'Corporate Directory'],
             ['key' => 'buzz', 'label' => 'Employee Social Feed'],
             ['key' => 'helpdesk', 'label' => 'Helpdesk / Support Ticketing'],
+            ['key' => 'pulse_surveys', 'label' => 'Employee Engagement & Pulse Surveys'],
         ] as $m) {
             ModuleToggle::updateOrCreate(['key' => $m['key']], $m);
         }
@@ -179,15 +189,15 @@ class RbacSeeder extends Seeder
 
         // ---- Screen grants per role ----
         $screenGrants = [
-            'admin' => ['home', 'buzz', 'helpdesk', 'leave.apply', 'claims.create', 'timesheets', 'performance', 'assets', 'vehicles', 'discipline', 'directory', 'policies', 'profile', 'approvals', 'employees', 'recruitment', 'admin.master-data', 'admin.onboarding-templates', 'admin.leave-configuration', 'admin.performance-configuration', 'admin.asset-configuration', 'admin.vehicle-configuration', 'admin.policy-configuration', 'admin.company-documents', 'admin.helpdesk-configuration', 'admin.claims-management', 'admin.projects', 'settings', 'admin.roles', 'admin.audit-log', 'admin.signatures', 'admin.health-check'],
-            'hr_admin' => ['home', 'buzz', 'helpdesk', 'leave.apply', 'claims.create', 'timesheets', 'performance', 'assets', 'vehicles', 'discipline', 'directory', 'policies', 'profile', 'approvals', 'employees', 'recruitment', 'admin.master-data', 'admin.onboarding-templates', 'admin.leave-configuration', 'admin.performance-configuration', 'admin.asset-configuration', 'admin.vehicle-configuration', 'admin.policy-configuration', 'admin.company-documents', 'admin.helpdesk-configuration', 'admin.claims-management', 'admin.projects', 'admin.signatures'],
+            'admin' => ['home', 'buzz', 'helpdesk', 'pulse-surveys', 'leave.apply', 'claims.create', 'timesheets', 'performance', 'assets', 'vehicles', 'discipline', 'directory', 'policies', 'profile', 'approvals', 'employees', 'recruitment', 'admin.master-data', 'admin.onboarding-templates', 'admin.leave-configuration', 'admin.performance-configuration', 'admin.asset-configuration', 'admin.vehicle-configuration', 'admin.policy-configuration', 'admin.company-documents', 'admin.helpdesk-configuration', 'admin.pulse-survey-configuration', 'admin.claims-management', 'admin.projects', 'settings', 'admin.roles', 'admin.audit-log', 'admin.signatures', 'admin.health-check'],
+            'hr_admin' => ['home', 'buzz', 'helpdesk', 'pulse-surveys', 'leave.apply', 'claims.create', 'timesheets', 'performance', 'assets', 'vehicles', 'discipline', 'directory', 'policies', 'profile', 'approvals', 'employees', 'recruitment', 'admin.master-data', 'admin.onboarding-templates', 'admin.leave-configuration', 'admin.performance-configuration', 'admin.asset-configuration', 'admin.vehicle-configuration', 'admin.policy-configuration', 'admin.company-documents', 'admin.helpdesk-configuration', 'admin.pulse-survey-configuration', 'admin.claims-management', 'admin.projects', 'admin.signatures'],
             // HR Officer deliberately does NOT get 'discipline' or
             // 'admin.policy-configuration' — spec's own "only HR/Admin
             // manage categories, documents, and versions" reads as Admin/HR
             // Admin specifically. It does get claims-management, assets,
             // vehicles, and the base 'policies' browse/acknowledge screen,
             // since spec never excludes HR Officer from any of those.
-            'hr_officer' => ['home', 'buzz', 'helpdesk', 'leave.apply', 'claims.create', 'timesheets', 'performance', 'assets', 'vehicles', 'directory', 'policies', 'profile', 'approvals', 'employees', 'recruitment', 'admin.claims-management'],
+            'hr_officer' => ['home', 'buzz', 'helpdesk', 'pulse-surveys', 'leave.apply', 'claims.create', 'timesheets', 'performance', 'assets', 'vehicles', 'directory', 'policies', 'profile', 'approvals', 'employees', 'recruitment', 'admin.claims-management'],
             // Recruitment/Performance/Discipline/Assets/Vehicles/Policies are
             // also granted at the base ESS level (like 'profile') since a
             // hiring manager may be any employee regardless of role, every
@@ -200,7 +210,7 @@ class RbacSeeder extends Seeder
             // scope (or, for Recruitment, the per-record hiring-manager
             // fact; for Policies, restricted-category file grants) rather
             // than a route-level block.
-            'ess' => ['home', 'buzz', 'helpdesk', 'leave.apply', 'claims.create', 'timesheets', 'performance', 'assets', 'vehicles', 'discipline', 'directory', 'policies', 'profile', 'recruitment'],
+            'ess' => ['home', 'buzz', 'helpdesk', 'pulse-surveys', 'leave.apply', 'claims.create', 'timesheets', 'performance', 'assets', 'vehicles', 'discipline', 'directory', 'policies', 'profile', 'recruitment'],
             // Now that the workflow engine (WorkflowSeeder) gives supervisors
             // a real pending_manager stage to act on, they need the Approvals
             // screen too — layered on top of their base role same as any
