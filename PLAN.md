@@ -2430,3 +2430,177 @@ a from-scratch `migrate:fresh` against a throwaway SQLite file to confirm CI par
 not this project's MariaDB dev database), `vendor/bin/pint` clean, and the full test suite (12 tests
 across both new files plus the pre-existing two) green. No stray references to the dropped generic SSO
 columns or the old unread-dot CSS class remained anywhere in the codebase.
+
+## Phase 8 — PIM/HRIS security & usability alignment
+
+Requested by the SI PIM session, citing its own `SI_PIM_HRIS_Production_Integration_Proposal.md` (§5)
+and `SI_PIM_Spec_Delta_2026-09-25.md` (§62–§67): bring HRIS's auth/session hardening and one UX pattern
+up to parity with PIM's own, more mature implementation, adapted to HRIS's Volt/Livewire structure
+rather than ported line-for-line from PIM's Filament codebase. Two scope questions (the faceted-filter
+rollout, and whether first-time TOTP setup should gate on an emailed code) were put to the user before
+starting; a third item (a shared DD/MM/YYYY date convention) was explicitly deferred, per the requesting
+session's own instruction, pending the user's separate confirmation.
+
+### 1 — Per-account lockout
+
+New `AccountLockoutService`: 5 wrong passwords locks the *account* (`users.failed_login_attempts`,
+`users.locked_until`) for 15 minutes, independent of the existing per-(email, IP) `ThrottlesAttempts`
+throttle — a lock an attacker can't defeat by rotating source IPs. The web login form and the API login
+endpoint both go through this one service (there's no separate admin-panel sign-in surface in HRIS to
+also wire up, unlike PIM's Filament admin). A locked account rejects even its correct password, logging
+`login_failed` (reason: locked) and `account_locked` as `SecurityEvent`s. Clears on the next successful
+password check anywhere a password is verified — sign-in, self-service change, or a forgot-password
+reset (see item 12).
+
+### 2 — Admin-configurable idle session timeout
+
+New `settings.idle_session_timeout_minutes` (Settings → Security), applied to `config('session.lifetime')`
+in `AppServiceProvider::boot()` (skipped for console commands, so `artisan migrate` on a database that
+doesn't have the `settings` table yet can't crash on it). A new `<x-idle-session-timeout>` component
+warns 10 seconds before that timeout with a "Stay signed in" button hitting a new `/session/keep-alive`
+route (`auth` middleware only — the fact that an authenticated request reached it is itself the
+keep-alive, since Laravel's session middleware already refreshes last-activity on any request). Built
+with plain DOM APIs rather than an Alpine-templated element: Livewire's root-element check (debug mode
+only) strips `<script>` tags before counting a page's direct `<body>` children, so a persistent `<div>`
+sibling here tripped "multiple root elements" for whichever full-page component the layout wraps — the
+same reason `⚡push-notifications.blade.php` is script-only. Resets only on real input events
+(mousemove/keydown/scroll/touchstart/click), deliberately not on the notification bell's `wire:poll`
+background activity.
+
+### 3 — Forced HTTPS + HSTS
+
+`URL::forceScheme('https')` outside local/testing (`AppServiceProvider::boot()`); `Strict-Transport-
+Security: max-age=31536000; includeSubDomains` added to `AddSecurityHeaders`, sent only when the request
+is already secure, so this dev box's plain-HTTP Apache setup is untouched.
+
+### 4 — Content-Security-Policy, report-only
+
+New `config/security.php` (`CSP_MODE=report-only|enforce|off`, env-driven rather than admin-UI-driven —
+a deployment/ops concern, unlike item 2's timeout) and `AddContentSecurityPolicy` middleware. `report-uri`
+points at a new unauthenticated `POST /api/csp-report` (outside any session/CSRF — it sits in the `api`
+group, not `web`), throttled 30/minute, logging a trimmed summary (`CspReportController`) rather than
+the full report body. `fonts.googleapis.com`/`fonts.gstatic.com` are HRIS's one external resource host
+(`⚡layouts/guest.blade.php` and `⚡layouts/app.blade.php`'s Google Fonts `<link>`) — unlike PIM, HRIS has
+no external avatar service to account for; every avatar here is already drawn locally as initials.
+Browsed the login, home, settings, and employee-list screens in report-only mode afterward and found
+zero violations in the log; a literal click-through of every screen in the app wasn't attempted.
+
+### 5 — Collapsible faceted filters (Employee list)
+
+Scoped to the Employee list only, per the user's choice. `⚡employee-list.blade.php`'s job title/sub-
+unit/supervisor/location filters became multi-select checkbox facets behind a panel that starts
+collapsed, with a "Show filters (N)" toggle and a one-line summary while collapsed. Each facet's count
+is computed from every *other* active filter (`filteredQuery($excluding)` builds the same query minus
+one facet, then groups by it) — the standard faceted-search behaviour, not the raw unfiltered total.
+"Clear all" resets every filter including the status toggle. The open/closed state lives on the
+component and is persisted to the session (`employee-list-filters-open`) rather than held in Alpine
+alone, so it survives a full page reload — verified live in the browser, along with the count
+recomputation and result filtering.
+
+### 6 — Per-account 2FA attempt limit
+
+`TwoFactorService` gained `tooManyVerifyAttempts()`/`recordVerifyFailure()`/`clearVerifyAttempts()`,
+keyed purely by user ID (`two-factor-verify:{id}`) via the `RateLimiter` facade directly — deliberately
+bypassing `ThrottlesAttempts`' own IP-inclusive key, since keying by IP is exactly what would let an
+attacker defeat this limit by rotating source addresses. 5 wrong codes of any method (TOTP, backup,
+email) pauses verification for that account, web and API, for 15 minutes; it doesn't reset on a fresh
+password sign-in, since the key never included anything password-related to begin with. Reused for item
+7's email gate too.
+
+### 7 — Emailed code before first-time TOTP setup
+
+Per the user's go-ahead. `⚡two-factor-setup.blade.php`'s `chooseTotp()` no longer generates a secret
+immediately — it sends an emailed code first (new `totp_email_gate` step) and only reveals the QR after
+`confirmTotpEmailGate()` verifies it, using item 6's same per-account throttle. This screen is reached
+only at an account's first TOTP enrollment or when re-enrolling after an Admin 2FA reset (`mount()`'s own
+`needsReEnrollment()` check), so no extra conditional was needed to scope the gate to those two cases —
+it's already exactly what this component handles. A voluntary method switch from an already-2FA-verified
+session (`⚡account-security.blade.php`) isn't gated the same way, since the threat this closes (a stolen
+password alone producing a scannable QR) doesn't apply to a session that already passed 2FA. Verified
+live end-to-end: wrong code stays gated, correct code reveals the real QR, and a real TOTP code against
+that QR's secret completes enrollment through to the backup-codes screen.
+
+**Bug found in the same pass**: `confirmTotp()`/`confirmTotpSwitch()` in both this component and
+`⚡account-security.blade.php` read `$this->secret` — a public Livewire property, not a fresh server
+value — when confirming enrollment. Unlocked, a tampered request could substitute a secret the account
+owner never saw on the QR. Fixed by adding `#[Locked]` to `$secret`, `$qrDataUri`, `$backupCodes`, and
+`$allowedMethods` in both components, plus `$step` (`two-factor-setup`) and `$method`/`$useBackupCode`
+(`⚡two-factor-verify.blade.php`), which are server-decided and never meant to be client-writable either.
+A full sweep of every Livewire component's public properties for the same class of issue was not
+attempted — only the auth-critical ones surfaced by this review were hardened.
+
+### 8 — Push-endpoint allowlist (SSRF)
+
+New `PushEndpointValidator`: `NotificationService::sendPush()` POSTs to whatever endpoint a subscription
+stores, so accepting any `https://` URL let a signed-in user aim that server-side request at an internal
+address. Restricted to the known browser push services (`fcm.googleapis.com`, `android.googleapis.com`,
+`updates.push.services.mozilla.com`, `web.push.apple.com`, and the `.push.services.mozilla.com`/
+`.notify.windows.com`/`.push.apple.com` suffixes), checked both in `PushSubscriptionController::store()`
+and again in `NotificationService::sendPush()` before ever queuing a send.
+
+### 9 — Remember-me
+
+`config/auth.php`'s `web` guard gained `'remember' => 60 * 24 * 30` (30 days; Laravel's own default is
+5 years). A role that may not use trusted devices (`Role::two_factor_trusted_device_allowed`) never gets
+the remember-me cookie in the first place — `⚡login-form.blade.php` looks the submitted email's user up
+before calling `Auth::attempt()` and suppresses `$remember` for that role, reusing the exact same role
+flag `TwoFactorService::trustedDeviceAllowedFor()` already checks elsewhere.
+
+### 10 — Password-reset code limits (confirmed, not changed)
+
+`⚡forgot-password-form.blade.php` already matched PIM's stated requirements exactly: 3 requests per 10
+minutes (counted whether or not the address exists), 5 wrong tries per code, and a 30-minute expiry
+(fixed earlier this project, see the Carbon `diffInMinutes` sign bug in Phase 6). No change needed.
+
+### 11 — Equal sign-in timing
+
+The web login already gets this for free: `Auth::attempt()` runs inside Laravel's own `Timebox`
+(`auth.timebox_duration`, 200ms default), which pads the response to a minimum duration regardless of
+whether a user was found. `Api\AuthController::login()` uses `Auth::once()` instead, which skips that
+wrapper entirely — a genuine, API-specific gap. Fixed by burning an equivalent `Hash::check()` against a
+precomputed dummy hash when the submitted email doesn't match any account, before ever calling
+`Auth::once()`.
+
+### 12 — Revoke on password change
+
+New `User::setOwnPassword()` — the one place either `⚡change-password.blade.php` (self-service and the
+forced-policy-change flow) or `⚡forgot-password-form.blade.php`'s reset now sets a password — deletes
+every Sanctum token and trusted device for that user (a `tokens_and_devices_revoked` `SecurityEvent` if
+either existed), on the basis that any of them may have been issued to whoever knew the old password.
+`Illuminate\Session\Middleware\AuthenticateSession` was added to the `web` middleware group to handle
+the user's *other browser sessions*: it compares each session's stored password hash against the
+current one on every request and signs out a stale one — the session performing the change itself is
+unaffected, since Laravel refreshes that session's stored hash at the end of the same request. Also
+clears the item-1 lockout, matching PIM's `NewPasswordController` behaviour.
+
+### 13 — Smaller hardening
+
+Applied: `config/filesystems.php`'s `local` disk (the one `PrivateMediaController` gates) had Laravel
+12's default `'serve' => true`, exposing an unused `/storage/{path}` route that needs a signed URL HRIS
+never generates for it — set to `false`. The `#[Locked]` fixes from item 7 above. **Confirmed already
+safe, no change needed**: the one-time backup-codes screen (`login.setup`) sits outside the
+`password_policy` middleware entirely (see Phase 6/7's own routing notes), so a mid-enrollment policy
+bump can't strand a user there. **Not applicable — no existing feature to extend**: HRIS has no
+password-re-confirmation ("confirm it's you") flow of any kind on any screen, and no `redirect()->
+intended()` mechanism either, so the two sub-items assuming one already existed (extending it to
+delete/bulk actions; validating its return URL) don't have anything to act on here. Building either from
+scratch was judged a larger feature than a hardening pass, not attempted without a separate discussion.
+
+### Own follow-up — SSO-only accounts and password re-confirmation
+
+Requested alongside the above: when fixing the SSO/password-policy lockout in Phase 7, also exempt
+SSO-only accounts from password re-confirmation and expiry, and prefer a fresh SSO sign-in wherever
+re-confirmation would otherwise be asked. HRIS has neither a password-expiry policy nor a password-
+re-confirmation flow (see item 13 above) for the SSO fix to interact with beyond the forced-password-
+change screen Phase 7 already exempted — there is nothing further to change here today; the exemption
+already covers everything HRIS actually has.
+
+### Verification
+
+`tests/Feature/AccountLockoutTest.php` (5), `tests/Feature/TwoFactorSetupEmailGateTest.php` (3),
+`tests/Feature/EmployeeListFacetedFiltersTest.php` (4), and `tests/Unit/PushEndpointValidatorTest.php`
+(3) were added — 15 new tests, full suite 27/27 green. `vendor/bin/pint` clean. A from-scratch
+`migrate:fresh` against a throwaway SQLite file confirmed CI parity for the new migration. `composer
+audit` stayed clean (no new dependencies this phase). Account lockout, the TOTP email gate through to a
+completed enrollment, faceted-filter counts/persistence, and the CSP report-only header were all also
+verified live in the browser, not just via the automated suite.
