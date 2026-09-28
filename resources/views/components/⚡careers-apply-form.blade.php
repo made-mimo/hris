@@ -3,6 +3,7 @@
 use App\Models\Candidate;
 use App\Models\CandidateApplication;
 use App\Models\Vacancy;
+use App\Traits\ThrottlesAttempts;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
@@ -10,6 +11,7 @@ use Livewire\WithFileUploads;
 new class extends Component
 {
     use WithFileUploads;
+    use ThrottlesAttempts;
 
     public Vacancy $vacancy;
 
@@ -27,8 +29,27 @@ new class extends Component
 
     public bool $submitted = false;
 
+    public string $rateLimitError = '';
+
+    /**
+     * Security fix: this is the one Livewire action in the app reachable
+     * without logging in at all — a public careers page. Keyed by a fixed
+     * scope string (not the submitted email, which an abuser fully
+     * controls and would just rotate) so the limit is purely per-IP: 10
+     * applications/hour is generous for a genuine one-time applicant and a
+     * meaningful throttle on scripted submission.
+     */
     public function apply(): void
     {
+        if ($this->tooManyAttempts('careers-apply', 'careers-apply', 10)) {
+            $seconds = $this->rateLimitSecondsRemaining('careers-apply', 'careers-apply');
+            $minutes = (int) ceil($seconds / 60);
+            $this->rateLimitError = "Too many applications from this connection recently. Please try again in about {$minutes} minute".($minutes === 1 ? '' : 's').'.';
+
+            return;
+        }
+        $this->hitRateLimit('careers-apply', 'careers-apply', 3600);
+
         $data = $this->validate([
             'firstName' => ['required', 'string', 'max:100'],
             'lastName' => ['required', 'string', 'max:100'],
@@ -68,6 +89,9 @@ new class extends Component
         <div class="text-sm text-accent" style="font-weight:600;">Thank you — your application has been received. We'll be in touch if you're shortlisted.</div>
     @else
         <h2 class="font-display text-base font-bold text-text" style="margin-bottom:14px;">Apply for this position</h2>
+        @if($rateLimitError)
+            <div class="mb-3.5 text-sm text-danger" style="font-weight:600;">{{ $rateLimitError }}</div>
+        @endif
         <form wire:submit="apply" class="flex flex-col gap-3.5">
             <div class="grid grid-cols-2 gap-3">
                 <div>

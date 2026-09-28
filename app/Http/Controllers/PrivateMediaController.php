@@ -9,6 +9,7 @@ use App\Models\Employee;
 use App\Models\ExpenseClaim;
 use App\Models\Interview;
 use App\Models\JobTitle;
+use App\Models\Post;
 use App\Models\SignatureEvent;
 use App\Models\TrainingRecord;
 use App\Models\Vacancy;
@@ -21,15 +22,17 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
  * `public` disk (no `useDisk('local')` call), which — via the standard
  * `storage:link` symlink — put Employee documents, Disciplinary Case files,
  * Candidate CVs, Expense receipts, Interview attachments, Signature
- * evidence, Training certificates, and Vacancy/JobTitle attachments at a
- * predictable, unauthenticated, world-readable URL, confirmed exploitable
- * with a plain unauthenticated curl request. Every affected model now uses
- * the private disk (see each model's registerMediaCollections()); this
- * controller is their one shared, authenticated replacement for the direct
- * `$media->getUrl()` links those views used to render — one gate per
- * domain, reusing that domain's own existing visibility rule (the same
- * data-group scope the corresponding screen/service already enforces)
- * rather than a new, parallel permission model.
+ * evidence, Training certificates, Vacancy/JobTitle attachments, and Buzz
+ * photos at a predictable, unauthenticated, world-readable URL, confirmed
+ * exploitable with a plain unauthenticated curl request. Every affected
+ * model now uses the private disk (see each model's
+ * registerMediaCollections()); this controller is their one shared,
+ * authenticated replacement for the direct `$media->getUrl()` links those
+ * views used to render — one gate per domain, reusing that domain's own
+ * existing visibility rule (the same data-group scope the corresponding
+ * screen/service already enforces, or — for Buzz, whose own rule is "no
+ * further scoping" — the same screen check) rather than a new, parallel
+ * permission model.
  */
 class PrivateMediaController extends Controller
 {
@@ -53,6 +56,11 @@ class PrivateMediaController extends Controller
             $model instanceof Candidate, $model instanceof Interview, $model instanceof Vacancy => (bool) $user->canView('recruitment'),
             $model instanceof JobTitle => (bool) $user->canView('admin.master-data'),
             $model instanceof SignatureEvent => (bool) $user->canView('admin.signatures'),
+            // Spec F1: "no other audience/visibility scoping (company-wide
+            // by design)" — any employee who can see the Buzz feed at all
+            // can see any photo posted to it, matching the feed's own
+            // existing (lack of) scoping exactly.
+            $model instanceof Post => (bool) $user->canView('buzz'),
             default => (bool) $user->isAdmin(),
         };
     }

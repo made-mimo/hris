@@ -202,7 +202,7 @@ new class extends Component
                     @if($share->post->type === 'photo' && $share->post->getMedia('photos')->isNotEmpty())
                         <div class="mt-2 grid" style="grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:6px;">
                             @foreach($share->post->getMedia('photos') as $media)
-                                <img src="{{ $media->getUrl() }}" alt="" style="width:100%;height:120px;object-fit:cover;border-radius:6px;">
+                                <img src="{{ route('private-media.show', $media) }}" alt="" style="width:100%;height:120px;object-fit:cover;border-radius:6px;">
                             @endforeach
                         </div>
                     @endif
