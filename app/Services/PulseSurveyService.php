@@ -98,6 +98,14 @@ class PulseSurveyService
         abort_if($run->status !== 'open', 422, 'This survey is not currently open.');
         abort_if($this->hasResponded($run, $employee), 422, 'You have already responded to this survey.');
 
+        // Security fix: the web/API responder screens only ever list runs
+        // the caller is actually targeted by, but this method itself never
+        // re-checked that — any employee who knew (or guessed) another
+        // department-scoped run's id could respond to it directly, e.g. via
+        // the API, polluting that department's aggregate with an outsider's
+        // score.
+        abort_unless($this->audienceEmployees($run)->contains('id', $employee->id), 403, 'You are not part of the audience for this survey.');
+
         return DB::transaction(function () use ($run, $employee, $scaleValue, $freeText) {
             $response = PulseSurveyResponse::create([
                 'pulse_survey_run_id' => $run->id,

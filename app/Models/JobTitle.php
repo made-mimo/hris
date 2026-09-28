@@ -22,12 +22,14 @@ class JobTitle extends Model implements HasMedia
 
     public function registerMediaCollections(): void
     {
-        $this->addMediaCollection('job_spec')->singleFile();
+        $this->addMediaCollection('job_spec')->singleFile()->useDisk('local');
     }
 
     public function jobSpecUrl(): ?string
     {
-        return $this->getFirstMediaUrl('job_spec') ?: null;
+        $media = $this->getFirstMedia('job_spec');
+
+        return $media ? route('private-media.show', $media) : null;
     }
 
     public function jobSpecName(): ?string

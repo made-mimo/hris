@@ -88,13 +88,35 @@ class TwoFactorService
         return 'data:image/svg+xml;base64,'.base64_encode($svg);
     }
 
+    /**
+     * Security fix: verifyKey() alone accepts the same valid code more than
+     * once within its time window — a shoulder-surfed or sniffed code could
+     * be replayed by anyone who captured it. verifyKeyNewer() additionally
+     * rejects any code at or before the last one this user's account
+     * actually accepted; `?? 0` (not null) for a first-ever verify keeps
+     * its return type an integer timestamp either way, not a bare `true`,
+     * so there's always a real value to persist for the next call.
+     */
     public function verifyTotp(User $user, string $code): bool
     {
         if (! $user->two_factor_secret) {
             return false;
         }
 
-        return $this->engine->verifyKey($user->two_factor_secret, $code, 1) !== false;
+        $matchedTimestamp = $this->engine->verifyKeyNewer(
+            $user->two_factor_secret,
+            $code,
+            $user->two_factor_last_totp_timestamp ?? 0,
+            1
+        );
+
+        if ($matchedTimestamp === false) {
+            return false;
+        }
+
+        $user->forceFill(['two_factor_last_totp_timestamp' => $matchedTimestamp])->save();
+
+        return true;
     }
 
     /**

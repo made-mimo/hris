@@ -2,6 +2,7 @@
 
 use App\Models\SecurityEvent;
 use App\Services\TwoFactorService;
+use App\Traits\ThrottlesAttempts;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 
@@ -15,6 +16,8 @@ use Livewire\Component;
  */
 new class extends Component
 {
+    use ThrottlesAttempts;
+
     public string $email = '';
     public string $password = '';
     public bool $remember = false;
@@ -26,13 +29,22 @@ new class extends Component
             'password' => ['required', 'string'],
         ]);
 
+        if ($this->tooManyAttempts('login', $credentials['email'], 5)) {
+            $seconds = $this->rateLimitSecondsRemaining('login', $credentials['email']);
+            $this->addError('email', "Too many attempts. Try again in {$seconds} second".($seconds === 1 ? '' : 's').'.');
+
+            return;
+        }
+
         if (! Auth::attempt($credentials, $this->remember)) {
+            $this->hitRateLimit('login', $credentials['email'], 60);
             SecurityEvent::record('login_failed', metadata: ['email' => $this->email]);
             $this->addError('email', 'Those credentials don\'t match our records.');
 
             return;
         }
 
+        $this->clearRateLimit('login', $credentials['email']);
         request()->session()->regenerate();
 
         $user = Auth::user();

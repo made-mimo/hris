@@ -64,7 +64,7 @@ new class extends Component
 
     public function uploadJobSpec(): void
     {
-        $this->validate(['jobSpecFile' => ['required', 'file', 'max:10240']]);
+        $this->validate(['jobSpecFile' => ['required', 'file', 'mimes:pdf,doc,docx', 'max:10240']]);
 
         $jobTitle = JobTitle::findOrFail($this->uploadingForId);
         $jobTitle->addMedia($this->jobSpecFile->getRealPath())

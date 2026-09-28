@@ -25,7 +25,7 @@ class Interview extends Model implements HasMedia
 
     public function registerMediaCollections(): void
     {
-        $this->addMediaCollection('attachments');
+        $this->addMediaCollection('attachments')->useDisk('local');
     }
 
     public function application(): BelongsTo

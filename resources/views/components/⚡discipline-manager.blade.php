@@ -64,6 +64,7 @@ new class extends Component
             'severity' => ['required', 'in:low,medium,high'],
             'description' => ['required', 'string', 'max:5000'],
             'incidentDate' => ['required', 'date'],
+            'file' => ['nullable', 'file', 'mimes:pdf,doc,docx,jpg,jpeg,png', 'max:10240'],
         ]);
 
         try {
@@ -90,7 +91,10 @@ new class extends Component
 
     public function respond(int $id, DisciplinaryCaseService $discipline): void
     {
-        $data = $this->validate(['responseBody' => ['required', 'string', 'max:5000']]);
+        $data = $this->validate([
+            'responseBody' => ['required', 'string', 'max:5000'],
+            'file' => ['nullable', 'file', 'mimes:pdf,doc,docx,jpg,jpeg,png', 'max:10240'],
+        ]);
         $case = DisciplinaryCase::findOrFail($id);
         $response = $discipline->respond($case, auth()->user(), $data['responseBody']);
 
@@ -107,6 +111,7 @@ new class extends Component
         $data = $this->validate([
             'outcome' => ['required', 'in:'.implode(',', DisciplinaryCase::OUTCOMES)],
             'resolutionNote' => ['nullable', 'string', 'max:5000'],
+            'file' => ['nullable', 'file', 'mimes:pdf,doc,docx,jpg,jpeg,png', 'max:10240'],
         ]);
 
         $case = DisciplinaryCase::findOrFail($id);
@@ -250,7 +255,7 @@ new class extends Component
                         <p class="text-sm text-text">{{ $case->description }}</p>
 
                         @foreach($case->getMedia('attachments') as $media)
-                            <a href="{{ $media->getUrl() }}" target="_blank" class="self-start rounded-pill bg-text-faint/15 px-2.5 py-1 text-xs font-semibold text-text hover:bg-text-faint/25">{{ $media->name }}</a>
+                            <a href="{{ route('private-media.show', $media) }}" target="_blank" class="self-start rounded-pill bg-text-faint/15 px-2.5 py-1 text-xs font-semibold text-text hover:bg-text-faint/25">{{ $media->name }}</a>
                         @endforeach
 
                         @if($case->responses->isNotEmpty())
@@ -260,7 +265,7 @@ new class extends Component
                                         <div class="mb-1 text-xs font-semibold text-text">{{ $response->type === 'follow_up' ? 'HR follow-up' : 'Response' }} — {{ $response->respondedBy->name }}</div>
                                         <div class="text-sm text-text">{{ $response->body }}</div>
                                         @foreach($response->getMedia('attachments') as $media)
-                                            <a href="{{ $media->getUrl() }}" target="_blank" class="mt-1 inline-block text-xs font-semibold text-primary">{{ $media->name }}</a>
+                                            <a href="{{ route('private-media.show', $media) }}" target="_blank" class="mt-1 inline-block text-xs font-semibold text-primary">{{ $media->name }}</a>
                                         @endforeach
                                     </div>
                                 @endforeach

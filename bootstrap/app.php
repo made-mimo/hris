@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\AddSecurityHeaders;
 use App\Http\Middleware\EnsurePasswordPolicyMet;
 use App\Http\Middleware\EnsureScreenAccess;
 use App\Http\Middleware\EnsureTwoFactorVerified;
@@ -37,6 +38,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'abilities' => CheckAbilities::class,
             'ability' => CheckForAnyAbility::class,
         ]);
+
+        $middleware->append(AddSecurityHeaders::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

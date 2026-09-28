@@ -155,7 +155,7 @@ new class extends Component
                                 @endif
                             @endif
                             @foreach($claim->getMedia('receipts') as $media)
-                                <a href="{{ $media->getUrl() }}" target="_blank" class="mt-1 block text-xs font-semibold text-primary">{{ $media->name }}</a>
+                                <a href="{{ route('private-media.show', $media) }}" target="_blank" class="mt-1 block text-xs font-semibold text-primary">{{ $media->name }}</a>
                             @endforeach
                         </td>
                     </tr>

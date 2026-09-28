@@ -4,6 +4,7 @@ use App\Mail\PasswordResetCodeMail;
 use App\Models\Setting;
 use App\Models\User;
 use App\Rules\PasswordPolicy;
+use App\Traits\ThrottlesAttempts;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
@@ -18,6 +19,8 @@ use Livewire\Component;
  */
 new class extends Component
 {
+    use ThrottlesAttempts;
+
     public string $step = 'request'; // request | reset
 
     public string $email = '';
@@ -31,6 +34,18 @@ new class extends Component
     public function sendCode(): void
     {
         $this->validate(['email' => ['required', 'email']]);
+
+        // Hit the limiter regardless of whether the address exists (checked
+        // below) — letting only real accounts count against it would let an
+        // attacker use the rate-limit response itself to find out which
+        // emails are registered, defeating the "same UI either way" rule
+        // right below.
+        if ($this->tooManyAttempts('password-reset-request', $this->email, 3)) {
+            $this->step = 'reset';
+
+            return;
+        }
+        $this->hitRateLimit('password-reset-request', $this->email, 600);
 
         $user = User::where('email', $this->email)->first();
 
@@ -57,13 +72,29 @@ new class extends Component
             'newPassword' => ['required', 'string', 'confirmed', new PasswordPolicy],
         ], [], ['newPassword' => 'new password']);
 
+        if ($this->tooManyAttempts('password-reset-verify', $this->email, 5)) {
+            $seconds = $this->rateLimitSecondsRemaining('password-reset-verify', $this->email);
+            $this->addError('code', "Too many attempts. Try again in {$seconds} second".($seconds === 1 ? '' : 's').'.');
+
+            return;
+        }
+
         $record = DB::table('password_reset_tokens')->where('email', $this->email)->first();
 
-        if (! $record || ! $record->created_at || now()->diffInMinutes($record->created_at) > 30 || ! Hash::check($this->code, $record->token)) {
+        // Security fix: `now()->diffInMinutes($record->created_at)` on a
+        // *past* timestamp returns a negative number in this Carbon version
+        // (diffInMinutes is signed by chronological direction, not always
+        // positive), so `> 30` never once evaluated true — this code never
+        // actually expired. `addMinutes(30)->isPast()` has no such
+        // direction-of-comparison ambiguity.
+        if (! $record || ! $record->created_at || \Illuminate\Support\Carbon::parse($record->created_at)->addMinutes(30)->isPast() || ! Hash::check($this->code, $record->token)) {
+            $this->hitRateLimit('password-reset-verify', $this->email, 300);
             $this->addError('code', 'That code is invalid or has expired.');
 
             return;
         }
+
+        $this->clearRateLimit('password-reset-verify', $this->email);
 
         $user = User::where('email', $this->email)->first();
 

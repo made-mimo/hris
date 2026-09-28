@@ -46,11 +46,13 @@ class SignatureEvent extends Model implements HasMedia
 
     public function registerMediaCollections(): void
     {
-        $this->addMediaCollection('signature_image')->singleFile();
+        $this->addMediaCollection('signature_image')->singleFile()->useDisk('local');
     }
 
     public function signatureImageUrl(): ?string
     {
-        return $this->getFirstMediaUrl('signature_image') ?: null;
+        $media = $this->getFirstMedia('signature_image');
+
+        return $media ? route('private-media.show', $media) : null;
     }
 }

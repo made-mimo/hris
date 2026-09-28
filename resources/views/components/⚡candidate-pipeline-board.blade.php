@@ -121,7 +121,7 @@ new class extends Component
 
     public function uploadCv(int $candidateId): void
     {
-        $this->validate(['file' => ['required', 'file', 'max:10240']]);
+        $this->validate(['file' => ['required', 'file', 'mimes:pdf,doc,docx,rtf,odt,txt', 'max:10240']]);
 
         Candidate::findOrFail($candidateId)->addMedia($this->file->getRealPath())
             ->usingName($this->file->getClientOriginalName())
@@ -280,7 +280,7 @@ new class extends Component
                             <div class="mb-1 text-xs font-semibold text-text">Attachments</div>
                             <div class="flex flex-wrap items-center gap-2">
                                 @foreach($app->candidate->getMedia('attachments') as $media)
-                                    <a href="{{ $media->getUrl() }}" target="_blank" class="rounded-pill bg-text-faint/15 px-2.5 py-1 text-xs font-semibold text-text hover:bg-text-faint/25">{{ $media->name }}</a>
+                                    <a href="{{ route('private-media.show', $media) }}" target="_blank" class="rounded-pill bg-text-faint/15 px-2.5 py-1 text-xs font-semibold text-text hover:bg-text-faint/25">{{ $media->name }}</a>
                                 @endforeach
                                 <input type="file" wire:model="file" class="text-xs">
                                 <button wire:click="uploadCv({{ $app->candidate->id }})" class="text-xs font-semibold text-primary">Upload CV</button>

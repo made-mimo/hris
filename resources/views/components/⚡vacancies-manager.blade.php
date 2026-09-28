@@ -62,7 +62,7 @@ new class extends Component
 
     public function upload(): void
     {
-        $this->validate(['file' => ['required', 'file', 'max:10240']]);
+        $this->validate(['file' => ['required', 'file', 'mimes:pdf,doc,docx,jpg,jpeg,png', 'max:10240']]);
 
         Vacancy::findOrFail($this->uploadingFor)->addMedia($this->file->getRealPath())
             ->usingName($this->file->getClientOriginalName())
@@ -155,7 +155,7 @@ new class extends Component
 
                 <div class="mt-2 flex flex-wrap items-center gap-2">
                     @foreach($v->getMedia('attachments') as $media)
-                        <a href="{{ $media->getUrl() }}" target="_blank" class="rounded-pill bg-text-faint/15 px-2.5 py-1 text-xs font-semibold text-text hover:bg-text-faint/25">{{ $media->name }}</a>
+                        <a href="{{ route('private-media.show', $media) }}" target="_blank" class="rounded-pill bg-text-faint/15 px-2.5 py-1 text-xs font-semibold text-text hover:bg-text-faint/25">{{ $media->name }}</a>
                     @endforeach
                     @if($uploadingFor === $v->id)
                         <input type="file" wire:model="file" class="text-xs">

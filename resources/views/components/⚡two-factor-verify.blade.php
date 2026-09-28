@@ -2,6 +2,7 @@
 
 use App\Models\SecurityEvent;
 use App\Services\TwoFactorService;
+use App\Traits\ThrottlesAttempts;
 use Livewire\Component;
 
 /**
@@ -12,6 +13,8 @@ use Livewire\Component;
  */
 new class extends Component
 {
+    use ThrottlesAttempts;
+
     public string $method = 'totp';
 
     public string $code = '';
@@ -52,6 +55,13 @@ new class extends Component
 
         $user = auth()->user();
 
+        if ($this->tooManyAttempts('2fa-verify', $user->email, 5)) {
+            $seconds = $this->rateLimitSecondsRemaining('2fa-verify', $user->email);
+            $this->addError('code', "Too many attempts. Try again in {$seconds} second".($seconds === 1 ? '' : 's').'.');
+
+            return;
+        }
+
         $ok = match (true) {
             $this->useBackupCode => $twoFactor->verifyBackupCode($user, $this->code),
             $this->method === 'totp' => $twoFactor->verifyTotp($user, $this->code),
@@ -60,12 +70,14 @@ new class extends Component
         };
 
         if (! $ok) {
+            $this->hitRateLimit('2fa-verify', $user->email, 300);
             SecurityEvent::record('two_factor_verify_failed', $user, $this->useBackupCode ? 'backup_code' : $this->method);
             $this->addError('code', 'That code is invalid or has expired.');
 
             return;
         }
 
+        $this->clearRateLimit('2fa-verify', $user->email);
         SecurityEvent::record('two_factor_verified', $user, $this->useBackupCode ? 'backup_code' : $this->method);
 
         session(['two_factor_verified' => true]);

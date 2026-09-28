@@ -31,11 +31,16 @@ use Illuminate\Support\Facades\Route;
  * every admin/management screen in Domains B-F as a second frontend; see
  * PLAN.md for that scope decision written out in full.
  */
-Route::post('/login', [AuthController::class, 'login']);
+// Spec's Non-Functional Requirements: "rate limiting on authentication...
+// endpoints" — keyed by IP via Laravel's default throttle middleware, the
+// same protection the web login/2FA-verify Livewire actions get via
+// App\Traits\ThrottlesAttempts (route middleware isn't available to them
+// since Livewire actions don't have their own routable path).
+Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
 
 // A `2fa-pending` token (see AuthController::login()'s doc comment) can
 // reach this one endpoint and nothing else.
-Route::middleware(['auth:sanctum', 'abilities:2fa:verify'])->group(function () {
+Route::middleware(['auth:sanctum', 'abilities:2fa:verify', 'throttle:5,1'])->group(function () {
     Route::post('/2fa/verify', [AuthController::class, 'verifyTwoFactor']);
 });
 

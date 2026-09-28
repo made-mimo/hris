@@ -5,6 +5,7 @@ use App\Http\Controllers\CareersFeedController;
 use App\Http\Controllers\CompanyDocumentFileController;
 use App\Http\Controllers\EmployeeCsvTemplateController;
 use App\Http\Controllers\PolicyDocumentFileController;
+use App\Http\Controllers\PrivateMediaController;
 use App\Http\Controllers\PushSubscriptionController;
 use App\Http\Controllers\TimezoneController;
 use Illuminate\Support\Facades\Route;
@@ -96,6 +97,13 @@ Route::middleware(['auth', 'password_policy', 'two_factor'])->group(function () 
     // No screen middleware here: authorization is entirely inside CompanyDocumentService::canAccessFile()
     // so a specifically-granted non-admin employee (spec E5's "external auditor" case) can still reach the file.
     Route::get('/company-documents/versions/{version}/file', CompanyDocumentFileController::class)->name('company-documents.file');
+    // Security fix: the shared replacement for every `$media->getUrl()`
+    // link across Employee documents, Disciplinary Case/Response,
+    // Candidate, ExpenseClaim, Interview, SignatureEvent, TrainingRecord,
+    // Vacancy, and JobTitle attachments — see PrivateMediaController's own
+    // doc comment. No screen middleware (it spans many domains); every
+    // domain's own access rule is enforced inside the controller instead.
+    Route::get('/files/{media}', PrivateMediaController::class)->name('private-media.show');
     Route::livewire('/settings', 'pages::settings')->name('settings')->middleware('screen:settings');
     Route::livewire('/admin/roles', 'pages::admin-roles')->name('admin.roles')->middleware('screen:admin.roles');
     Route::livewire('/admin/roles/{role}', 'pages::admin-role-edit')->name('admin.roles.edit')->middleware('screen:admin.roles');

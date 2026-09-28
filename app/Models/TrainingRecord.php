@@ -25,12 +25,14 @@ class TrainingRecord extends Model implements HasMedia
 
     public function registerMediaCollections(): void
     {
-        $this->addMediaCollection('certificate')->singleFile();
+        $this->addMediaCollection('certificate')->singleFile()->useDisk('local');
     }
 
     public function certificateUrl(): ?string
     {
-        return $this->getFirstMediaUrl('certificate') ?: null;
+        $media = $this->getFirstMedia('certificate');
+
+        return $media ? route('private-media.show', $media) : null;
     }
 
     public function employee(): BelongsTo

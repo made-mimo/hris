@@ -64,7 +64,11 @@ class Employee extends Model implements HasMedia
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection('avatar')->singleFile();
-        $this->addMediaCollection('documents');
+        // 'documents' can hold ID/immigration-adjacent uploads (spec B2's
+        // per-tab attachments) — private disk, unlike avatar (low
+        // sensitivity, intentionally visible across the app as other
+        // employees' avatars).
+        $this->addMediaCollection('documents')->useDisk('local');
     }
 
     protected function casts(): array
@@ -353,27 +357,32 @@ class Employee extends Model implements HasMedia
         $this->clearMediaCollection('avatar');
         $this->clearMediaCollection('documents');
 
-        $this->forceFill([
-            'first_name' => 'Redacted',
-            'last_name' => 'Redacted',
-            'preferred_name' => null,
-            'date_of_birth' => null,
-            'gender' => null,
-            'marital_status' => null,
-            'nationality_id' => null,
-            'government_id_type' => null,
-            'government_id_number' => null,
-            'driving_license_number' => null,
-            'home_address' => null,
-            'home_city_state' => null,
-            'home_country_id' => null,
-            'phone_home' => null,
-            'phone_mobile' => null,
-            'personal_email' => null,
-            'work_email' => null,
-            'is_gdpr_purged' => true,
-            'gdpr_purged_at' => now(),
-        ])->save();
+        $redactedFields = [
+            'preferred_name', 'date_of_birth', 'gender', 'marital_status',
+            'nationality_id', 'government_id_type', 'government_id_number', 'driving_license_number',
+            'home_address', 'home_city_state', 'home_country_id', 'phone_home', 'phone_mobile',
+            'personal_email', 'work_email',
+        ];
+
+        $this->forceFill(array_merge(
+            array_fill_keys($redactedFields, null),
+            [
+                'first_name' => 'Redacted',
+                'last_name' => 'Redacted',
+                'is_gdpr_purged' => true,
+                'gdpr_purged_at' => now(),
+            ]
+        ))->save();
+
+        // Erasing the live row isn't enough for a genuine right-to-erasure
+        // purge — every prior audit_logs entry for this employee still holds
+        // these fields in plain text (that's the audit trail's whole point,
+        // for an ordinary edit), including the "updated" row the forceFill()
+        // above just wrote. Found during a security review: the purge
+        // appeared to erase PII while it actually persisted indefinitely in
+        // an Admin-viewable log. See AuditLog::redactHistoryFor()'s own doc
+        // comment for why this isn't done inline here.
+        AuditLog::redactHistoryFor(self::class, $this->id, array_merge($redactedFields, ['first_name', 'last_name']));
     }
 
     public function documentsUrl(): array
@@ -381,7 +390,7 @@ class Employee extends Model implements HasMedia
         return $this->getMedia('documents')->map(fn ($m) => [
             'id' => $m->id,
             'name' => $m->name,
-            'url' => $m->getUrl(),
+            'url' => route('private-media.show', $m),
             'tab' => $m->getCustomProperty('tab'),
             'description' => $m->getCustomProperty('description'),
         ])->all();

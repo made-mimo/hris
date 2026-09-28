@@ -31,7 +31,7 @@ new class extends Component
     public function upload(): void
     {
         $this->validate([
-            'file' => ['required', 'file', 'max:10240'],
+            'file' => ['required', 'file', 'mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png', 'max:10240'],
             'tab' => ['required', 'in:'.implode(',', EmployeeCustomFieldDefinition::TABS)],
             'description' => ['nullable', 'string', 'max:255'],
         ]);
