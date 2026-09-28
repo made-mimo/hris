@@ -43,19 +43,23 @@ new class extends Component
 ?>
 
 <div x-data="{ open: false }" style="position:relative;" @click.outside="open = false">
-    <button type="button" aria-label="Notifications" class="icon-btn" @click="open = !open" wire:poll.15s>
+    <button type="button" aria-label="{{ $unreadCount > 0 ? "Notifications ({$unreadCount} unread)" : 'Notifications' }}" class="icon-btn" @click="open = !open" wire:poll.15s>
         <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 16V11a6 6 0 1 1 12 0v5l2 2H4z"></path><path d="M10 21h4"></path></svg>
         @if($unreadCount > 0)
-            <span class="dot"></span>
+            <span class="count-badge">{{ $unreadCount > 9 ? '9+' : $unreadCount }}</span>
         @endif
     </button>
 
-    <div x-show="open" x-cloak style="position:absolute;left:0;top:44px;width:340px;max-width:calc(100vw - 32px);max-height:420px;overflow-y:auto;background:var(--color-surface);border:1px solid var(--color-border);border-radius:12px;box-shadow:0 12px 32px rgba(0,0,0,0.14);z-index:50;">
+    <div x-show="open" x-cloak class="notif-panel">
         <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--color-border);">
-            <span style="font-size:13.5px;font-weight:700;">Notifications</span>
+            <span style="font-size:13.5px;font-weight:700;">Notifications{{ $unreadCount > 0 ? " · {$unreadCount} unread" : '' }}</span>
             <div style="display:flex;gap:10px;">
-                <button type="button" wire:click="markAllAsRead" class="hint" style="background:none;border:none;padding:0;cursor:pointer;font-weight:600;">Mark all read</button>
-                <button type="button" wire:click="clearAll" class="hint" style="background:none;border:none;padding:0;cursor:pointer;font-weight:600;">Clear all</button>
+                @if($unreadCount > 0)
+                    <button type="button" wire:click="markAllAsRead" class="hint" style="background:none;border:none;padding:0;cursor:pointer;font-weight:600;">Mark all read</button>
+                @endif
+                @if($items->isNotEmpty())
+                    <button type="button" wire:click="clearAll" class="hint" style="background:none;border:none;padding:0;cursor:pointer;font-weight:600;">Clear all</button>
+                @endif
             </div>
         </div>
 
@@ -64,9 +68,9 @@ new class extends Component
         </button>
 
         @forelse($items as $item)
-            <div style="display:flex;gap:8px;padding:11px 14px;border-bottom:1px solid var(--color-border);{{ $item->isRead() ? '' : 'background:var(--color-primary-light);' }}">
+            <div class="notif-item{{ $item->isRead() ? '' : ' unread' }}" style="display:flex;gap:8px;padding:11px 14px;border-bottom:1px solid var(--color-border);{{ $item->isRead() ? '' : 'background:var(--color-primary-light);' }}">
                 <a href="{{ $item->deep_link ?? '#' }}" wire:navigate style="flex:1;text-decoration:none;color:inherit;" wire:click="markAsRead({{ $item->id }})">
-                    <div style="font-size:13px;font-weight:600;">{{ $item->title }}</div>
+                    <div class="notif-title" style="font-size:13px;font-weight:600;">{{ $item->title }}</div>
                     <div style="font-size:12.5px;color:var(--color-text-muted);margin-top:2px;">{{ $item->body }}</div>
                     <div class="hint" style="margin-top:4px;">{{ $item->created_at->diffForHumans() }}</div>
                 </a>
