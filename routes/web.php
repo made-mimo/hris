@@ -7,6 +7,7 @@ use App\Http\Controllers\EmployeeCsvTemplateController;
 use App\Http\Controllers\PolicyDocumentFileController;
 use App\Http\Controllers\PrivateMediaController;
 use App\Http\Controllers\PushSubscriptionController;
+use App\Http\Controllers\SsoController;
 use App\Http\Controllers\TimezoneController;
 use Illuminate\Support\Facades\Route;
 
@@ -20,6 +21,10 @@ Route::post('/push/unsubscribe', [PushSubscriptionController::class, 'destroy'])
 
 Route::livewire('/login', 'pages::login')->name('login')->middleware('guest');
 Route::livewire('/forgot-password', 'pages::forgot-password')->name('password.request')->middleware('guest');
+
+// Spec Section A3's SSO (Google Workspace, Microsoft 365) — see SsoController.
+Route::get('/auth/{provider}/redirect', [SsoController::class, 'redirect'])->name('sso.redirect')->middleware('guest')->whereIn('provider', ['google', 'microsoft']);
+Route::get('/auth/{provider}/callback', [SsoController::class, 'callback'])->name('sso.callback')->middleware('guest')->whereIn('provider', ['google', 'microsoft']);
 
 // Authenticated (password already checked) but not yet past the 2FA step —
 // deliberately outside both 'guest' (they ARE logged in) and 'two_factor'
