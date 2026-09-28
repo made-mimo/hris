@@ -15,7 +15,10 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
  */
 class AssignmentHistory extends Model
 {
-    protected $fillable = ['assignable_type', 'assignable_id', 'employee_id', 'sub_unit_id', 'started_at', 'ended_at'];
+    protected $fillable = [
+        'assignable_type', 'assignable_id', 'employee_id', 'sub_unit_id', 'started_at', 'ended_at',
+        'override_reason', 'overridden_by_id',
+    ];
 
     protected function casts(): array
     {
@@ -35,6 +38,11 @@ class AssignmentHistory extends Model
     public function subUnit(): BelongsTo
     {
         return $this->belongsTo(SubUnit::class);
+    }
+
+    public function overriddenBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'overridden_by_id');
     }
 
     public function isOpen(): bool

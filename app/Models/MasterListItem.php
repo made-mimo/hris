@@ -65,4 +65,10 @@ class MasterListItem extends Model
     {
         return static::ofType($type)->where('name', self::DEFAULT_COUNTRY_NAME)->value('id');
     }
+
+    /** Spec E3: vehicle-assignment driving-license validation needs one canonical license_type row to check against — seeded once by Database\Seeders\MasterListSeeder. */
+    public static function drivingLicenseTypeId(): ?int
+    {
+        return static::ofType(self::TYPE_LICENSE_TYPE)->where('name', 'Driving License')->value('id');
+    }
 }

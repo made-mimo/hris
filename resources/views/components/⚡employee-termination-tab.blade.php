@@ -2,6 +2,7 @@
 
 use App\Models\Asset;
 use App\Models\Employee;
+use App\Models\Vehicle;
 use Livewire\Component;
 
 new class extends Component
@@ -23,10 +24,18 @@ new class extends Component
         $this->employee = $employee;
     }
 
-    /** Spec E2 (retroactively wired now that Asset Management exists): "an employee's offboarding cannot be marked complete while they still have assets assigned to them — this is a hard block, not a soft reminder." */
+    /** Spec E2/E3 (retroactively wired now that Asset/Vehicle Management exist): "an employee's offboarding cannot be marked complete while they still have assets [or vehicles] assigned to them — this is a hard block, not a soft reminder." */
     protected function assignedAssetNames(): array
     {
         return Asset::where('current_employee_id', $this->employee->id)->pluck('name')->all();
+    }
+
+    protected function assignedVehicleNames(): array
+    {
+        return Vehicle::where('current_employee_id', $this->employee->id)
+            ->get()
+            ->map(fn (Vehicle $v) => "{$v->make} {$v->model} ({$v->vin})")
+            ->all();
     }
 
     public function record(): void
@@ -39,9 +48,9 @@ new class extends Component
             'note' => ['nullable', 'string', 'max:1000'],
         ]);
 
-        $assigned = $this->assignedAssetNames();
+        $assigned = array_merge($this->assignedAssetNames(), $this->assignedVehicleNames());
         if ($assigned) {
-            $this->addError('date', 'This employee still has assets assigned to them ('.implode(', ', $assigned).') — return or reassign them before recording offboarding.');
+            $this->addError('date', 'This employee still has assets/vehicles assigned to them ('.implode(', ', $assigned).') — return or reassign them before recording offboarding.');
 
             return;
         }

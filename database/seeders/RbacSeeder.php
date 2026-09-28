@@ -30,6 +30,9 @@ class RbacSeeder extends Seeder
             // group's own scope, not a route-level block, so the screen is
             // granted at base ESS level same as Performance/Profile.
             ['key' => 'assets', 'label' => 'Assets', 'nav_group' => 'Workspace', 'sort_order' => 6, 'module_key' => 'assets'],
+            // Spec E3: "same for vehicles" — mirrors the Assets screen's
+            // self-only-by-default policy exactly.
+            ['key' => 'vehicles', 'label' => 'Vehicles', 'nav_group' => 'Workspace', 'sort_order' => 6, 'module_key' => 'vehicles'],
             ['key' => 'profile', 'label' => 'My Profile', 'nav_group' => 'Workspace', 'sort_order' => 6],
             ['key' => 'approvals', 'label' => 'Approvals', 'nav_group' => 'My Team', 'sort_order' => 6],
             ['key' => 'employees', 'label' => 'Employees', 'nav_group' => 'My Team', 'sort_order' => 7],
@@ -45,6 +48,7 @@ class RbacSeeder extends Seeder
             ['key' => 'admin.performance-configuration', 'label' => 'Performance Configuration', 'nav_group' => 'Admin', 'sort_order' => 7],
             ['key' => 'admin.claims-management', 'label' => 'Claims Management', 'nav_group' => 'Admin', 'sort_order' => 7],
             ['key' => 'admin.asset-configuration', 'label' => 'Asset Configuration', 'nav_group' => 'Admin', 'sort_order' => 7],
+            ['key' => 'admin.vehicle-configuration', 'label' => 'Vehicle Configuration', 'nav_group' => 'Admin', 'sort_order' => 7],
             ['key' => 'settings', 'label' => 'Settings', 'nav_group' => 'Admin', 'sort_order' => 8],
             ['key' => 'admin.roles', 'label' => 'Roles & Permissions', 'nav_group' => 'Admin', 'sort_order' => 9],
             ['key' => 'admin.audit-log', 'label' => 'Audit Log', 'nav_group' => 'Admin', 'sort_order' => 10],
@@ -65,6 +69,7 @@ class RbacSeeder extends Seeder
             ['key' => 'recruitment', 'label' => 'Recruitment'],
             ['key' => 'performance', 'label' => 'Performance Management'],
             ['key' => 'assets', 'label' => 'Asset Management'],
+            ['key' => 'vehicles', 'label' => 'Vehicle Fleet Management'],
         ] as $m) {
             ModuleToggle::updateOrCreate(['key' => $m['key']], $m);
         }
@@ -97,6 +102,10 @@ class RbacSeeder extends Seeder
             // supervisor tier at all for Assets, unlike every other module's
             // reporting-line scoping.
             ['key' => 'assets', 'label' => 'Asset Management'],
+            // Spec E3: "same for vehicles" as Assets — full register for
+            // Admin/HR Admin/HR Officer, self-only for everyone else, no
+            // supervisor tier.
+            ['key' => 'vehicles', 'label' => 'Vehicle Fleet Management'],
         ];
         foreach ($groups as $g) {
             DataGroup::updateOrCreate(['key' => $g['key']], $g);
@@ -123,23 +132,24 @@ class RbacSeeder extends Seeder
 
         // ---- Screen grants per role ----
         $screenGrants = [
-            'admin' => ['home', 'leave.apply', 'claims.create', 'timesheets', 'performance', 'assets', 'discipline', 'profile', 'approvals', 'employees', 'recruitment', 'admin.master-data', 'admin.onboarding-templates', 'admin.leave-configuration', 'admin.performance-configuration', 'admin.asset-configuration', 'admin.claims-management', 'admin.projects', 'settings', 'admin.roles', 'admin.audit-log', 'admin.signatures', 'admin.health-check'],
-            'hr_admin' => ['home', 'leave.apply', 'claims.create', 'timesheets', 'performance', 'assets', 'discipline', 'profile', 'approvals', 'employees', 'recruitment', 'admin.master-data', 'admin.onboarding-templates', 'admin.leave-configuration', 'admin.performance-configuration', 'admin.asset-configuration', 'admin.claims-management', 'admin.projects', 'admin.signatures'],
+            'admin' => ['home', 'leave.apply', 'claims.create', 'timesheets', 'performance', 'assets', 'vehicles', 'discipline', 'profile', 'approvals', 'employees', 'recruitment', 'admin.master-data', 'admin.onboarding-templates', 'admin.leave-configuration', 'admin.performance-configuration', 'admin.asset-configuration', 'admin.vehicle-configuration', 'admin.claims-management', 'admin.projects', 'settings', 'admin.roles', 'admin.audit-log', 'admin.signatures', 'admin.health-check'],
+            'hr_admin' => ['home', 'leave.apply', 'claims.create', 'timesheets', 'performance', 'assets', 'vehicles', 'discipline', 'profile', 'approvals', 'employees', 'recruitment', 'admin.master-data', 'admin.onboarding-templates', 'admin.leave-configuration', 'admin.performance-configuration', 'admin.asset-configuration', 'admin.vehicle-configuration', 'admin.claims-management', 'admin.projects', 'admin.signatures'],
             // HR Officer deliberately does NOT get 'discipline' — spec's own
             // "no access...at all," a route-level block, not just a data
-            // scope of 'none'. It does get claims-management and assets,
-            // since spec never excludes HR Officer from either.
-            'hr_officer' => ['home', 'leave.apply', 'claims.create', 'timesheets', 'performance', 'assets', 'profile', 'approvals', 'employees', 'recruitment', 'admin.claims-management'],
-            // Recruitment/Performance/Discipline/Assets are also granted at
-            // the base ESS level (like 'profile') since a hiring manager may
-            // be any employee regardless of role, every employee has their
-            // own performance records, spec D3 gives a plain employee real
-            // (self-scoped) access to their own case, and spec E2 gives every
-            // employee visibility into assets assigned to them — each screen
-            // scopes its own content down via its data group's
-            // self/self_subordinates/all scope (or, for Recruitment, the
-            // per-record hiring-manager fact) rather than a route-level block.
-            'ess' => ['home', 'leave.apply', 'claims.create', 'timesheets', 'performance', 'assets', 'discipline', 'profile', 'recruitment'],
+            // scope of 'none'. It does get claims-management, assets, and
+            // vehicles, since spec never excludes HR Officer from any of them.
+            'hr_officer' => ['home', 'leave.apply', 'claims.create', 'timesheets', 'performance', 'assets', 'vehicles', 'profile', 'approvals', 'employees', 'recruitment', 'admin.claims-management'],
+            // Recruitment/Performance/Discipline/Assets/Vehicles are also
+            // granted at the base ESS level (like 'profile') since a hiring
+            // manager may be any employee regardless of role, every employee
+            // has their own performance records, spec D3 gives a plain
+            // employee real (self-scoped) access to their own case, and spec
+            // E2/E3 give every employee visibility into assets/vehicles
+            // assigned to them — each screen scopes its own content down via
+            // its data group's self/self_subordinates/all scope (or, for
+            // Recruitment, the per-record hiring-manager fact) rather than a
+            // route-level block.
+            'ess' => ['home', 'leave.apply', 'claims.create', 'timesheets', 'performance', 'assets', 'vehicles', 'discipline', 'profile', 'recruitment'],
             // Now that the workflow engine (WorkflowSeeder) gives supervisors
             // a real pending_manager stage to act on, they need the Approvals
             // screen too — layered on top of their base role same as any
@@ -170,6 +180,7 @@ class RbacSeeder extends Seeder
                 'recruitment' => ['all', 'view_edit_delete'],
                 'performance' => ['all', 'view_edit_delete'],
                 'assets' => ['all', 'view_edit_delete'],
+                'vehicles' => ['all', 'view_edit_delete'],
             ],
             'hr_admin' => [
                 'employee_personal_details' => ['all', 'view_edit_delete'],
@@ -182,6 +193,7 @@ class RbacSeeder extends Seeder
                 'recruitment' => ['all', 'view_edit_delete'],
                 'performance' => ['all', 'view_edit_delete'],
                 'assets' => ['all', 'view_edit_delete'],
+                'vehicles' => ['all', 'view_edit_delete'],
             ],
             'hr_officer' => [
                 'employee_personal_details' => ['all', 'view_edit'],
@@ -194,6 +206,7 @@ class RbacSeeder extends Seeder
                 'recruitment' => ['all', 'view_edit'],
                 'performance' => ['all', 'view_edit'],
                 'assets' => ['all', 'view_edit'],
+                'vehicles' => ['all', 'view_edit'],
             ],
             'supervisor' => [
                 'employee_personal_details' => ['self_subordinates', 'view'],
@@ -213,6 +226,7 @@ class RbacSeeder extends Seeder
                 // every other module's reporting-line scoping" — a supervisor
                 // sees only assets assigned to themselves, same as any ESS.
                 'assets' => ['self', 'view'],
+                'vehicles' => ['self', 'view'],
             ],
             'ess' => [
                 'employee_personal_details' => ['self', 'view_edit'],
@@ -229,6 +243,7 @@ class RbacSeeder extends Seeder
                 'recruitment' => ['none', 'none'],
                 'performance' => ['self', 'view_edit'],
                 'assets' => ['self', 'view'],
+                'vehicles' => ['self', 'view'],
             ],
         ];
         foreach ($matrix as $slug => $grants) {

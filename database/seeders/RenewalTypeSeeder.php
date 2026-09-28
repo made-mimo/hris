@@ -18,6 +18,7 @@ class RenewalTypeSeeder extends Seeder
     {
         $types = [
             ['key' => 'asset_warranty', 'label' => 'Asset Warranty/Service Contract'],
+            ['key' => 'vehicle_renewal', 'label' => 'Vehicle Renewal (Insurance/License)'],
         ];
 
         foreach ($types as $t) {

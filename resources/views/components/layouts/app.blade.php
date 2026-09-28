@@ -16,11 +16,13 @@
     $canApproveTimesheets = $canTimesheets && in_array($permissions->scopeFor(auth()->user(), 'timesheets'), ['all', 'self_subordinates'], true);
     $canPerformance = auth()->user()?->canView('performance');
     $canAssets = auth()->user()?->canView('assets');
+    $canVehicles = auth()->user()?->canView('vehicles');
     $canMasterData = auth()->user()?->canView('admin.master-data');
     $canOnboardingTemplates = auth()->user()?->canView('admin.onboarding-templates');
     $canLeaveConfiguration = auth()->user()?->canView('admin.leave-configuration');
     $canPerformanceConfiguration = auth()->user()?->canView('admin.performance-configuration');
     $canAssetConfiguration = auth()->user()?->canView('admin.asset-configuration');
+    $canVehicleConfiguration = auth()->user()?->canView('admin.vehicle-configuration');
     $canClaimsManagement = auth()->user()?->canView('admin.claims-management');
     $canProjects = auth()->user()?->canView('admin.projects');
     $canSettings = auth()->user()?->canView('settings');
@@ -121,6 +123,11 @@
                     <span class="nav-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg></span>Assets
                 </a>
             @endif
+            @if($canVehicles)
+                <a href="{{ route('vehicles') }}" class="nav-link {{ request()->routeIs('vehicles') ? 'active' : '' }}">
+                    <span class="nav-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17h14M6 17V9a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v8"></path><circle cx="7.5" cy="17.5" r="1.8"></circle><circle cx="16.5" cy="17.5" r="1.8"></circle><path d="M3 13l1.5-4A2 2 0 0 1 6.4 7.5"></path></svg></span>Vehicles
+                </a>
+            @endif
             <a href="{{ route('profile') }}" class="nav-link {{ request()->routeIs('profile') ? 'active' : '' }}">
                 <span class="nav-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"></path></svg></span>My Profile
             </a>
@@ -183,7 +190,7 @@
             </span>
             </div>
 
-            @if($canMasterData || $canOnboardingTemplates || $canLeaveConfiguration || $canPerformanceConfiguration || $canAssetConfiguration || $canClaimsManagement || $canProjects || $canSettings || $canRoles || $canAuditLog || $canSignatures || $canHealthCheck)
+            @if($canMasterData || $canOnboardingTemplates || $canLeaveConfiguration || $canPerformanceConfiguration || $canAssetConfiguration || $canVehicleConfiguration || $canClaimsManagement || $canProjects || $canSettings || $canRoles || $canAuditLog || $canSignatures || $canHealthCheck)
                 <button type="button" @click="toggle('admin')" class="nav-section-label" style="display:flex;width:100%;align-items:center;justify-content:space-between;background:none;border:none;cursor:pointer;font:inherit;text-align:left;">
                     <span>Admin</span>
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" :style="sections.admin ? '' : 'transform:rotate(-90deg)'" style="transition:transform .15s ease;"><path d="m6 9 6 6 6-6"></path></svg>
@@ -215,6 +222,11 @@
                 @if($canAssetConfiguration)
                     <a href="{{ route('admin.asset-configuration') }}" class="nav-link {{ request()->routeIs('admin.asset-configuration') ? 'active' : '' }}">
                         <span class="nav-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg></span>Asset Configuration
+                    </a>
+                @endif
+                @if($canVehicleConfiguration)
+                    <a href="{{ route('admin.vehicle-configuration') }}" class="nav-link {{ request()->routeIs('admin.vehicle-configuration') ? 'active' : '' }}">
+                        <span class="nav-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17h14M6 17V9a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v8"></path><circle cx="7.5" cy="17.5" r="1.8"></circle><circle cx="16.5" cy="17.5" r="1.8"></circle></svg></span>Vehicle Configuration
                     </a>
                 @endif
                 @if($canClaimsManagement)
