@@ -57,6 +57,11 @@ class RbacSeeder extends Seeder
             // versions" — a route-level block, same as every other
             // Admin-only configuration screen.
             ['key' => 'admin.policy-configuration', 'label' => 'Policy Configuration', 'nav_group' => 'Admin', 'sort_order' => 7],
+            // Spec E5: "restricted by default" — unlike Policies (E4), there
+            // is no base-ESS browse screen at all; a specifically-granted
+            // employee reaches a file only via its direct download link,
+            // never a self-service listing (documented scope trade-off).
+            ['key' => 'admin.company-documents', 'label' => 'Company Registration Documents', 'nav_group' => 'Admin', 'sort_order' => 7],
             ['key' => 'settings', 'label' => 'Settings', 'nav_group' => 'Admin', 'sort_order' => 8],
             ['key' => 'admin.roles', 'label' => 'Roles & Permissions', 'nav_group' => 'Admin', 'sort_order' => 9],
             ['key' => 'admin.audit-log', 'label' => 'Audit Log', 'nav_group' => 'Admin', 'sort_order' => 10],
@@ -141,8 +146,8 @@ class RbacSeeder extends Seeder
 
         // ---- Screen grants per role ----
         $screenGrants = [
-            'admin' => ['home', 'leave.apply', 'claims.create', 'timesheets', 'performance', 'assets', 'vehicles', 'discipline', 'policies', 'profile', 'approvals', 'employees', 'recruitment', 'admin.master-data', 'admin.onboarding-templates', 'admin.leave-configuration', 'admin.performance-configuration', 'admin.asset-configuration', 'admin.vehicle-configuration', 'admin.policy-configuration', 'admin.claims-management', 'admin.projects', 'settings', 'admin.roles', 'admin.audit-log', 'admin.signatures', 'admin.health-check'],
-            'hr_admin' => ['home', 'leave.apply', 'claims.create', 'timesheets', 'performance', 'assets', 'vehicles', 'discipline', 'policies', 'profile', 'approvals', 'employees', 'recruitment', 'admin.master-data', 'admin.onboarding-templates', 'admin.leave-configuration', 'admin.performance-configuration', 'admin.asset-configuration', 'admin.vehicle-configuration', 'admin.policy-configuration', 'admin.claims-management', 'admin.projects', 'admin.signatures'],
+            'admin' => ['home', 'leave.apply', 'claims.create', 'timesheets', 'performance', 'assets', 'vehicles', 'discipline', 'policies', 'profile', 'approvals', 'employees', 'recruitment', 'admin.master-data', 'admin.onboarding-templates', 'admin.leave-configuration', 'admin.performance-configuration', 'admin.asset-configuration', 'admin.vehicle-configuration', 'admin.policy-configuration', 'admin.company-documents', 'admin.claims-management', 'admin.projects', 'settings', 'admin.roles', 'admin.audit-log', 'admin.signatures', 'admin.health-check'],
+            'hr_admin' => ['home', 'leave.apply', 'claims.create', 'timesheets', 'performance', 'assets', 'vehicles', 'discipline', 'policies', 'profile', 'approvals', 'employees', 'recruitment', 'admin.master-data', 'admin.onboarding-templates', 'admin.leave-configuration', 'admin.performance-configuration', 'admin.asset-configuration', 'admin.vehicle-configuration', 'admin.policy-configuration', 'admin.company-documents', 'admin.claims-management', 'admin.projects', 'admin.signatures'],
             // HR Officer deliberately does NOT get 'discipline' or
             // 'admin.policy-configuration' — spec's own "only HR/Admin
             // manage categories, documents, and versions" reads as Admin/HR

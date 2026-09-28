@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CareersFeedController;
+use App\Http\Controllers\CompanyDocumentFileController;
 use App\Http\Controllers\EmployeeCsvTemplateController;
 use App\Http\Controllers\PolicyDocumentFileController;
 use App\Http\Controllers\PushSubscriptionController;
@@ -84,6 +85,10 @@ Route::middleware(['auth', 'password_policy', 'two_factor'])->group(function () 
     Route::livewire('/admin/asset-configuration', 'pages::admin-asset-configuration')->name('admin.asset-configuration')->middleware('screen:admin.asset-configuration');
     Route::livewire('/admin/vehicle-configuration', 'pages::admin-vehicle-configuration')->name('admin.vehicle-configuration')->middleware('screen:admin.vehicle-configuration');
     Route::livewire('/admin/policy-configuration', 'pages::admin-policy-configuration')->name('admin.policy-configuration')->middleware('screen:admin.policy-configuration');
+    Route::livewire('/admin/company-documents', 'pages::admin-company-documents')->name('admin.company-documents')->middleware('screen:admin.company-documents');
+    // No screen middleware here: authorization is entirely inside CompanyDocumentService::canAccessFile()
+    // so a specifically-granted non-admin employee (spec E5's "external auditor" case) can still reach the file.
+    Route::get('/company-documents/versions/{version}/file', CompanyDocumentFileController::class)->name('company-documents.file');
     Route::livewire('/settings', 'pages::settings')->name('settings')->middleware('screen:settings');
     Route::livewire('/admin/roles', 'pages::admin-roles')->name('admin.roles')->middleware('screen:admin.roles');
     Route::livewire('/admin/roles/{role}', 'pages::admin-role-edit')->name('admin.roles.edit')->middleware('screen:admin.roles');

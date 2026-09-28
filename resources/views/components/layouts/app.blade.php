@@ -25,6 +25,7 @@
     $canAssetConfiguration = auth()->user()?->canView('admin.asset-configuration');
     $canVehicleConfiguration = auth()->user()?->canView('admin.vehicle-configuration');
     $canPolicyConfiguration = auth()->user()?->canView('admin.policy-configuration');
+    $canCompanyDocuments = auth()->user()?->canView('admin.company-documents');
     $canClaimsManagement = auth()->user()?->canView('admin.claims-management');
     $canProjects = auth()->user()?->canView('admin.projects');
     $canSettings = auth()->user()?->canView('settings');
@@ -194,7 +195,7 @@
             @endif
             </div>
 
-            @if($canMasterData || $canOnboardingTemplates || $canLeaveConfiguration || $canPerformanceConfiguration || $canAssetConfiguration || $canVehicleConfiguration || $canPolicyConfiguration || $canClaimsManagement || $canProjects || $canSettings || $canRoles || $canAuditLog || $canSignatures || $canHealthCheck)
+            @if($canMasterData || $canOnboardingTemplates || $canLeaveConfiguration || $canPerformanceConfiguration || $canAssetConfiguration || $canVehicleConfiguration || $canPolicyConfiguration || $canCompanyDocuments || $canClaimsManagement || $canProjects || $canSettings || $canRoles || $canAuditLog || $canSignatures || $canHealthCheck)
                 <button type="button" @click="toggle('admin')" class="nav-section-label" style="display:flex;width:100%;align-items:center;justify-content:space-between;background:none;border:none;cursor:pointer;font:inherit;text-align:left;">
                     <span>Admin</span>
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" :style="sections.admin ? '' : 'transform:rotate(-90deg)'" style="transition:transform .15s ease;"><path d="m6 9 6 6 6-6"></path></svg>
@@ -236,6 +237,11 @@
                 @if($canPolicyConfiguration)
                     <a href="{{ route('admin.policy-configuration') }}" class="nav-link {{ request()->routeIs('admin.policy-configuration') ? 'active' : '' }}">
                         <span class="nav-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z"></path><path d="M14 3v5h5M9 13h6M9 17h6"></path></svg></span>Policy Configuration
+                    </a>
+                @endif
+                @if($canCompanyDocuments)
+                    <a href="{{ route('admin.company-documents') }}" class="nav-link {{ request()->routeIs('admin.company-documents') ? 'active' : '' }}">
+                        <span class="nav-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"></path><path d="M4 21V5"></path></svg></span>Company Documents
                     </a>
                 @endif
                 @if($canClaimsManagement)
