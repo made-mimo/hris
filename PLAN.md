@@ -2604,3 +2604,44 @@ already covers everything HRIS actually has.
 audit` stayed clean (no new dependencies this phase). Account lockout, the TOTP email gate through to a
 completed enrollment, faceted-filter counts/persistence, and the CSP report-only header were all also
 verified live in the browser, not just via the automated suite.
+
+### 14 — Shared date convention (unblocked mid-Phase-8)
+
+Held back initially pending the user's confirmation; unblocked partway through this phase once the SI
+PIM session relayed it. New `App\Support\Dates` (`DATE = 'd/m/Y'`, `DATE_TIME = 'd/m/Y H:i'`, `LONG =
+'j M Y'`) mirrors PIM's own `Dates.php` constants without mass-rewriting every existing `'j M Y'` call
+site that was already correct for its context — only sites that needed to actually change were touched.
+Classified each of the ~50 existing date-format call sites by what it actually renders, not just its
+format string: genuine table/list columns (the Employee list's Hired column, an audit-log/signature-
+verification timestamp column, a `<td>` in Goals) and history/activity-log rows (candidate application
+history, attendance punch records, company-document and employee audit trails, a timesheet's action
+log) moved to `Dates::DATE`/`DATE_TIME`; one-off descriptive sentences about a single record ("expires
+on…", "Signed by X on…", "Trusted…", "This record was purged on…") were deliberately left in the long
+"28 Sep 2026" style, matching the confirmed rule's own "sentences where space allows" wording. The
+Employee CSV/PDF export (`EmployeeReportService::rowValue()`) moved from raw ISO to `Dates::DATE`. Four
+remaining 12-hour (`g:ia`) timestamps were fixed to 24-hour regardless of which style they otherwise
+kept. The home page's weekday greeting and a chart tooltip's month-only label were aligned to the
+confirmed exact examples ("Monday, 28 Sep 2026"; full month name for a month-only period). Added hover
+titles with the exact date/time to four relative-time ("`5 minutes ago`") displays (notification bell,
+Buzz shares, careers listing, trusted-device "last used"), per the rule's own requirement for those.
+API JSON resources (already ISO 8601) and native `<input type="date">` bindings (which must stay ISO —
+that's the HTML spec's own value-attribute format, unrelated to display) were deliberately left
+untouched. A custom DD/MM/YYYY-masked replacement for HRIS's 26 native date inputs — matching PIM's own
+`<x-date-input>` — was considered and declined by the user as a separate, larger feature; native pickers
+already display per the browser's own locale and their stored value is unaffected either way.
+
+**Unrelated but serious, found and fixed in the same pass**: discovered the real dev MariaDB database's
+core tables (`users`, `employees`, `roles`, etc.) had been dropped and recreated empty at some point
+earlier in this session — MySQL's own table metadata showed the exact timestamp, though this instance
+has neither a general query log nor binlog enabled to identify which command caused it; the leading
+theory is an earlier CI-parity `migrate:fresh` check against a throwaway SQLite file losing its
+`DB_CONNECTION` override. Flagged to the user immediately rather than silently reseeding. Restored via
+`php artisan db:seed`, which also surfaced (and fixed) a genuine pre-existing bug in `HrisDemoSeeder`:
+its `Setting::create(['id' => 1, ...])` call wasn't idempotent like the rest of the seeder's own
+lookups, and failed on a unique-constraint violation against the settings singleton `Setting::current()`
+had already recreated elsewhere — changed to `updateOrCreate`, matching the pattern the seeder already
+uses for its job title/sub-unit/location lookups.
+
+Verified live in the browser after reseeding: the Employee list's Hired column, the Audit Log's both
+tabs, and the home page's weekday greeting all render in the confirmed convention. Full test suite
+(27/27) and `vendor/bin/pint` stayed green throughout.
