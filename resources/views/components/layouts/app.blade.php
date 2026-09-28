@@ -19,6 +19,7 @@
     $canOnboardingTemplates = auth()->user()?->canView('admin.onboarding-templates');
     $canLeaveConfiguration = auth()->user()?->canView('admin.leave-configuration');
     $canPerformanceConfiguration = auth()->user()?->canView('admin.performance-configuration');
+    $canClaimsManagement = auth()->user()?->canView('admin.claims-management');
     $canProjects = auth()->user()?->canView('admin.projects');
     $canSettings = auth()->user()?->canView('settings');
     $canRoles = auth()->user()?->canView('admin.roles');
@@ -96,6 +97,9 @@
                 <a href="{{ route('claims.create') }}" class="nav-link {{ request()->routeIs('claims.create') ? 'active' : '' }}">
                     <span class="nav-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"></path><path d="M9 8h6M9 12h6"></path></svg></span>My Claims
                 </a>
+                <a href="{{ route('claims.travel-advance') }}" class="nav-link {{ request()->routeIs('claims.travel-advance') ? 'active' : '' }}">
+                    <span class="nav-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><path d="M3.27 6.96 12 12l8.73-5.04M12 22.08V12"></path></svg></span>Travel Advance
+                </a>
             @endif
             @if($canTimesheets)
                 <a href="{{ route('timesheets') }}" class="nav-link {{ request()->routeIs('timesheets') ? 'active' : '' }}">
@@ -172,7 +176,7 @@
             </span>
             </div>
 
-            @if($canMasterData || $canOnboardingTemplates || $canLeaveConfiguration || $canPerformanceConfiguration || $canProjects || $canSettings || $canRoles || $canAuditLog || $canSignatures || $canHealthCheck)
+            @if($canMasterData || $canOnboardingTemplates || $canLeaveConfiguration || $canPerformanceConfiguration || $canClaimsManagement || $canProjects || $canSettings || $canRoles || $canAuditLog || $canSignatures || $canHealthCheck)
                 <button type="button" @click="toggle('admin')" class="nav-section-label" style="display:flex;width:100%;align-items:center;justify-content:space-between;background:none;border:none;cursor:pointer;font:inherit;text-align:left;">
                     <span>Admin</span>
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" :style="sections.admin ? '' : 'transform:rotate(-90deg)'" style="transition:transform .15s ease;"><path d="m6 9 6 6 6-6"></path></svg>
@@ -199,6 +203,11 @@
                 @if($canPerformanceConfiguration)
                     <a href="{{ route('admin.performance-configuration') }}" class="nav-link {{ request()->routeIs('admin.performance-configuration') ? 'active' : '' }}">
                         <span class="nav-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"></path><path d="M18 17V9M13 17V5M8 17v-4"></path></svg></span>Performance Configuration
+                    </a>
+                @endif
+                @if($canClaimsManagement)
+                    <a href="{{ route('admin.claims-management') }}" class="nav-link {{ request()->routeIs('admin.claims-management') ? 'active' : '' }}">
+                        <span class="nav-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"></path><path d="M9 8h6M9 12h6"></path></svg></span>Claims Management
                     </a>
                 @endif
                 @if($canProjects)

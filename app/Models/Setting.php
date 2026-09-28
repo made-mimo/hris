@@ -31,6 +31,7 @@ class Setting extends Model implements HasMedia
         'health_check_hidden', 'show_optional_profile_fields',
         'time_display_format',
         'attendance_allow_backdate', 'attendance_allow_self_edit', 'attendance_allow_supervisor_proxy',
+        'expense_claim_second_approval_threshold', 'travel_advance_reconciliation_window_days',
     ];
 
     protected function casts(): array
@@ -50,6 +51,7 @@ class Setting extends Model implements HasMedia
             'attendance_allow_backdate' => 'boolean',
             'attendance_allow_self_edit' => 'boolean',
             'attendance_allow_supervisor_proxy' => 'boolean',
+            'expense_claim_second_approval_threshold' => 'decimal:2',
         ];
     }
 

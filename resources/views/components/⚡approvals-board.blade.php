@@ -56,17 +56,28 @@ new class extends Component
     public function approve(): void
     {
         [$record, $workflow] = $this->findRecord($this->resolvedSelectedKey());
-        $wasPendingManager = $record->status === 'pending_manager';
+        $fromStatus = $record->status;
 
-        $this->engine->apply($workflow, $record, auth()->user(), 'approve');
+        // Spec E1: a claim above the Admin-configured threshold routes
+        // through a second, higher-level approver — the HR reviewer still
+        // just clicks "Approve" once; which engine action fires (and
+        // therefore which state it lands in) is decided here, transparently
+        // to them, based on the claim's own total.
+        $action = ($workflow === 'expense_claim' && $fromStatus === 'pending_hr' && $record->requiresSecondApproval())
+            ? 'approve_high_value'
+            : 'approve';
+
+        $this->engine->apply($workflow, $record, auth()->user(), $action);
 
         // Stamp the domain-specific audit columns for whichever stage just
         // cleared — the engine itself only knows about the generic `status`
         // column, per spec's separation of workflow *process* from a
         // module's own record-keeping.
-        $record->update($wasPendingManager
-            ? ['manager_approved_by' => auth()->id(), 'manager_approved_at' => now()]
-            : ['hr_approved_by' => auth()->id(), 'hr_approved_at' => now()]);
+        $record->update(match ($fromStatus) {
+            'pending_manager' => ['manager_approved_by' => auth()->id(), 'manager_approved_at' => now()],
+            'pending_second_approval' => ['second_approved_by' => auth()->id(), 'second_approved_at' => now()],
+            default => ['hr_approved_by' => auth()->id(), 'hr_approved_at' => now()],
+        });
 
         // Spec C1: final HR approval is the moment a leave request's days
         // actually flip to scheduled/taken and draw down an entitlement
@@ -124,10 +135,14 @@ new class extends Component
                 ];
             });
 
-        $claims = $this->engine->pendingFor($user, 'expense_claim', ExpenseClaim::class, ['pending_manager', 'pending_hr'])
+        $claims = $this->engine->pendingFor($user, 'expense_claim', ExpenseClaim::class, ['pending_manager', 'pending_hr', 'pending_second_approval'])
             ->load(['employee.supervisor', 'employee.subUnit', 'claimEvent', 'lines'])
             ->map(function (ExpenseClaim $c) use ($user) {
-                $stageLabel = $c->status === 'pending_manager' ? 'Line Manager approval' : 'HR review';
+                $stageLabel = match ($c->status) {
+                    'pending_manager' => 'Line Manager approval',
+                    'pending_second_approval' => 'Second approval (high value)',
+                    default => 'HR review',
+                };
 
                 return [
                     'key' => "claim-{$c->id}", 'kind' => 'claim', 'kindLabel' => 'Claim',
@@ -140,12 +155,17 @@ new class extends Component
                         ['k' => 'Claim event', 'v' => $c->claimEvent->name],
                         ['k' => 'Total', 'v' => '₦'.number_format($c->total(), 2)],
                         ['k' => 'Line items', 'v' => $c->lines->count().($c->lines->contains('flagged', true) ? ' · has a flagged line' : ' · no cap flags')],
-                        ['k' => 'Next approver', 'v' => $c->status === 'pending_manager' ? 'HR & Admin next' : 'Finance (payment)'],
+                        ['k' => 'Next approver', 'v' => match ($c->status) {
+                            'pending_manager' => 'HR & Admin next',
+                            'pending_second_approval' => 'Admin (second approver)',
+                            default => $c->requiresSecondApproval() ? 'Second approver next (high value)' : 'Finance (payment)',
+                        }],
                     ],
                     'trail' => [
                         ['label' => 'Submitted by '.$c->employee->fullName(), 'state' => 'done'],
                         ['label' => 'Line Manager · '.($c->employee->supervisor?->fullName() ?? '—'), 'state' => $c->status === 'pending_manager' ? 'current' : 'done'],
-                        ['label' => 'HR review', 'state' => $c->status === 'pending_hr' ? 'current' : 'todo'],
+                        ['label' => 'HR review', 'state' => $c->status === 'pending_hr' ? 'current' : ($c->status === 'pending_manager' ? 'todo' : 'done')],
+                        ['label' => 'Second approval (high value)', 'state' => $c->status === 'pending_second_approval' ? 'current' : 'todo'],
                     ],
                 ];
             });

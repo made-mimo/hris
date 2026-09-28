@@ -52,6 +52,8 @@ Route::middleware(['auth', 'password_policy', 'two_factor'])->group(function () 
     Route::livewire('/leave/assign', 'pages::leave-assign')->name('leave.assign')->middleware('screen:approvals');
     Route::livewire('/leave/reports', 'pages::leave-reports')->name('leave.reports')->middleware('screen:admin.leave-configuration');
     Route::livewire('/claims/create', 'pages::expense-claim')->name('claims.create')->middleware('screen:claims.create');
+    Route::livewire('/claims/travel-advance', 'pages::claims-travel-advance')->name('claims.travel-advance')->middleware('screen:claims.create');
+    Route::livewire('/admin/claims-management', 'pages::claims-management')->name('admin.claims-management')->middleware('screen:admin.claims-management');
     Route::livewire('/timesheets', 'pages::timesheets')->name('timesheets')->middleware('screen:timesheets');
     Route::livewire('/timesheets/approvals', 'pages::timesheet-approvals')->name('timesheets.approvals')->middleware('screen:timesheets');
     Route::livewire('/timesheets/reports', 'pages::timesheet-reports')->name('timesheets.reports')->middleware('screen:admin.projects');

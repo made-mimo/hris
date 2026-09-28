@@ -1,18 +1,19 @@
 <?php
 
 use App\Models\ClaimEvent;
-use App\Models\ExpenseClaim;
-use App\Models\ExpenseClaimLine;
 use App\Models\ExpenseType;
-use App\Models\Role;
-use App\Services\NotificationService;
+use App\Services\ExpenseClaimService;
 use Livewire\Component;
+use Livewire\WithFileUploads;
 
 new class extends Component
 {
+    use WithFileUploads;
+
     public ?int $claimEventId = null;
     public string $currency = 'NGN';
     public array $lines = [];
+    public $receipt = null;
 
     public function mount(): void
     {
@@ -39,7 +40,7 @@ new class extends Component
         return collect($this->lines)->sum(fn ($l) => (float) ($l['amount'] ?? 0));
     }
 
-    public function submit(NotificationService $notifications): void
+    public function submit(ExpenseClaimService $claims): void
     {
         $this->validate([
             'claimEventId' => ['required', 'exists:claim_events,id'],
@@ -47,50 +48,15 @@ new class extends Component
             'lines.*.type_id' => ['required', 'exists:expense_types,id'],
             'lines.*.date' => ['required', 'date'],
             'lines.*.amount' => ['required', 'numeric', 'min:0.01'],
+            'receipt' => ['nullable', 'file', 'max:10240'],
         ]);
 
         $me = auth()->user()->employee;
-        // Routes into the workflow engine's matrix — see the identical note
-        // in ⚡leave-apply-form.blade.php and PLAN.md §4.7.
-        $hasSupervisor = (bool) $me->supervisor_id;
 
-        $claim = ExpenseClaim::create([
-            'reference' => 'CLM-'.now()->format('Ymd').'-'.str_pad((string) (ExpenseClaim::max('id') + 1), 3, '0', STR_PAD_LEFT),
-            'employee_id' => $me->id,
-            'claim_event_id' => $this->claimEventId,
-            'currency' => $this->currency,
-            'status' => $hasSupervisor ? 'pending_manager' : 'pending_hr',
-            'submitted_at' => now(),
-            'manager_approved_at' => $hasSupervisor ? null : now(),
-        ]);
+        $claim = $claims->submit($me, $this->claimEventId, $this->currency, $this->lines);
 
-        foreach ($this->lines as $line) {
-            $type = ExpenseType::find($line['type_id']);
-            $flagged = $type?->default_cap && $line['amount'] > $type->default_cap;
-
-            ExpenseClaimLine::create([
-                'expense_claim_id' => $claim->id,
-                'expense_type_id' => $line['type_id'],
-                'date' => $line['date'],
-                'note' => $line['note'] ?: null,
-                'amount' => $line['amount'],
-                'flagged' => $flagged,
-            ]);
-        }
-
-        $recipients = $hasSupervisor
-            ? ($me->supervisor?->user ? [$me->supervisor->user] : [])
-            : (Role::where('slug', 'hr_admin')->first()?->users ?? []);
-
-        foreach ($recipients as $recipient) {
-            $notifications->notify(
-                $recipient,
-                'expense_claim.submitted',
-                'New expense claim',
-                "{$me->fullName()} submitted claim {$claim->reference} for {$claim->currency} {$this->total}.",
-                '/approvals',
-                'Expense Claim'
-            );
+        if ($this->receipt) {
+            $claim->addMedia($this->receipt->getRealPath())->usingName($this->receipt->getClientOriginalName())->toMediaCollection('receipts');
         }
 
         session()->flash('status', "Claim {$claim->reference} submitted for approval.");
@@ -175,7 +141,13 @@ new class extends Component
             </div>
         </section>
 
-        <div class="hint">Receipt upload and Travel Advance &amp; Reconciliation (spec E1) aren't implemented in this prototype slice — see PLAN.md §4/§5.</div>
+        <section class="card">
+            <label for="receipt" style="font-weight:600;font-size:13.5px;display:block;margin-bottom:8px;">Receipt / supporting document <span class="text-muted" style="font-weight:400;">(optional)</span></label>
+            <input id="receipt" type="file" wire:model="receipt">
+            @error('receipt') <div class="hint" style="color:var(--color-danger);margin-top:6px;">{{ $message }}</div> @enderror
+        </section>
+
+        <div class="hint">Need funds ahead of the trip? <a href="{{ route('claims.travel-advance') }}">Request a Travel Advance</a> against this claim event first.</div>
     </div>
 
     <div style="display:flex;flex-direction:column;gap:18px;">

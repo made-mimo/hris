@@ -38,6 +38,7 @@ class RbacSeeder extends Seeder
             ['key' => 'admin.onboarding-templates', 'label' => 'Onboarding/Offboarding Templates', 'nav_group' => 'Admin', 'sort_order' => 7],
             ['key' => 'admin.leave-configuration', 'label' => 'Leave Configuration', 'nav_group' => 'Admin', 'sort_order' => 7],
             ['key' => 'admin.performance-configuration', 'label' => 'Performance Configuration', 'nav_group' => 'Admin', 'sort_order' => 7],
+            ['key' => 'admin.claims-management', 'label' => 'Claims Management', 'nav_group' => 'Admin', 'sort_order' => 7],
             ['key' => 'settings', 'label' => 'Settings', 'nav_group' => 'Admin', 'sort_order' => 8],
             ['key' => 'admin.roles', 'label' => 'Roles & Permissions', 'nav_group' => 'Admin', 'sort_order' => 9],
             ['key' => 'admin.audit-log', 'label' => 'Audit Log', 'nav_group' => 'Admin', 'sort_order' => 10],
@@ -109,12 +110,13 @@ class RbacSeeder extends Seeder
 
         // ---- Screen grants per role ----
         $screenGrants = [
-            'admin' => ['home', 'leave.apply', 'claims.create', 'timesheets', 'performance', 'discipline', 'profile', 'approvals', 'employees', 'recruitment', 'admin.master-data', 'admin.onboarding-templates', 'admin.leave-configuration', 'admin.performance-configuration', 'admin.projects', 'settings', 'admin.roles', 'admin.audit-log', 'admin.signatures', 'admin.health-check'],
-            'hr_admin' => ['home', 'leave.apply', 'claims.create', 'timesheets', 'performance', 'discipline', 'profile', 'approvals', 'employees', 'recruitment', 'admin.master-data', 'admin.onboarding-templates', 'admin.leave-configuration', 'admin.performance-configuration', 'admin.projects', 'admin.signatures'],
+            'admin' => ['home', 'leave.apply', 'claims.create', 'timesheets', 'performance', 'discipline', 'profile', 'approvals', 'employees', 'recruitment', 'admin.master-data', 'admin.onboarding-templates', 'admin.leave-configuration', 'admin.performance-configuration', 'admin.claims-management', 'admin.projects', 'settings', 'admin.roles', 'admin.audit-log', 'admin.signatures', 'admin.health-check'],
+            'hr_admin' => ['home', 'leave.apply', 'claims.create', 'timesheets', 'performance', 'discipline', 'profile', 'approvals', 'employees', 'recruitment', 'admin.master-data', 'admin.onboarding-templates', 'admin.leave-configuration', 'admin.performance-configuration', 'admin.claims-management', 'admin.projects', 'admin.signatures'],
             // HR Officer deliberately does NOT get 'discipline' — spec's own
             // "no access...at all," a route-level block, not just a data
-            // scope of 'none'.
-            'hr_officer' => ['home', 'leave.apply', 'claims.create', 'timesheets', 'performance', 'profile', 'approvals', 'employees', 'recruitment'],
+            // scope of 'none'. It does get claims-management, since spec
+            // never excludes HR Officer from Expense Claims data.
+            'hr_officer' => ['home', 'leave.apply', 'claims.create', 'timesheets', 'performance', 'profile', 'approvals', 'employees', 'recruitment', 'admin.claims-management'],
             // Recruitment/Performance/Discipline are also granted at the base
             // ESS level (like 'profile') since a hiring manager may be any
             // employee regardless of role, every employee has their own
