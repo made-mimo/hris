@@ -120,9 +120,5 @@ new class extends Component
         <p class="text-muted" style="margin:22px 0 0;font-size:12.5px;text-align:center;line-height:1.55;">
             Accounts are created by HR during onboarding.<br>Can't sign in? Contact HR &amp; Admin.
         </p>
-
-        <div class="hint" style="margin-top:24px;padding:12px 14px;background:var(--color-bg);border-radius:8px;">
-            Demo logins (password <code>password</code>): <code>admin@systemsintelligenz.com</code> (Admin) · <code>hr@systemsintelligenz.com</code> (HR &amp; Admin) · <code>emeka@systemsintelligenz.com</code> (Line Manager) · <code>adaeze@systemsintelligenz.com</code> (ESS + Line Manager)
-        </div>
     </form>
 </div>
