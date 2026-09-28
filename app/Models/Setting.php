@@ -34,6 +34,7 @@ class Setting extends Model implements HasMedia
         'expense_claim_second_approval_threshold', 'travel_advance_reconciliation_window_days',
         'pulse_survey_min_responses',
         'dashboard_who_is_out_scope',
+        'help_provider_base_url',
     ];
 
     protected function casts(): array

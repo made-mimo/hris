@@ -4,6 +4,7 @@
     $isHr = auth()->user()?->isHr();
     $isSupervisor = $me && $me->subordinates()->exists();
     $permissions = app(\App\Services\PermissionService::class);
+    $helpUrl = app(\App\Services\Help\HelpLinkResolver::class)->currentScreenHelpUrl(request());
     $canBuzz = auth()->user()?->canView('buzz');
     $canHelpdesk = auth()->user()?->canView('helpdesk');
     $canPulseSurveys = auth()->user()?->canView('pulse-surveys');
@@ -332,6 +333,12 @@
                 <input type="search" aria-label="Search" placeholder="Search people, requests, policies…">
             </label>
             <div class="topbar-actions">
+                @if($helpUrl)
+                    <a href="{{ $helpUrl }}" target="_blank" rel="noopener" aria-label="Help" title="Help" class="icon-btn">
+                        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M9.5 9a2.5 2.5 0 0 1 5 0c0 1.5-2 1.8-2 3.5"></path><path d="M12 17h.01"></path></svg>
+                    </a>
+                @endif
+
                 <livewire:notification-bell />
 
                 <button type="button" aria-label="Toggle theme" class="icon-btn"

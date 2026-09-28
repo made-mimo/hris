@@ -19,82 +19,85 @@ class RbacSeeder extends Seeder
     public function run(): void
     {
         // ---- Screens (one per route this app actually has) ----
+        // Spec F5: each screen's optional `help_tag` maps it to a help-center
+        // search query for the topbar's contextual Help link; a screen with
+        // no tag falls back to the provider's default landing page.
         $screens = [
-            ['key' => 'home', 'label' => 'Home', 'nav_group' => 'Workspace', 'sort_order' => 1],
+            ['key' => 'home', 'label' => 'Home', 'nav_group' => 'Workspace', 'sort_order' => 1, 'help_tag' => 'dashboard'],
             // Spec F1: company-wide feed, "no other audience/visibility
             // scoping (company-wide by design)" — granted at base level for
             // every role; the 'buzz' data group below governs only
             // edit/delete-others moderation rights, never what's visible.
-            ['key' => 'buzz', 'label' => 'Buzz', 'nav_group' => 'Workspace', 'sort_order' => 2, 'module_key' => 'buzz'],
+            ['key' => 'buzz', 'label' => 'Buzz', 'nav_group' => 'Workspace', 'sort_order' => 2, 'module_key' => 'buzz', 'help_tag' => 'buzz-social-feed'],
             // Spec F4: every employee can raise a ticket for themselves;
             // visibility beyond the raiser is governed by the
             // 'helpdesk_tickets' data group below (plus the per-category
             // confidential handler list for Grievance/Whistleblower).
-            ['key' => 'helpdesk', 'label' => 'Helpdesk', 'nav_group' => 'Workspace', 'sort_order' => 3, 'module_key' => 'helpdesk'],
+            ['key' => 'helpdesk', 'label' => 'Helpdesk', 'nav_group' => 'Workspace', 'sort_order' => 3, 'module_key' => 'helpdesk', 'help_tag' => 'helpdesk-tickets'],
             // Spec F8: every employee participates in pulse surveys; results
             // reporting (with the anonymization threshold) is a separate
             // Admin-only screen below.
-            ['key' => 'pulse-surveys', 'label' => 'Pulse Surveys', 'nav_group' => 'Workspace', 'sort_order' => 4, 'module_key' => 'pulse_surveys'],
-            ['key' => 'leave.apply', 'label' => 'My Leave', 'nav_group' => 'Workspace', 'sort_order' => 2, 'module_key' => 'leave'],
-            ['key' => 'claims.create', 'label' => 'My Claims', 'nav_group' => 'Workspace', 'sort_order' => 3, 'module_key' => 'claims'],
-            ['key' => 'timesheets', 'label' => 'My Timesheets', 'nav_group' => 'Workspace', 'sort_order' => 4, 'module_key' => 'timesheets'],
-            ['key' => 'performance', 'label' => 'Performance', 'nav_group' => 'Workspace', 'sort_order' => 5, 'module_key' => 'performance'],
+            ['key' => 'pulse-surveys', 'label' => 'Pulse Surveys', 'nav_group' => 'Workspace', 'sort_order' => 4, 'module_key' => 'pulse_surveys', 'help_tag' => 'pulse-surveys'],
+            ['key' => 'leave.apply', 'label' => 'My Leave', 'nav_group' => 'Workspace', 'sort_order' => 2, 'module_key' => 'leave', 'help_tag' => 'leave-management'],
+            ['key' => 'claims.create', 'label' => 'My Claims', 'nav_group' => 'Workspace', 'sort_order' => 3, 'module_key' => 'claims', 'help_tag' => 'expense-claims'],
+            ['key' => 'timesheets', 'label' => 'My Timesheets', 'nav_group' => 'Workspace', 'sort_order' => 4, 'module_key' => 'timesheets', 'help_tag' => 'timesheets'],
+            ['key' => 'performance', 'label' => 'Performance', 'nav_group' => 'Workspace', 'sort_order' => 5, 'module_key' => 'performance', 'help_tag' => 'performance-reviews'],
             // Spec E2: "an ordinary ESS user sees only assets currently
             // assigned to them" — real self-scoped access via this data
             // group's own scope, not a route-level block, so the screen is
             // granted at base ESS level same as Performance/Profile.
-            ['key' => 'assets', 'label' => 'Assets', 'nav_group' => 'Workspace', 'sort_order' => 6, 'module_key' => 'assets'],
+            ['key' => 'assets', 'label' => 'Assets', 'nav_group' => 'Workspace', 'sort_order' => 6, 'module_key' => 'assets', 'help_tag' => 'asset-management'],
             // Spec E3: "same for vehicles" — mirrors the Assets screen's
             // self-only-by-default policy exactly.
-            ['key' => 'vehicles', 'label' => 'Vehicles', 'nav_group' => 'Workspace', 'sort_order' => 6, 'module_key' => 'vehicles'],
-            ['key' => 'profile', 'label' => 'My Profile', 'nav_group' => 'Workspace', 'sort_order' => 6],
-            ['key' => 'approvals', 'label' => 'Approvals', 'nav_group' => 'My Team', 'sort_order' => 6],
-            ['key' => 'employees', 'label' => 'Employees', 'nav_group' => 'My Team', 'sort_order' => 7],
-            ['key' => 'recruitment', 'label' => 'Recruitment', 'nav_group' => 'My Team', 'sort_order' => 8, 'module_key' => 'recruitment'],
+            ['key' => 'vehicles', 'label' => 'Vehicles', 'nav_group' => 'Workspace', 'sort_order' => 6, 'module_key' => 'vehicles', 'help_tag' => 'vehicle-fleet'],
+            ['key' => 'profile', 'label' => 'My Profile', 'nav_group' => 'Workspace', 'sort_order' => 6, 'help_tag' => 'employee-profile'],
+            ['key' => 'approvals', 'label' => 'Approvals', 'nav_group' => 'My Team', 'sort_order' => 6, 'help_tag' => 'approvals'],
+            ['key' => 'employees', 'label' => 'Employees', 'nav_group' => 'My Team', 'sort_order' => 7, 'help_tag' => 'employee-records'],
+            ['key' => 'recruitment', 'label' => 'Recruitment', 'nav_group' => 'My Team', 'sort_order' => 8, 'module_key' => 'recruitment', 'help_tag' => 'recruitment'],
             // Spec D3: "HR Officer has no access to Discipline case data at
             // all" — this screen is simply never granted to that role below,
             // a route-level block stronger than data-group scoping alone.
-            ['key' => 'discipline', 'label' => 'Discipline Cases', 'nav_group' => 'My Team', 'sort_order' => 9],
+            ['key' => 'discipline', 'label' => 'Discipline Cases', 'nav_group' => 'My Team', 'sort_order' => 9, 'help_tag' => 'discipline-cases'],
             // Spec F3: "a searchable, browsable company directory" — a pure
             // read-only projection over Employee, open to every role same as
             // Policies below.
-            ['key' => 'directory', 'label' => 'Directory', 'nav_group' => 'Company', 'sort_order' => 1, 'module_key' => 'directory'],
+            ['key' => 'directory', 'label' => 'Directory', 'nav_group' => 'Company', 'sort_order' => 1, 'module_key' => 'directory', 'help_tag' => 'corporate-directory'],
             // Spec E4: "every employee can browse and download active
             // policy documents they have access to" — granted at base ESS
             // level, unlike the Admin-only management screen below.
-            ['key' => 'policies', 'label' => 'Policies', 'nav_group' => 'Company', 'sort_order' => 2, 'module_key' => 'policies'],
-            ['key' => 'admin.projects', 'label' => 'Customers & Projects', 'nav_group' => 'Admin', 'sort_order' => 6],
-            ['key' => 'admin.master-data', 'label' => 'Organization & Master Data', 'nav_group' => 'Admin', 'sort_order' => 6],
-            ['key' => 'admin.onboarding-templates', 'label' => 'Onboarding/Offboarding Templates', 'nav_group' => 'Admin', 'sort_order' => 7],
-            ['key' => 'admin.leave-configuration', 'label' => 'Leave Configuration', 'nav_group' => 'Admin', 'sort_order' => 7],
-            ['key' => 'admin.performance-configuration', 'label' => 'Performance Configuration', 'nav_group' => 'Admin', 'sort_order' => 7],
-            ['key' => 'admin.claims-management', 'label' => 'Claims Management', 'nav_group' => 'Admin', 'sort_order' => 7],
-            ['key' => 'admin.asset-configuration', 'label' => 'Asset Configuration', 'nav_group' => 'Admin', 'sort_order' => 7],
-            ['key' => 'admin.vehicle-configuration', 'label' => 'Vehicle Configuration', 'nav_group' => 'Admin', 'sort_order' => 7],
+            ['key' => 'policies', 'label' => 'Policies', 'nav_group' => 'Company', 'sort_order' => 2, 'module_key' => 'policies', 'help_tag' => 'policy-documents'],
+            ['key' => 'admin.projects', 'label' => 'Customers & Projects', 'nav_group' => 'Admin', 'sort_order' => 6, 'help_tag' => 'customers-projects'],
+            ['key' => 'admin.master-data', 'label' => 'Organization & Master Data', 'nav_group' => 'Admin', 'sort_order' => 6, 'help_tag' => 'master-data'],
+            ['key' => 'admin.onboarding-templates', 'label' => 'Onboarding/Offboarding Templates', 'nav_group' => 'Admin', 'sort_order' => 7, 'help_tag' => 'onboarding-templates'],
+            ['key' => 'admin.leave-configuration', 'label' => 'Leave Configuration', 'nav_group' => 'Admin', 'sort_order' => 7, 'help_tag' => 'leave-configuration'],
+            ['key' => 'admin.performance-configuration', 'label' => 'Performance Configuration', 'nav_group' => 'Admin', 'sort_order' => 7, 'help_tag' => 'performance-configuration'],
+            ['key' => 'admin.claims-management', 'label' => 'Claims Management', 'nav_group' => 'Admin', 'sort_order' => 7, 'help_tag' => 'claims-management'],
+            ['key' => 'admin.asset-configuration', 'label' => 'Asset Configuration', 'nav_group' => 'Admin', 'sort_order' => 7, 'help_tag' => 'asset-configuration'],
+            ['key' => 'admin.vehicle-configuration', 'label' => 'Vehicle Configuration', 'nav_group' => 'Admin', 'sort_order' => 7, 'help_tag' => 'vehicle-configuration'],
             // Spec E4: "only HR/Admin manage categories, documents, and
             // versions" — a route-level block, same as every other
             // Admin-only configuration screen.
-            ['key' => 'admin.policy-configuration', 'label' => 'Policy Configuration', 'nav_group' => 'Admin', 'sort_order' => 7],
+            ['key' => 'admin.policy-configuration', 'label' => 'Policy Configuration', 'nav_group' => 'Admin', 'sort_order' => 7, 'help_tag' => 'policy-configuration'],
             // Spec E5: "restricted by default" — unlike Policies (E4), there
             // is no base-ESS browse screen at all; a specifically-granted
             // employee reaches a file only via its direct download link,
             // never a self-service listing (documented scope trade-off).
-            ['key' => 'admin.company-documents', 'label' => 'Company Registration Documents', 'nav_group' => 'Admin', 'sort_order' => 7],
+            ['key' => 'admin.company-documents', 'label' => 'Company Registration Documents', 'nav_group' => 'Admin', 'sort_order' => 7, 'help_tag' => 'company-documents'],
             // Spec F4: "category management is HR/Admin only."
-            ['key' => 'admin.helpdesk-configuration', 'label' => 'Helpdesk Configuration', 'nav_group' => 'Admin', 'sort_order' => 7],
+            ['key' => 'admin.helpdesk-configuration', 'label' => 'Helpdesk Configuration', 'nav_group' => 'Admin', 'sort_order' => 7, 'help_tag' => 'helpdesk-configuration'],
             // Spec F8: "an aggregated Results snapshot per run...is what
             // HR/Admin ever sees" — Admin/HR Admin manage templates/runs and
             // view results here; raw responses are never individually
             // exposed anywhere, including this screen.
-            ['key' => 'admin.pulse-survey-configuration', 'label' => 'Pulse Survey Configuration', 'nav_group' => 'Admin', 'sort_order' => 7],
-            ['key' => 'settings', 'label' => 'Settings', 'nav_group' => 'Admin', 'sort_order' => 8],
-            ['key' => 'admin.roles', 'label' => 'Roles & Permissions', 'nav_group' => 'Admin', 'sort_order' => 9],
-            ['key' => 'admin.audit-log', 'label' => 'Audit Log', 'nav_group' => 'Admin', 'sort_order' => 10],
-            ['key' => 'admin.signatures', 'label' => 'Signature Verification', 'nav_group' => 'Admin', 'sort_order' => 11],
-            ['key' => 'admin.health-check', 'label' => 'System Health Check', 'nav_group' => 'Admin', 'sort_order' => 12],
+            ['key' => 'admin.pulse-survey-configuration', 'label' => 'Pulse Survey Configuration', 'nav_group' => 'Admin', 'sort_order' => 7, 'help_tag' => 'pulse-survey-configuration'],
+            ['key' => 'settings', 'label' => 'Settings', 'nav_group' => 'Admin', 'sort_order' => 8, 'help_tag' => 'system-settings'],
+            ['key' => 'admin.roles', 'label' => 'Roles & Permissions', 'nav_group' => 'Admin', 'sort_order' => 9, 'help_tag' => 'roles-permissions'],
+            ['key' => 'admin.audit-log', 'label' => 'Audit Log', 'nav_group' => 'Admin', 'sort_order' => 10, 'help_tag' => 'audit-log'],
+            ['key' => 'admin.signatures', 'label' => 'Signature Verification', 'nav_group' => 'Admin', 'sort_order' => 11, 'help_tag' => 'signature-verification'],
+            ['key' => 'admin.health-check', 'label' => 'System Health Check', 'nav_group' => 'Admin', 'sort_order' => 12, 'help_tag' => 'system-health-check'],
         ];
         foreach ($screens as $s) {
-            Screen::updateOrCreate(['key' => $s['key']], $s + ['module_key' => null]);
+            Screen::updateOrCreate(['key' => $s['key']], $s + ['module_key' => null, 'help_tag' => null]);
         }
 
         // ---- Module toggles (spec B1) — only modules with a screen tagged

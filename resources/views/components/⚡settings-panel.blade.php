@@ -58,6 +58,8 @@ new class extends Component
 
     public string $dashboardWhoIsOutScope = 'scoped';
 
+    public ?string $helpProviderBaseUrl = null;
+
     public function mount(): void
     {
         $settings = Setting::current();
@@ -97,6 +99,7 @@ new class extends Component
         $this->expenseClaimSecondApprovalThreshold = $settings->expense_claim_second_approval_threshold !== null ? (string) $settings->expense_claim_second_approval_threshold : '';
         $this->travelAdvanceReconciliationWindowDays = $settings->travel_advance_reconciliation_window_days;
         $this->dashboardWhoIsOutScope = $settings->dashboard_who_is_out_scope;
+        $this->helpProviderBaseUrl = $settings->help_provider_base_url;
     }
 
     /** Spec E1: "an Admin-configurable claim-amount threshold (unset by default — single-level approval until an Admin sets one)." */
@@ -180,6 +183,16 @@ new class extends Component
         Setting::current()->update(['dashboard_who_is_out_scope' => $value]);
         Setting::forget();
         session()->flash('status', 'Dashboard "who\'s out today" scope updated.');
+    }
+
+    /** Spec F5: "URL validation before the help link is shown at all" — validated here, before it's ever handed to HelpProviderInterface. */
+    public function saveHelpProviderSettings(): void
+    {
+        $this->validate(['helpProviderBaseUrl' => ['nullable', 'url', 'max:255']]);
+
+        Setting::current()->update(['help_provider_base_url' => $this->helpProviderBaseUrl ?: null]);
+        Setting::forget();
+        session()->flash('status', 'Help & Support settings updated.');
     }
 
     /** Spec C3: three independently toggleable, Admin-configurable permissions — all off by default. */
@@ -650,6 +663,21 @@ new class extends Component
                 </select>
                 <div class="mt-1 text-xs text-text-muted">Spec F2 — controls the Home dashboard's "who's out today" widget scope for every viewer.</div>
             </div>
+        </section>
+
+        <section class="rounded-md border border-border bg-surface p-5 shadow-sm">
+            <div class="mb-3.5 flex items-center justify-between">
+                <h2 class="font-display text-base font-bold text-text">Help &amp; Support</h2>
+            </div>
+            <form wire:submit="saveHelpProviderSettings" class="flex flex-col gap-3">
+                <div>
+                    <label for="helpProviderBaseUrl" class="mb-1.5 block text-xs font-semibold text-text">Help center base URL</label>
+                    <input type="text" id="helpProviderBaseUrl" wire:model="helpProviderBaseUrl" placeholder="https://systemsintelligenz.zendesk.com" class="w-full max-w-md rounded-sm border border-border bg-surface px-3 py-2 text-sm text-text outline-none focus:border-primary">
+                    @error('helpProviderBaseUrl') <div class="mt-1 text-xs text-danger">{{ $message }}</div> @enderror
+                    <div class="mt-1 text-xs text-text-muted">Spec F5 — the in-app Help link (topbar) is hidden entirely until a valid URL is set here. Every screen deep-links into a search on this help center; unmapped screens open its default landing page.</div>
+                </div>
+                <button type="submit" class="self-start rounded-sm bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-dark">Save Help &amp; Support settings</button>
+            </form>
         </section>
 
         <section class="rounded-md border border-border bg-surface p-5 shadow-sm">
