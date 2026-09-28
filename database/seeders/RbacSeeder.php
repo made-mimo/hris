@@ -24,7 +24,8 @@ class RbacSeeder extends Seeder
             ['key' => 'leave.apply', 'label' => 'My Leave', 'nav_group' => 'Workspace', 'sort_order' => 2, 'module_key' => 'leave'],
             ['key' => 'claims.create', 'label' => 'My Claims', 'nav_group' => 'Workspace', 'sort_order' => 3, 'module_key' => 'claims'],
             ['key' => 'timesheets', 'label' => 'My Timesheets', 'nav_group' => 'Workspace', 'sort_order' => 4, 'module_key' => 'timesheets'],
-            ['key' => 'profile', 'label' => 'My Profile', 'nav_group' => 'Workspace', 'sort_order' => 5],
+            ['key' => 'performance', 'label' => 'Performance', 'nav_group' => 'Workspace', 'sort_order' => 5, 'module_key' => 'performance'],
+            ['key' => 'profile', 'label' => 'My Profile', 'nav_group' => 'Workspace', 'sort_order' => 6],
             ['key' => 'approvals', 'label' => 'Approvals', 'nav_group' => 'My Team', 'sort_order' => 6],
             ['key' => 'employees', 'label' => 'Employees', 'nav_group' => 'My Team', 'sort_order' => 7],
             ['key' => 'recruitment', 'label' => 'Recruitment', 'nav_group' => 'My Team', 'sort_order' => 8, 'module_key' => 'recruitment'],
@@ -32,6 +33,7 @@ class RbacSeeder extends Seeder
             ['key' => 'admin.master-data', 'label' => 'Organization & Master Data', 'nav_group' => 'Admin', 'sort_order' => 6],
             ['key' => 'admin.onboarding-templates', 'label' => 'Onboarding/Offboarding Templates', 'nav_group' => 'Admin', 'sort_order' => 7],
             ['key' => 'admin.leave-configuration', 'label' => 'Leave Configuration', 'nav_group' => 'Admin', 'sort_order' => 7],
+            ['key' => 'admin.performance-configuration', 'label' => 'Performance Configuration', 'nav_group' => 'Admin', 'sort_order' => 7],
             ['key' => 'settings', 'label' => 'Settings', 'nav_group' => 'Admin', 'sort_order' => 8],
             ['key' => 'admin.roles', 'label' => 'Roles & Permissions', 'nav_group' => 'Admin', 'sort_order' => 9],
             ['key' => 'admin.audit-log', 'label' => 'Audit Log', 'nav_group' => 'Admin', 'sort_order' => 10],
@@ -50,6 +52,7 @@ class RbacSeeder extends Seeder
             ['key' => 'claims', 'label' => 'Expense Claims'],
             ['key' => 'timesheets', 'label' => 'Time & Project Tracking'],
             ['key' => 'recruitment', 'label' => 'Recruitment'],
+            ['key' => 'performance', 'label' => 'Performance Management'],
         ] as $m) {
             ModuleToggle::updateOrCreate(['key' => $m['key']], $m);
         }
@@ -70,6 +73,12 @@ class RbacSeeder extends Seeder
             // specifically the assigned hiring manager, a per-record fact
             // this data group's scope doesn't otherwise express.
             ['key' => 'recruitment', 'label' => 'Recruitment'],
+            // Spec D2: "Access throughout the module follows the
+            // reporting-line graph: supervisors act on/see their own
+            // reporting line, employees see only their own records, HR/Admin
+            // see everything" — a plain self/self_subordinates/all scope,
+            // unlike Recruitment's per-record hiring-manager fact.
+            ['key' => 'performance', 'label' => 'Performance Management'],
         ];
         foreach ($groups as $g) {
             DataGroup::updateOrCreate(['key' => $g['key']], $g);
@@ -96,16 +105,17 @@ class RbacSeeder extends Seeder
 
         // ---- Screen grants per role ----
         $screenGrants = [
-            'admin' => ['home', 'leave.apply', 'claims.create', 'timesheets', 'profile', 'approvals', 'employees', 'recruitment', 'admin.master-data', 'admin.onboarding-templates', 'admin.leave-configuration', 'admin.projects', 'settings', 'admin.roles', 'admin.audit-log', 'admin.signatures', 'admin.health-check'],
-            'hr_admin' => ['home', 'leave.apply', 'claims.create', 'timesheets', 'profile', 'approvals', 'employees', 'recruitment', 'admin.master-data', 'admin.onboarding-templates', 'admin.leave-configuration', 'admin.projects', 'admin.signatures'],
-            'hr_officer' => ['home', 'leave.apply', 'claims.create', 'timesheets', 'profile', 'approvals', 'employees', 'recruitment'],
-            // Recruitment is also granted at the base ESS level (like
-            // 'profile') since a hiring manager may be any employee
-            // regardless of role — the screen itself scopes what a
-            // non-HR/non-hiring-manager visitor sees down to nothing, per
-            // RecruitmentService/PermissionService's 'recruitment' data
-            // group rather than a route-level block.
-            'ess' => ['home', 'leave.apply', 'claims.create', 'timesheets', 'profile', 'recruitment'],
+            'admin' => ['home', 'leave.apply', 'claims.create', 'timesheets', 'performance', 'profile', 'approvals', 'employees', 'recruitment', 'admin.master-data', 'admin.onboarding-templates', 'admin.leave-configuration', 'admin.performance-configuration', 'admin.projects', 'settings', 'admin.roles', 'admin.audit-log', 'admin.signatures', 'admin.health-check'],
+            'hr_admin' => ['home', 'leave.apply', 'claims.create', 'timesheets', 'performance', 'profile', 'approvals', 'employees', 'recruitment', 'admin.master-data', 'admin.onboarding-templates', 'admin.leave-configuration', 'admin.performance-configuration', 'admin.projects', 'admin.signatures'],
+            'hr_officer' => ['home', 'leave.apply', 'claims.create', 'timesheets', 'performance', 'profile', 'approvals', 'employees', 'recruitment'],
+            // Recruitment/Performance are also granted at the base ESS level
+            // (like 'profile') since a hiring manager may be any employee
+            // regardless of role, and every employee has their own
+            // performance records to view — each screen scopes its own
+            // content down via its data group's self/self_subordinates/all
+            // scope (or, for Recruitment, the per-record hiring-manager
+            // fact) rather than a route-level block.
+            'ess' => ['home', 'leave.apply', 'claims.create', 'timesheets', 'performance', 'profile', 'recruitment'],
             // Now that the workflow engine (WorkflowSeeder) gives supervisors
             // a real pending_manager stage to act on, they need the Approvals
             // screen too — layered on top of their base role same as any
@@ -134,6 +144,7 @@ class RbacSeeder extends Seeder
                 'approvals_queue' => ['all', 'view_edit_delete'],
                 'timesheets' => ['all', 'view_edit_delete'],
                 'recruitment' => ['all', 'view_edit_delete'],
+                'performance' => ['all', 'view_edit_delete'],
             ],
             'hr_admin' => [
                 'employee_personal_details' => ['all', 'view_edit_delete'],
@@ -144,6 +155,7 @@ class RbacSeeder extends Seeder
                 'approvals_queue' => ['all', 'view_edit'],
                 'timesheets' => ['all', 'view_edit'],
                 'recruitment' => ['all', 'view_edit_delete'],
+                'performance' => ['all', 'view_edit_delete'],
             ],
             'hr_officer' => [
                 'employee_personal_details' => ['all', 'view_edit'],
@@ -154,6 +166,7 @@ class RbacSeeder extends Seeder
                 'approvals_queue' => ['all', 'view_edit'],
                 'timesheets' => ['self', 'view_edit'],
                 'recruitment' => ['all', 'view_edit'],
+                'performance' => ['all', 'view_edit'],
             ],
             'supervisor' => [
                 'employee_personal_details' => ['self_subordinates', 'view'],
@@ -168,6 +181,7 @@ class RbacSeeder extends Seeder
                 'approvals_queue' => ['self_subordinates', 'view_edit'],
                 'timesheets' => ['self_subordinates', 'view_edit'],
                 'recruitment' => ['none', 'none'],
+                'performance' => ['self_subordinates', 'view_edit'],
             ],
             'ess' => [
                 'employee_personal_details' => ['self', 'view_edit'],
@@ -178,6 +192,7 @@ class RbacSeeder extends Seeder
                 'approvals_queue' => ['none', 'none'],
                 'timesheets' => ['self', 'view_edit'],
                 'recruitment' => ['none', 'none'],
+                'performance' => ['self', 'view_edit'],
             ],
         ];
         foreach ($matrix as $slug => $grants) {

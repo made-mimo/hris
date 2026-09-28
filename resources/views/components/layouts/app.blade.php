@@ -13,9 +13,11 @@
     $canClaims = auth()->user()?->canView('claims.create');
     $canTimesheets = auth()->user()?->canView('timesheets');
     $canApproveTimesheets = $canTimesheets && in_array($permissions->scopeFor(auth()->user(), 'timesheets'), ['all', 'self_subordinates'], true);
+    $canPerformance = auth()->user()?->canView('performance');
     $canMasterData = auth()->user()?->canView('admin.master-data');
     $canOnboardingTemplates = auth()->user()?->canView('admin.onboarding-templates');
     $canLeaveConfiguration = auth()->user()?->canView('admin.leave-configuration');
+    $canPerformanceConfiguration = auth()->user()?->canView('admin.performance-configuration');
     $canProjects = auth()->user()?->canView('admin.projects');
     $canSettings = auth()->user()?->canView('settings');
     $canRoles = auth()->user()?->canView('admin.roles');
@@ -102,6 +104,11 @@
                     <span class="nav-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"></rect><path d="M16 2v4M8 2v4M3 10h18"></path><path d="M12 14v3l2 1"></path></svg></span>My Attendance
                 </a>
             @endif
+            @if($canPerformance)
+                <a href="{{ route('performance') }}" class="nav-link {{ request()->routeIs('performance') ? 'active' : '' }}">
+                    <span class="nav-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"></path><path d="M18 17V9M13 17V5M8 17v-4"></path></svg></span>Performance
+                </a>
+            @endif
             <a href="{{ route('profile') }}" class="nav-link {{ request()->routeIs('profile') ? 'active' : '' }}">
                 <span class="nav-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"></path></svg></span>My Profile
             </a>
@@ -158,7 +165,7 @@
             </span>
             </div>
 
-            @if($canMasterData || $canOnboardingTemplates || $canLeaveConfiguration || $canProjects || $canSettings || $canRoles || $canAuditLog || $canSignatures || $canHealthCheck)
+            @if($canMasterData || $canOnboardingTemplates || $canLeaveConfiguration || $canPerformanceConfiguration || $canProjects || $canSettings || $canRoles || $canAuditLog || $canSignatures || $canHealthCheck)
                 <button type="button" @click="toggle('admin')" class="nav-section-label" style="display:flex;width:100%;align-items:center;justify-content:space-between;background:none;border:none;cursor:pointer;font:inherit;text-align:left;">
                     <span>Admin</span>
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" :style="sections.admin ? '' : 'transform:rotate(-90deg)'" style="transition:transform .15s ease;"><path d="m6 9 6 6 6-6"></path></svg>
@@ -180,6 +187,11 @@
                     </a>
                     <a href="{{ route('leave.reports') }}" class="nav-link {{ request()->routeIs('leave.reports') ? 'active' : '' }}">
                         <span class="nav-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"></path><path d="M18 17V9M13 17V5M8 17v-4"></path></svg></span>Leave Reports
+                    </a>
+                @endif
+                @if($canPerformanceConfiguration)
+                    <a href="{{ route('admin.performance-configuration') }}" class="nav-link {{ request()->routeIs('admin.performance-configuration') ? 'active' : '' }}">
+                        <span class="nav-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"></path><path d="M18 17V9M13 17V5M8 17v-4"></path></svg></span>Performance Configuration
                     </a>
                 @endif
                 @if($canProjects)
