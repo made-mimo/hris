@@ -20,6 +20,7 @@ new class extends Component
     public bool $passwordRequireNumber = true;
     public bool $passwordRequireSpecial = false;
     public bool $passwordAllowSpaces = true;
+    public string $passwordMinZxcvbnScore = '';
 
     public string $employeeIdFormat = 'SIL{YY}{MM}{SEQ:3}';
     public string $employeeIdSequenceScope = 'global';
@@ -60,6 +61,12 @@ new class extends Component
 
     public ?string $helpProviderBaseUrl = null;
 
+    public string $auditLogRetentionDays = '';
+
+    public string $securityEventRetentionDays = '';
+
+    public string $notificationRetentionDays = '';
+
     public function mount(): void
     {
         $settings = Setting::current();
@@ -72,6 +79,7 @@ new class extends Component
         $this->passwordRequireNumber = $settings->password_require_number;
         $this->passwordRequireSpecial = $settings->password_require_special;
         $this->passwordAllowSpaces = $settings->password_allow_spaces;
+        $this->passwordMinZxcvbnScore = $settings->password_min_zxcvbn_score !== null ? (string) $settings->password_min_zxcvbn_score : '';
         $this->employeeIdFormat = $settings->employee_id_format;
         $this->employeeIdSequenceScope = $settings->employee_id_sequence_scope;
         $this->orgTaxId = $settings->tax_id;
@@ -100,6 +108,9 @@ new class extends Component
         $this->travelAdvanceReconciliationWindowDays = $settings->travel_advance_reconciliation_window_days;
         $this->dashboardWhoIsOutScope = $settings->dashboard_who_is_out_scope;
         $this->helpProviderBaseUrl = $settings->help_provider_base_url;
+        $this->auditLogRetentionDays = $settings->audit_log_retention_days !== null ? (string) $settings->audit_log_retention_days : '';
+        $this->securityEventRetentionDays = $settings->security_event_retention_days !== null ? (string) $settings->security_event_retention_days : '';
+        $this->notificationRetentionDays = $settings->notification_retention_days !== null ? (string) $settings->notification_retention_days : '';
     }
 
     /** Spec E1: "an Admin-configurable claim-amount threshold (unset by default — single-level approval until an Admin sets one)." */
@@ -195,6 +206,25 @@ new class extends Component
         session()->flash('status', 'Help & Support settings updated.');
     }
 
+    /** Spec's data-retention NFR. Blank = keep forever (the default) — strictly opt-in, never silently starts deleting data. */
+    public function saveRetentionSettings(): void
+    {
+        $this->validate([
+            'auditLogRetentionDays' => ['nullable', 'integer', 'min:1', 'max:3650'],
+            'securityEventRetentionDays' => ['nullable', 'integer', 'min:1', 'max:3650'],
+            'notificationRetentionDays' => ['nullable', 'integer', 'min:1', 'max:3650'],
+        ]);
+
+        Setting::current()->update([
+            'audit_log_retention_days' => $this->auditLogRetentionDays !== '' ? (int) $this->auditLogRetentionDays : null,
+            'security_event_retention_days' => $this->securityEventRetentionDays !== '' ? (int) $this->securityEventRetentionDays : null,
+            'notification_retention_days' => $this->notificationRetentionDays !== '' ? (int) $this->notificationRetentionDays : null,
+        ]);
+
+        Setting::forget();
+        session()->flash('status', 'Data retention settings updated.');
+    }
+
     /** Spec C3: three independently toggleable, Admin-configurable permissions — all off by default. */
     public function updatedAttendanceAllowBackdate($value): void
     {
@@ -222,6 +252,7 @@ new class extends Component
         $this->validate([
             'passwordMinLength' => ['required', 'integer', 'min:4', 'max:128'],
             'passwordMaxLength' => ['nullable', 'integer', 'gte:passwordMinLength', 'max:255'],
+            'passwordMinZxcvbnScore' => ['nullable', 'integer', 'min:0', 'max:4'],
         ]);
 
         Setting::current()->update([
@@ -232,6 +263,7 @@ new class extends Component
             'password_require_number' => $this->passwordRequireNumber,
             'password_require_special' => $this->passwordRequireSpecial,
             'password_allow_spaces' => $this->passwordAllowSpaces,
+            'password_min_zxcvbn_score' => $this->passwordMinZxcvbnScore !== '' ? (int) $this->passwordMinZxcvbnScore : null,
         ]);
 
         Setting::forget();
@@ -419,6 +451,19 @@ new class extends Component
                         <input type="checkbox" wire:model="passwordAllowSpaces" class="h-4 w-4 accent-primary">
                         Allow spaces
                     </label>
+                </div>
+
+                <div>
+                    <label for="passwordMinZxcvbnScore" class="mb-1.5 block text-xs font-semibold text-text">Minimum strength (zxcvbn score)</label>
+                    <select id="passwordMinZxcvbnScore" wire:model="passwordMinZxcvbnScore" class="w-full max-w-xs rounded-sm border border-border bg-surface px-3 py-2 text-sm text-text outline-none focus:border-primary">
+                        <option value="">Off — character-class rules only</option>
+                        <option value="1">1 — reject the weakest (common passwords, simple patterns)</option>
+                        <option value="2">2 — reject weak</option>
+                        <option value="3">3 — reject fair (recommended)</option>
+                        <option value="4">4 — require strong</option>
+                    </select>
+                    @error('passwordMinZxcvbnScore') <div class="mt-1 text-xs text-danger">{{ $message }}</div> @enderror
+                    <div class="mt-1 text-xs text-text-muted">Real entropy scoring (bjeavons/zxcvbn-php), not just character-class boxes — catches a password like "P@ssw0rd1!" that satisfies every rule above while still being one of the first a real attacker tries.</div>
                 </div>
 
                 <button type="submit" class="self-start rounded-sm bg-primary px-4.5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-primary-dark">Save password policy</button>
@@ -677,6 +722,31 @@ new class extends Component
                     <div class="mt-1 text-xs text-text-muted">Spec F5 — the in-app Help link (topbar) is hidden entirely until a valid URL is set here. Every screen deep-links into a search on this help center; unmapped screens open its default landing page.</div>
                 </div>
                 <button type="submit" class="self-start rounded-sm bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-dark">Save Help &amp; Support settings</button>
+            </form>
+        </section>
+
+        <section class="rounded-md border border-border bg-surface p-5 shadow-sm">
+            <div class="mb-3.5 flex items-center justify-between">
+                <h2 class="font-display text-base font-bold text-text">Data Retention</h2>
+            </div>
+            <div class="mb-3.5 text-xs text-text-muted">A daily job archives matching rows to a dated file on the private disk, then deletes them from the live table. Leave a field blank to keep that log type forever — nothing is purged until you explicitly set a window.</div>
+            <form wire:submit="saveRetentionSettings" class="flex flex-wrap items-end gap-4">
+                <div>
+                    <label for="auditLogRetentionDays" class="mb-1.5 block text-xs font-semibold text-text">Audit log (days)</label>
+                    <input type="number" id="auditLogRetentionDays" wire:model="auditLogRetentionDays" min="1" max="3650" placeholder="Keep forever" class="w-36 rounded-sm border border-border bg-surface px-3 py-2 text-sm text-text outline-none focus:border-primary">
+                    @error('auditLogRetentionDays') <div class="mt-1 text-xs text-danger">{{ $message }}</div> @enderror
+                </div>
+                <div>
+                    <label for="securityEventRetentionDays" class="mb-1.5 block text-xs font-semibold text-text">Login/security history (days)</label>
+                    <input type="number" id="securityEventRetentionDays" wire:model="securityEventRetentionDays" min="1" max="3650" placeholder="Keep forever" class="w-36 rounded-sm border border-border bg-surface px-3 py-2 text-sm text-text outline-none focus:border-primary">
+                    @error('securityEventRetentionDays') <div class="mt-1 text-xs text-danger">{{ $message }}</div> @enderror
+                </div>
+                <div>
+                    <label for="notificationRetentionDays" class="mb-1.5 block text-xs font-semibold text-text">Notifications (days)</label>
+                    <input type="number" id="notificationRetentionDays" wire:model="notificationRetentionDays" min="1" max="3650" placeholder="Keep forever" class="w-36 rounded-sm border border-border bg-surface px-3 py-2 text-sm text-text outline-none focus:border-primary">
+                    @error('notificationRetentionDays') <div class="mt-1 text-xs text-danger">{{ $message }}</div> @enderror
+                </div>
+                <button type="submit" class="rounded-sm bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-dark">Save retention settings</button>
             </form>
         </section>
 

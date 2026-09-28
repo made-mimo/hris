@@ -12,6 +12,8 @@ use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Laravel\Sanctum\Http\Middleware\CheckAbilities;
+use Laravel\Sanctum\Http\Middleware\CheckForAnyAbility;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -26,6 +28,14 @@ return Application::configure(basePath: dirname(__DIR__))
             'two_factor' => EnsureTwoFactorVerified::class,
             'screen' => EnsureScreenAccess::class,
             'password_policy' => EnsurePasswordPolicyMet::class,
+            // Spec F6/A1: gates a Sanctum token's *scope*, not just its
+            // validity — the short-lived `2fa-pending` token login() issues
+            // to a 2FA-required user carries only the `2fa:verify` ability,
+            // so `abilities:*` (required by every substantive API route)
+            // rejects it everywhere except the one endpoint that ability
+            // grants.
+            'abilities' => CheckAbilities::class,
+            'ability' => CheckForAnyAbility::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

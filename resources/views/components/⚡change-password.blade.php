@@ -61,6 +61,7 @@ new class extends Component
             $settings->password_require_number ? 'a number' : null,
             $settings->password_require_special ? 'a special character' : null,
             ! $settings->password_allow_spaces ? 'no spaces' : null,
+            $settings->password_min_zxcvbn_score ? 'enough real-world strength (a common or easily-guessed password is rejected even if it satisfies every rule above)' : null,
         ]);
 
         return ['requirements' => $requirements];

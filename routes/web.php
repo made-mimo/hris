@@ -92,6 +92,7 @@ Route::middleware(['auth', 'password_policy', 'two_factor'])->group(function () 
     Route::livewire('/admin/helpdesk-configuration', 'pages::admin-helpdesk-configuration')->name('admin.helpdesk-configuration')->middleware('screen:admin.helpdesk-configuration');
     Route::livewire('/pulse-surveys', 'pages::pulse-surveys')->name('pulse-surveys')->middleware('screen:pulse-surveys');
     Route::livewire('/admin/pulse-survey-configuration', 'pages::admin-pulse-survey-configuration')->name('admin.pulse-survey-configuration')->middleware('screen:admin.pulse-survey-configuration');
+    Route::livewire('/admin/renewal-configuration', 'pages::admin-renewal-configuration')->name('admin.renewal-configuration')->middleware('screen:admin.renewal-configuration');
     // No screen middleware here: authorization is entirely inside CompanyDocumentService::canAccessFile()
     // so a specifically-granted non-admin employee (spec E5's "external auditor" case) can still reach the file.
     Route::get('/company-documents/versions/{version}/file', CompanyDocumentFileController::class)->name('company-documents.file');

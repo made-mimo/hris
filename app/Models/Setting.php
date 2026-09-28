@@ -35,6 +35,8 @@ class Setting extends Model implements HasMedia
         'pulse_survey_min_responses',
         'dashboard_who_is_out_scope',
         'help_provider_base_url',
+        'audit_log_retention_days', 'security_event_retention_days', 'notification_retention_days',
+        'password_min_zxcvbn_score',
     ];
 
     protected function casts(): array
@@ -69,7 +71,7 @@ class Setting extends Model implements HasMedia
             $policyFields = [
                 'password_min_length', 'password_max_length', 'password_require_uppercase',
                 'password_require_lowercase', 'password_require_number', 'password_require_special',
-                'password_allow_spaces',
+                'password_allow_spaces', 'password_min_zxcvbn_score',
             ];
 
             if ($settings->exists && $settings->isDirty($policyFields)) {

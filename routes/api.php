@@ -33,9 +33,19 @@ use Illuminate\Support\Facades\Route;
  */
 Route::post('/login', [AuthController::class, 'login']);
 
+// A `2fa-pending` token (see AuthController::login()'s doc comment) can
+// reach this one endpoint and nothing else.
+Route::middleware(['auth:sanctum', 'abilities:2fa:verify'])->group(function () {
+    Route::post('/2fa/verify', [AuthController::class, 'verifyTwoFactor']);
+});
+
+// Logout revokes whatever token was sent, including a still-pending one a
+// client wants to abandon — deliberately not gated by ability.
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
+});
 
+Route::middleware(['auth:sanctum', 'abilities:*'])->group(function () {
     Route::get('/menus', [MenuController::class, 'index']);
 
     Route::get('/leave-requests', [LeaveRequestController::class, 'index']);

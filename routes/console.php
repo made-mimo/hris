@@ -31,3 +31,6 @@ Schedule::command('pulse-surveys:process')->daily();
 
 // Spec F2's nightly HR-metrics snapshot — run early each day so the Dashboard's trend widget always has a same-day point.
 Schedule::command('hr-metrics:snapshot')->daily();
+
+// Spec's data-retention NFR — archives then purges audit/security-event/notification rows past their Admin-configured window (a no-op for any type left unset).
+Schedule::command('retention:purge-logs')->daily();

@@ -33,6 +33,7 @@
     $canCompanyDocuments = auth()->user()?->canView('admin.company-documents');
     $canHelpdeskConfiguration = auth()->user()?->canView('admin.helpdesk-configuration');
     $canPulseSurveyConfiguration = auth()->user()?->canView('admin.pulse-survey-configuration');
+    $canRenewalConfiguration = auth()->user()?->canView('admin.renewal-configuration');
     $canClaimsManagement = auth()->user()?->canView('admin.claims-management');
     $canProjects = auth()->user()?->canView('admin.projects');
     $canSettings = auth()->user()?->canView('settings');
@@ -212,7 +213,7 @@
             @endif
             </div>
 
-            @if($canMasterData || $canOnboardingTemplates || $canLeaveConfiguration || $canPerformanceConfiguration || $canAssetConfiguration || $canVehicleConfiguration || $canPolicyConfiguration || $canCompanyDocuments || $canHelpdeskConfiguration || $canPulseSurveyConfiguration || $canClaimsManagement || $canProjects || $canSettings || $canRoles || $canAuditLog || $canSignatures || $canHealthCheck)
+            @if($canMasterData || $canOnboardingTemplates || $canLeaveConfiguration || $canPerformanceConfiguration || $canAssetConfiguration || $canVehicleConfiguration || $canPolicyConfiguration || $canCompanyDocuments || $canHelpdeskConfiguration || $canPulseSurveyConfiguration || $canRenewalConfiguration || $canClaimsManagement || $canProjects || $canSettings || $canRoles || $canAuditLog || $canSignatures || $canHealthCheck)
                 <button type="button" @click="toggle('admin')" class="nav-section-label" style="display:flex;width:100%;align-items:center;justify-content:space-between;background:none;border:none;cursor:pointer;font:inherit;text-align:left;">
                     <span>Admin</span>
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" :style="sections.admin ? '' : 'transform:rotate(-90deg)'" style="transition:transform .15s ease;"><path d="m6 9 6 6 6-6"></path></svg>
@@ -269,6 +270,11 @@
                 @if($canPulseSurveyConfiguration)
                     <a href="{{ route('admin.pulse-survey-configuration') }}" class="nav-link {{ request()->routeIs('admin.pulse-survey-configuration') ? 'active' : '' }}">
                         <span class="nav-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"></path><path d="M7 12l3-3 3 3 5-6"></path></svg></span>Pulse Survey Configuration
+                    </a>
+                @endif
+                @if($canRenewalConfiguration)
+                    <a href="{{ route('admin.renewal-configuration') }}" class="nav-link {{ request()->routeIs('admin.renewal-configuration') ? 'active' : '' }}">
+                        <span class="nav-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg></span>Renewal Configuration
                     </a>
                 @endif
                 @if($canClaimsManagement)
