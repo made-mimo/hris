@@ -26,6 +26,11 @@ class RbacSeeder extends Seeder
             // every role; the 'buzz' data group below governs only
             // edit/delete-others moderation rights, never what's visible.
             ['key' => 'buzz', 'label' => 'Buzz', 'nav_group' => 'Workspace', 'sort_order' => 2, 'module_key' => 'buzz'],
+            // Spec F4: every employee can raise a ticket for themselves;
+            // visibility beyond the raiser is governed by the
+            // 'helpdesk_tickets' data group below (plus the per-category
+            // confidential handler list for Grievance/Whistleblower).
+            ['key' => 'helpdesk', 'label' => 'Helpdesk', 'nav_group' => 'Workspace', 'sort_order' => 3, 'module_key' => 'helpdesk'],
             ['key' => 'leave.apply', 'label' => 'My Leave', 'nav_group' => 'Workspace', 'sort_order' => 2, 'module_key' => 'leave'],
             ['key' => 'claims.create', 'label' => 'My Claims', 'nav_group' => 'Workspace', 'sort_order' => 3, 'module_key' => 'claims'],
             ['key' => 'timesheets', 'label' => 'My Timesheets', 'nav_group' => 'Workspace', 'sort_order' => 4, 'module_key' => 'timesheets'],
@@ -71,6 +76,8 @@ class RbacSeeder extends Seeder
             // employee reaches a file only via its direct download link,
             // never a self-service listing (documented scope trade-off).
             ['key' => 'admin.company-documents', 'label' => 'Company Registration Documents', 'nav_group' => 'Admin', 'sort_order' => 7],
+            // Spec F4: "category management is HR/Admin only."
+            ['key' => 'admin.helpdesk-configuration', 'label' => 'Helpdesk Configuration', 'nav_group' => 'Admin', 'sort_order' => 7],
             ['key' => 'settings', 'label' => 'Settings', 'nav_group' => 'Admin', 'sort_order' => 8],
             ['key' => 'admin.roles', 'label' => 'Roles & Permissions', 'nav_group' => 'Admin', 'sort_order' => 9],
             ['key' => 'admin.audit-log', 'label' => 'Audit Log', 'nav_group' => 'Admin', 'sort_order' => 10],
@@ -95,6 +102,7 @@ class RbacSeeder extends Seeder
             ['key' => 'policies', 'label' => 'Policy Document Management'],
             ['key' => 'directory', 'label' => 'Corporate Directory'],
             ['key' => 'buzz', 'label' => 'Employee Social Feed'],
+            ['key' => 'helpdesk', 'label' => 'Helpdesk / Support Ticketing'],
         ] as $m) {
             ModuleToggle::updateOrCreate(['key' => $m['key']], $m);
         }
@@ -138,6 +146,13 @@ class RbacSeeder extends Seeder
             // "own content only." This never restricts what's *visible* in
             // the feed (always company-wide), only who may edit/delete.
             ['key' => 'buzz', 'label' => 'Employee Social Feed'],
+            // Spec F4: 'self' means "my own tickets only" (every employee's
+            // base scope); 'all' means "every non-confidential ticket."
+            // Confidential (Grievance/Whistleblower) tickets are gated
+            // separately by TicketService::isHandler(), regardless of this
+            // scope — even an 'all'-scope HR Admin doesn't see them unless
+            // also on that category's specific handler list.
+            ['key' => 'helpdesk_tickets', 'label' => 'Helpdesk Tickets'],
         ];
         foreach ($groups as $g) {
             DataGroup::updateOrCreate(['key' => $g['key']], $g);
@@ -164,15 +179,15 @@ class RbacSeeder extends Seeder
 
         // ---- Screen grants per role ----
         $screenGrants = [
-            'admin' => ['home', 'buzz', 'leave.apply', 'claims.create', 'timesheets', 'performance', 'assets', 'vehicles', 'discipline', 'directory', 'policies', 'profile', 'approvals', 'employees', 'recruitment', 'admin.master-data', 'admin.onboarding-templates', 'admin.leave-configuration', 'admin.performance-configuration', 'admin.asset-configuration', 'admin.vehicle-configuration', 'admin.policy-configuration', 'admin.company-documents', 'admin.claims-management', 'admin.projects', 'settings', 'admin.roles', 'admin.audit-log', 'admin.signatures', 'admin.health-check'],
-            'hr_admin' => ['home', 'buzz', 'leave.apply', 'claims.create', 'timesheets', 'performance', 'assets', 'vehicles', 'discipline', 'directory', 'policies', 'profile', 'approvals', 'employees', 'recruitment', 'admin.master-data', 'admin.onboarding-templates', 'admin.leave-configuration', 'admin.performance-configuration', 'admin.asset-configuration', 'admin.vehicle-configuration', 'admin.policy-configuration', 'admin.company-documents', 'admin.claims-management', 'admin.projects', 'admin.signatures'],
+            'admin' => ['home', 'buzz', 'helpdesk', 'leave.apply', 'claims.create', 'timesheets', 'performance', 'assets', 'vehicles', 'discipline', 'directory', 'policies', 'profile', 'approvals', 'employees', 'recruitment', 'admin.master-data', 'admin.onboarding-templates', 'admin.leave-configuration', 'admin.performance-configuration', 'admin.asset-configuration', 'admin.vehicle-configuration', 'admin.policy-configuration', 'admin.company-documents', 'admin.helpdesk-configuration', 'admin.claims-management', 'admin.projects', 'settings', 'admin.roles', 'admin.audit-log', 'admin.signatures', 'admin.health-check'],
+            'hr_admin' => ['home', 'buzz', 'helpdesk', 'leave.apply', 'claims.create', 'timesheets', 'performance', 'assets', 'vehicles', 'discipline', 'directory', 'policies', 'profile', 'approvals', 'employees', 'recruitment', 'admin.master-data', 'admin.onboarding-templates', 'admin.leave-configuration', 'admin.performance-configuration', 'admin.asset-configuration', 'admin.vehicle-configuration', 'admin.policy-configuration', 'admin.company-documents', 'admin.helpdesk-configuration', 'admin.claims-management', 'admin.projects', 'admin.signatures'],
             // HR Officer deliberately does NOT get 'discipline' or
             // 'admin.policy-configuration' — spec's own "only HR/Admin
             // manage categories, documents, and versions" reads as Admin/HR
             // Admin specifically. It does get claims-management, assets,
             // vehicles, and the base 'policies' browse/acknowledge screen,
             // since spec never excludes HR Officer from any of those.
-            'hr_officer' => ['home', 'buzz', 'leave.apply', 'claims.create', 'timesheets', 'performance', 'assets', 'vehicles', 'directory', 'policies', 'profile', 'approvals', 'employees', 'recruitment', 'admin.claims-management'],
+            'hr_officer' => ['home', 'buzz', 'helpdesk', 'leave.apply', 'claims.create', 'timesheets', 'performance', 'assets', 'vehicles', 'directory', 'policies', 'profile', 'approvals', 'employees', 'recruitment', 'admin.claims-management'],
             // Recruitment/Performance/Discipline/Assets/Vehicles/Policies are
             // also granted at the base ESS level (like 'profile') since a
             // hiring manager may be any employee regardless of role, every
@@ -185,7 +200,7 @@ class RbacSeeder extends Seeder
             // scope (or, for Recruitment, the per-record hiring-manager
             // fact; for Policies, restricted-category file grants) rather
             // than a route-level block.
-            'ess' => ['home', 'buzz', 'leave.apply', 'claims.create', 'timesheets', 'performance', 'assets', 'vehicles', 'discipline', 'directory', 'policies', 'profile', 'recruitment'],
+            'ess' => ['home', 'buzz', 'helpdesk', 'leave.apply', 'claims.create', 'timesheets', 'performance', 'assets', 'vehicles', 'discipline', 'directory', 'policies', 'profile', 'recruitment'],
             // Now that the workflow engine (WorkflowSeeder) gives supervisors
             // a real pending_manager stage to act on, they need the Approvals
             // screen too — layered on top of their base role same as any
@@ -218,6 +233,7 @@ class RbacSeeder extends Seeder
                 'assets' => ['all', 'view_edit_delete'],
                 'vehicles' => ['all', 'view_edit_delete'],
                 'buzz' => ['all', 'view_edit_delete'],
+                'helpdesk_tickets' => ['all', 'view_edit'],
             ],
             'hr_admin' => [
                 'employee_personal_details' => ['all', 'view_edit_delete'],
@@ -232,6 +248,7 @@ class RbacSeeder extends Seeder
                 'assets' => ['all', 'view_edit_delete'],
                 'vehicles' => ['all', 'view_edit_delete'],
                 'buzz' => ['all', 'view_edit_delete'],
+                'helpdesk_tickets' => ['all', 'view_edit'],
             ],
             'hr_officer' => [
                 'employee_personal_details' => ['all', 'view_edit'],
@@ -246,6 +263,7 @@ class RbacSeeder extends Seeder
                 'assets' => ['all', 'view_edit'],
                 'vehicles' => ['all', 'view_edit'],
                 'buzz' => ['all', 'view_edit_delete'],
+                'helpdesk_tickets' => ['all', 'view_edit'],
             ],
             'supervisor' => [
                 'employee_personal_details' => ['self_subordinates', 'view'],
@@ -267,6 +285,7 @@ class RbacSeeder extends Seeder
                 'assets' => ['self', 'view'],
                 'vehicles' => ['self', 'view'],
                 'buzz' => ['self', 'view_edit_delete'],
+                'helpdesk_tickets' => ['self', 'view_edit'],
             ],
             'ess' => [
                 'employee_personal_details' => ['self', 'view_edit'],
@@ -285,6 +304,7 @@ class RbacSeeder extends Seeder
                 'assets' => ['self', 'view'],
                 'vehicles' => ['self', 'view'],
                 'buzz' => ['self', 'view_edit_delete'],
+                'helpdesk_tickets' => ['self', 'view_edit'],
             ],
         ];
         foreach ($matrix as $slug => $grants) {

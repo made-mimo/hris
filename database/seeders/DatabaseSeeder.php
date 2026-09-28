@@ -16,6 +16,7 @@ class DatabaseSeeder extends Seeder
         $this->call(CountrySeeder::class);
         $this->call(MasterListSeeder::class);
         $this->call(RenewalTypeSeeder::class);
+        $this->call(HelpdeskCategorySeeder::class);
         $this->call(HrisDemoSeeder::class);
     }
 }

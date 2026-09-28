@@ -5,6 +5,7 @@
     $isSupervisor = $me && $me->subordinates()->exists();
     $permissions = app(\App\Services\PermissionService::class);
     $canBuzz = auth()->user()?->canView('buzz');
+    $canHelpdesk = auth()->user()?->canView('helpdesk');
     $canApprovals = auth()->user()?->canView('approvals');
     $canEmployees = auth()->user()?->canView('employees');
     $canRecruitmentScreen = auth()->user()?->canView('recruitment');
@@ -28,6 +29,7 @@
     $canVehicleConfiguration = auth()->user()?->canView('admin.vehicle-configuration');
     $canPolicyConfiguration = auth()->user()?->canView('admin.policy-configuration');
     $canCompanyDocuments = auth()->user()?->canView('admin.company-documents');
+    $canHelpdeskConfiguration = auth()->user()?->canView('admin.helpdesk-configuration');
     $canClaimsManagement = auth()->user()?->canView('admin.claims-management');
     $canProjects = auth()->user()?->canView('admin.projects');
     $canSettings = auth()->user()?->canView('settings');
@@ -141,9 +143,11 @@
             <a href="{{ route('profile') }}" class="nav-link {{ request()->routeIs('profile') ? 'active' : '' }}">
                 <span class="nav-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"></path></svg></span>My Profile
             </a>
-            <span class="nav-link" style="opacity:.5;cursor:default;">
-                <span class="nav-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v3a2 2 0 0 0 0 4v3a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-3a2 2 0 0 0 0-4z"></path></svg></span>Helpdesk
-            </span>
+            @if($canHelpdesk)
+                <a href="{{ route('helpdesk') }}" class="nav-link {{ request()->routeIs('helpdesk') ? 'active' : '' }}">
+                    <span class="nav-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v3a2 2 0 0 0 0 4v3a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-3a2 2 0 0 0 0-4z"></path></svg></span>Helpdesk
+                </a>
+            @endif
             </div>
 
             @if($canApprovals || $canEmployees || $canRecruitment || $canDiscipline)
@@ -204,7 +208,7 @@
             @endif
             </div>
 
-            @if($canMasterData || $canOnboardingTemplates || $canLeaveConfiguration || $canPerformanceConfiguration || $canAssetConfiguration || $canVehicleConfiguration || $canPolicyConfiguration || $canCompanyDocuments || $canClaimsManagement || $canProjects || $canSettings || $canRoles || $canAuditLog || $canSignatures || $canHealthCheck)
+            @if($canMasterData || $canOnboardingTemplates || $canLeaveConfiguration || $canPerformanceConfiguration || $canAssetConfiguration || $canVehicleConfiguration || $canPolicyConfiguration || $canCompanyDocuments || $canHelpdeskConfiguration || $canClaimsManagement || $canProjects || $canSettings || $canRoles || $canAuditLog || $canSignatures || $canHealthCheck)
                 <button type="button" @click="toggle('admin')" class="nav-section-label" style="display:flex;width:100%;align-items:center;justify-content:space-between;background:none;border:none;cursor:pointer;font:inherit;text-align:left;">
                     <span>Admin</span>
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" :style="sections.admin ? '' : 'transform:rotate(-90deg)'" style="transition:transform .15s ease;"><path d="m6 9 6 6 6-6"></path></svg>
@@ -251,6 +255,11 @@
                 @if($canCompanyDocuments)
                     <a href="{{ route('admin.company-documents') }}" class="nav-link {{ request()->routeIs('admin.company-documents') ? 'active' : '' }}">
                         <span class="nav-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"></path><path d="M4 21V5"></path></svg></span>Company Documents
+                    </a>
+                @endif
+                @if($canHelpdeskConfiguration)
+                    <a href="{{ route('admin.helpdesk-configuration') }}" class="nav-link {{ request()->routeIs('admin.helpdesk-configuration') ? 'active' : '' }}">
+                        <span class="nav-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v3a2 2 0 0 0 0 4v3a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-3a2 2 0 0 0 0-4z"></path></svg></span>Helpdesk Configuration
                     </a>
                 @endif
                 @if($canClaimsManagement)

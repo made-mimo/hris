@@ -51,6 +51,7 @@ Route::livewire('/recruitment/offer/{application}/sign', 'pages::offer-sign')->n
 Route::middleware(['auth', 'password_policy', 'two_factor'])->group(function () {
     Route::livewire('/', 'pages::home')->name('home')->middleware('screen:home');
     Route::livewire('/buzz', 'pages::buzz')->name('buzz')->middleware('screen:buzz');
+    Route::livewire('/helpdesk', 'pages::helpdesk')->name('helpdesk')->middleware('screen:helpdesk');
     Route::livewire('/leave/apply', 'pages::leave-apply')->name('leave.apply')->middleware('screen:leave.apply');
     Route::livewire('/leave/assign', 'pages::leave-assign')->name('leave.assign')->middleware('screen:approvals');
     Route::livewire('/leave/reports', 'pages::leave-reports')->name('leave.reports')->middleware('screen:admin.leave-configuration');
@@ -88,6 +89,7 @@ Route::middleware(['auth', 'password_policy', 'two_factor'])->group(function () 
     Route::livewire('/admin/vehicle-configuration', 'pages::admin-vehicle-configuration')->name('admin.vehicle-configuration')->middleware('screen:admin.vehicle-configuration');
     Route::livewire('/admin/policy-configuration', 'pages::admin-policy-configuration')->name('admin.policy-configuration')->middleware('screen:admin.policy-configuration');
     Route::livewire('/admin/company-documents', 'pages::admin-company-documents')->name('admin.company-documents')->middleware('screen:admin.company-documents');
+    Route::livewire('/admin/helpdesk-configuration', 'pages::admin-helpdesk-configuration')->name('admin.helpdesk-configuration')->middleware('screen:admin.helpdesk-configuration');
     // No screen middleware here: authorization is entirely inside CompanyDocumentService::canAccessFile()
     // so a specifically-granted non-admin employee (spec E5's "external auditor" case) can still reach the file.
     Route::get('/company-documents/versions/{version}/file', CompanyDocumentFileController::class)->name('company-documents.file');
