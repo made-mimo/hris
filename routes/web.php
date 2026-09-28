@@ -67,6 +67,7 @@ Route::middleware(['auth', 'password_policy', 'two_factor'])->group(function () 
     Route::livewire('/discipline', 'pages::discipline')->name('discipline')->middleware('screen:discipline');
     Route::livewire('/assets', 'pages::assets')->name('assets')->middleware('screen:assets');
     Route::livewire('/vehicles', 'pages::vehicles')->name('vehicles')->middleware('screen:vehicles');
+    Route::livewire('/directory', 'pages::directory')->name('directory')->middleware('screen:directory');
     Route::livewire('/policies', 'pages::policies')->name('policies')->middleware('screen:policies');
     Route::get('/policies/versions/{version}/file', PolicyDocumentFileController::class)->name('policies.file')->middleware('screen:policies');
     Route::livewire('/profile', 'pages::profile')->name('profile')->middleware('screen:profile');

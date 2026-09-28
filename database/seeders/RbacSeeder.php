@@ -41,6 +41,10 @@ class RbacSeeder extends Seeder
             // all" — this screen is simply never granted to that role below,
             // a route-level block stronger than data-group scoping alone.
             ['key' => 'discipline', 'label' => 'Discipline Cases', 'nav_group' => 'My Team', 'sort_order' => 9],
+            // Spec F3: "a searchable, browsable company directory" — a pure
+            // read-only projection over Employee, open to every role same as
+            // Policies below.
+            ['key' => 'directory', 'label' => 'Directory', 'nav_group' => 'Company', 'sort_order' => 1, 'module_key' => 'directory'],
             // Spec E4: "every employee can browse and download active
             // policy documents they have access to" — granted at base ESS
             // level, unlike the Admin-only management screen below.
@@ -84,6 +88,7 @@ class RbacSeeder extends Seeder
             ['key' => 'assets', 'label' => 'Asset Management'],
             ['key' => 'vehicles', 'label' => 'Vehicle Fleet Management'],
             ['key' => 'policies', 'label' => 'Policy Document Management'],
+            ['key' => 'directory', 'label' => 'Corporate Directory'],
         ] as $m) {
             ModuleToggle::updateOrCreate(['key' => $m['key']], $m);
         }
@@ -146,15 +151,15 @@ class RbacSeeder extends Seeder
 
         // ---- Screen grants per role ----
         $screenGrants = [
-            'admin' => ['home', 'leave.apply', 'claims.create', 'timesheets', 'performance', 'assets', 'vehicles', 'discipline', 'policies', 'profile', 'approvals', 'employees', 'recruitment', 'admin.master-data', 'admin.onboarding-templates', 'admin.leave-configuration', 'admin.performance-configuration', 'admin.asset-configuration', 'admin.vehicle-configuration', 'admin.policy-configuration', 'admin.company-documents', 'admin.claims-management', 'admin.projects', 'settings', 'admin.roles', 'admin.audit-log', 'admin.signatures', 'admin.health-check'],
-            'hr_admin' => ['home', 'leave.apply', 'claims.create', 'timesheets', 'performance', 'assets', 'vehicles', 'discipline', 'policies', 'profile', 'approvals', 'employees', 'recruitment', 'admin.master-data', 'admin.onboarding-templates', 'admin.leave-configuration', 'admin.performance-configuration', 'admin.asset-configuration', 'admin.vehicle-configuration', 'admin.policy-configuration', 'admin.company-documents', 'admin.claims-management', 'admin.projects', 'admin.signatures'],
+            'admin' => ['home', 'leave.apply', 'claims.create', 'timesheets', 'performance', 'assets', 'vehicles', 'discipline', 'directory', 'policies', 'profile', 'approvals', 'employees', 'recruitment', 'admin.master-data', 'admin.onboarding-templates', 'admin.leave-configuration', 'admin.performance-configuration', 'admin.asset-configuration', 'admin.vehicle-configuration', 'admin.policy-configuration', 'admin.company-documents', 'admin.claims-management', 'admin.projects', 'settings', 'admin.roles', 'admin.audit-log', 'admin.signatures', 'admin.health-check'],
+            'hr_admin' => ['home', 'leave.apply', 'claims.create', 'timesheets', 'performance', 'assets', 'vehicles', 'discipline', 'directory', 'policies', 'profile', 'approvals', 'employees', 'recruitment', 'admin.master-data', 'admin.onboarding-templates', 'admin.leave-configuration', 'admin.performance-configuration', 'admin.asset-configuration', 'admin.vehicle-configuration', 'admin.policy-configuration', 'admin.company-documents', 'admin.claims-management', 'admin.projects', 'admin.signatures'],
             // HR Officer deliberately does NOT get 'discipline' or
             // 'admin.policy-configuration' — spec's own "only HR/Admin
             // manage categories, documents, and versions" reads as Admin/HR
             // Admin specifically. It does get claims-management, assets,
             // vehicles, and the base 'policies' browse/acknowledge screen,
             // since spec never excludes HR Officer from any of those.
-            'hr_officer' => ['home', 'leave.apply', 'claims.create', 'timesheets', 'performance', 'assets', 'vehicles', 'policies', 'profile', 'approvals', 'employees', 'recruitment', 'admin.claims-management'],
+            'hr_officer' => ['home', 'leave.apply', 'claims.create', 'timesheets', 'performance', 'assets', 'vehicles', 'directory', 'policies', 'profile', 'approvals', 'employees', 'recruitment', 'admin.claims-management'],
             // Recruitment/Performance/Discipline/Assets/Vehicles/Policies are
             // also granted at the base ESS level (like 'profile') since a
             // hiring manager may be any employee regardless of role, every
@@ -167,7 +172,7 @@ class RbacSeeder extends Seeder
             // scope (or, for Recruitment, the per-record hiring-manager
             // fact; for Policies, restricted-category file grants) rather
             // than a route-level block.
-            'ess' => ['home', 'leave.apply', 'claims.create', 'timesheets', 'performance', 'assets', 'vehicles', 'discipline', 'policies', 'profile', 'recruitment'],
+            'ess' => ['home', 'leave.apply', 'claims.create', 'timesheets', 'performance', 'assets', 'vehicles', 'discipline', 'directory', 'policies', 'profile', 'recruitment'],
             // Now that the workflow engine (WorkflowSeeder) gives supervisors
             // a real pending_manager stage to act on, they need the Approvals
             // screen too — layered on top of their base role same as any

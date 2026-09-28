@@ -17,6 +17,7 @@
     $canPerformance = auth()->user()?->canView('performance');
     $canAssets = auth()->user()?->canView('assets');
     $canVehicles = auth()->user()?->canView('vehicles');
+    $canDirectory = auth()->user()?->canView('directory');
     $canPolicies = auth()->user()?->canView('policies');
     $canMasterData = auth()->user()?->canView('admin.master-data');
     $canOnboardingTemplates = auth()->user()?->canView('admin.onboarding-templates');
@@ -185,9 +186,11 @@
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" :style="sections.company ? '' : 'transform:rotate(-90deg)'" style="transition:transform .15s ease;"><path d="m6 9 6 6 6-6"></path></svg>
             </button>
             <div x-show="sections.company" x-cloak>
-            <span class="nav-link" style="opacity:.5;cursor:default;">
-                <span class="nav-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"></path><path d="M4 21V5"></path></svg></span>Directory
-            </span>
+            @if($canDirectory)
+                <a href="{{ route('directory') }}" class="nav-link {{ request()->routeIs('directory') ? 'active' : '' }}">
+                    <span class="nav-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"></path><path d="M4 21V5"></path></svg></span>Directory
+                </a>
+            @endif
             @if($canPolicies)
                 <a href="{{ route('policies') }}" class="nav-link {{ request()->routeIs('policies') ? 'active' : '' }}">
                     <span class="nav-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z"></path><path d="M14 3v5h5M9 13h6M9 17h6"></path></svg></span>Policies
