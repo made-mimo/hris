@@ -52,6 +52,8 @@ Route::middleware(['auth', 'password_policy', 'two_factor'])->group(function () 
     Route::livewire('/leave/assign', 'pages::leave-assign')->name('leave.assign')->middleware('screen:approvals');
     Route::livewire('/leave/reports', 'pages::leave-reports')->name('leave.reports')->middleware('screen:admin.leave-configuration');
     Route::livewire('/claims/create', 'pages::expense-claim')->name('claims.create')->middleware('screen:claims.create');
+    Route::livewire('/claims/travel-advance', 'pages::claims-travel-advance')->name('claims.travel-advance')->middleware('screen:claims.create');
+    Route::livewire('/admin/claims-management', 'pages::claims-management')->name('admin.claims-management')->middleware('screen:admin.claims-management');
     Route::livewire('/timesheets', 'pages::timesheets')->name('timesheets')->middleware('screen:timesheets');
     Route::livewire('/timesheets/approvals', 'pages::timesheet-approvals')->name('timesheets.approvals')->middleware('screen:timesheets');
     Route::livewire('/timesheets/reports', 'pages::timesheet-reports')->name('timesheets.reports')->middleware('screen:admin.projects');
@@ -61,6 +63,7 @@ Route::middleware(['auth', 'password_policy', 'two_factor'])->group(function () 
     Route::livewire('/recruitment', 'pages::recruitment')->name('recruitment')->middleware('screen:recruitment');
     Route::livewire('/performance', 'pages::performance')->name('performance')->middleware('screen:performance');
     Route::livewire('/discipline', 'pages::discipline')->name('discipline')->middleware('screen:discipline');
+    Route::livewire('/assets', 'pages::assets')->name('assets')->middleware('screen:assets');
     Route::livewire('/profile', 'pages::profile')->name('profile')->middleware('screen:profile');
     Route::livewire('/account/settings', 'pages::account-settings')->name('account.settings')->middleware('screen:profile');
     Route::livewire('/approvals', 'pages::approvals')->name('approvals')->middleware('screen:approvals');
@@ -74,6 +77,7 @@ Route::middleware(['auth', 'password_policy', 'two_factor'])->group(function () 
     Route::livewire('/admin/onboarding-templates', 'pages::admin-onboarding-templates')->name('admin.onboarding-templates')->middleware('screen:admin.onboarding-templates');
     Route::livewire('/admin/leave-configuration', 'pages::admin-leave-configuration')->name('admin.leave-configuration')->middleware('screen:admin.leave-configuration');
     Route::livewire('/admin/performance-configuration', 'pages::admin-performance-configuration')->name('admin.performance-configuration')->middleware('screen:admin.performance-configuration');
+    Route::livewire('/admin/asset-configuration', 'pages::admin-asset-configuration')->name('admin.asset-configuration')->middleware('screen:admin.asset-configuration');
     Route::livewire('/settings', 'pages::settings')->name('settings')->middleware('screen:settings');
     Route::livewire('/admin/roles', 'pages::admin-roles')->name('admin.roles')->middleware('screen:admin.roles');
     Route::livewire('/admin/roles/{role}', 'pages::admin-role-edit')->name('admin.roles.edit')->middleware('screen:admin.roles');

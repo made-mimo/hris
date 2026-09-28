@@ -53,6 +53,9 @@ new class extends Component
     public bool $attendanceAllowSelfEdit = false;
     public bool $attendanceAllowSupervisorProxy = false;
 
+    public string $expenseClaimSecondApprovalThreshold = '';
+    public int $travelAdvanceReconciliationWindowDays = 30;
+
     public function mount(): void
     {
         $settings = Setting::current();
@@ -89,6 +92,25 @@ new class extends Component
         $this->attendanceAllowBackdate = $settings->attendance_allow_backdate;
         $this->attendanceAllowSelfEdit = $settings->attendance_allow_self_edit;
         $this->attendanceAllowSupervisorProxy = $settings->attendance_allow_supervisor_proxy;
+        $this->expenseClaimSecondApprovalThreshold = $settings->expense_claim_second_approval_threshold !== null ? (string) $settings->expense_claim_second_approval_threshold : '';
+        $this->travelAdvanceReconciliationWindowDays = $settings->travel_advance_reconciliation_window_days;
+    }
+
+    /** Spec E1: "an Admin-configurable claim-amount threshold (unset by default — single-level approval until an Admin sets one)." */
+    public function saveExpenseClaimSettings(): void
+    {
+        $this->validate([
+            'expenseClaimSecondApprovalThreshold' => ['nullable', 'numeric', 'min:0'],
+            'travelAdvanceReconciliationWindowDays' => ['required', 'integer', 'min:1'],
+        ]);
+
+        Setting::current()->update([
+            'expense_claim_second_approval_threshold' => $this->expenseClaimSecondApprovalThreshold !== '' ? $this->expenseClaimSecondApprovalThreshold : null,
+            'travel_advance_reconciliation_window_days' => $this->travelAdvanceReconciliationWindowDays,
+        ]);
+
+        Setting::forget();
+        session()->flash('status', 'Expense claim settings updated.');
     }
 
     public function getEmployeeIdPreviewProperty(): string
@@ -641,6 +663,27 @@ new class extends Component
                     </span>
                 </label>
             </div>
+        </section>
+
+        <section class="rounded-md border border-border bg-surface p-5 shadow-sm">
+            <div class="mb-3.5 flex items-center justify-between">
+                <h2 class="font-display text-base font-bold text-text">Expense Claims</h2>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label for="expenseClaimSecondApprovalThreshold" class="mb-1.5 block text-xs font-semibold text-text">Second-approval threshold</label>
+                    <input id="expenseClaimSecondApprovalThreshold" type="number" step="0.01" min="0" wire:model="expenseClaimSecondApprovalThreshold" placeholder="Unset — single-level approval" class="w-full rounded-sm border border-border bg-surface px-3 py-2 text-sm text-text outline-none focus:border-primary">
+                    <div class="mt-1 text-xs text-text-muted">Spec E1 — claims above this amount route through a second, higher-level (Admin) approver. Leave blank for single-level approval.</div>
+                    @error('expenseClaimSecondApprovalThreshold') <div class="mt-1 text-xs text-danger">{{ $message }}</div> @enderror
+                </div>
+                <div>
+                    <label for="travelAdvanceReconciliationWindowDays" class="mb-1.5 block text-xs font-semibold text-text">Advance reconciliation window (days)</label>
+                    <input id="travelAdvanceReconciliationWindowDays" type="number" min="1" wire:model="travelAdvanceReconciliationWindowDays" class="w-full rounded-sm border border-border bg-surface px-3 py-2 text-sm text-text outline-none focus:border-primary">
+                    <div class="mt-1 text-xs text-text-muted">An advance with no reconciling claim within this many days of payout surfaces on the Unreconciled Advances report.</div>
+                    @error('travelAdvanceReconciliationWindowDays') <div class="mt-1 text-xs text-danger">{{ $message }}</div> @enderror
+                </div>
+            </div>
+            <button wire:click="saveExpenseClaimSettings" class="mt-3.5 rounded-sm bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-dark">Save</button>
         </section>
     </div>
 </div>

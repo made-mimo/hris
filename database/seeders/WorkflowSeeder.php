@@ -45,11 +45,31 @@ class WorkflowSeeder extends Seeder
             ['expense_claim', 'pending_hr', 'hr_admin', 'reject', 'Reject', 'rejected'],
             ['expense_claim', 'pending_hr', 'hr_officer', 'approve', 'Approve and route to Finance', 'approved'],
             ['expense_claim', 'pending_hr', 'hr_officer', 'reject', 'Reject', 'rejected'],
-            // Payment tracking (spec E1): not yet exposed in any screen this
-            // session — seeded so the matrix is complete and ready the
-            // moment a "mark paid" action is built, per the engine's whole
-            // point ("a policy change is a row edit, not new code").
+            // Spec E1: "an Admin-configurable claim-amount threshold...
+            // routes any claim above it through a second, higher-level
+            // approver before it can move to Paid." approvals-board.blade.php
+            // decides 'approve' vs 'approve_high_value' based on the claim's
+            // own total — the HR reviewer's click is identical either way.
+            ['expense_claim', 'pending_hr', 'hr_admin', 'approve_high_value', 'Approve and route to second approval', 'pending_second_approval'],
+            ['expense_claim', 'pending_hr', 'hr_officer', 'approve_high_value', 'Approve and route to second approval', 'pending_second_approval'],
+            ['expense_claim', 'pending_second_approval', 'admin', 'approve', 'Give second approval', 'approved'],
+            ['expense_claim', 'pending_second_approval', 'admin', 'reject', 'Reject', 'rejected'],
+            // Payment tracking (spec E1) — now exposed via
+            // claims-payment-manager.blade.php.
             ['expense_claim', 'approved', 'hr_admin', 'mark_paid', 'Mark as paid', 'paid'],
+
+            // ---- travel_advance (spec E1) — same two-stage shape as
+            // expense_claim's own approval chain, but with no second-approval
+            // tier (advances are typically smaller, and the reconciling
+            // claim itself goes through the full chain including any
+            // second approval).
+            ['travel_advance', 'pending_manager', 'supervisor', 'approve', 'Approve', 'pending_hr'],
+            ['travel_advance', 'pending_manager', 'supervisor', 'reject', 'Reject', 'rejected'],
+            ['travel_advance', 'pending_hr', 'hr_admin', 'approve', 'Approve', 'approved'],
+            ['travel_advance', 'pending_hr', 'hr_admin', 'reject', 'Reject', 'rejected'],
+            ['travel_advance', 'pending_hr', 'hr_officer', 'approve', 'Approve', 'approved'],
+            ['travel_advance', 'pending_hr', 'hr_officer', 'reject', 'Reject', 'rejected'],
+            ['travel_advance', 'approved', 'hr_admin', 'mark_paid', 'Mark as paid', 'paid'],
 
             // ---- timesheet (spec C2) — single-stage (supervisor OR admin,
             // whichever acts), unlike Leave's two-stage sequence, and
