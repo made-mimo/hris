@@ -68,6 +68,63 @@ class WorkflowSeeder extends Seeder
             // Spec: "only an administrator may reset an approved timesheet
             // back to submitted (undo an approval)."
             ['timesheet', 'approved', 'admin', 'reset', 'Undo approval', 'submitted'],
+
+            // ---- requisition (spec D1) — "a one-time, one-way decision."
+            // HR Admin and HR Officer both decide, matching the same pairing
+            // used for Leave/Expense Claim's HR-decision step.
+            ['requisition', 'requested', 'hr_admin', 'approve', 'Approve (creates vacancy)', 'approved'],
+            ['requisition', 'requested', 'hr_admin', 'reject', 'Reject', 'rejected'],
+            ['requisition', 'requested', 'hr_officer', 'approve', 'Approve (creates vacancy)', 'approved'],
+            ['requisition', 'requested', 'hr_officer', 'reject', 'Reject', 'rejected'],
+
+            // ---- candidate_pipeline (spec D1) — "Application Initiated →
+            // Shortlisted → Interview Scheduled → Interview Passed → Job
+            // Offered → Hired," with Interview Failed/Offer Declined/Rejected
+            // as reachable terminal branches. 'hiring_manager' is the
+            // vacancy's own hiring manager (workflowActorTags, not
+            // owner/supervisor); hr_admin/hr_officer can act on any pipeline
+            // for HR oversight.
+            ['candidate_pipeline', 'application_initiated', 'hiring_manager', 'shortlist', 'Shortlist', 'shortlisted'],
+            ['candidate_pipeline', 'application_initiated', 'hr_admin', 'shortlist', 'Shortlist', 'shortlisted'],
+            ['candidate_pipeline', 'application_initiated', 'hr_officer', 'shortlist', 'Shortlist', 'shortlisted'],
+            ['candidate_pipeline', 'application_initiated', 'hiring_manager', 'reject', 'Reject', 'rejected'],
+            ['candidate_pipeline', 'application_initiated', 'hr_admin', 'reject', 'Reject', 'rejected'],
+            ['candidate_pipeline', 'application_initiated', 'hr_officer', 'reject', 'Reject', 'rejected'],
+
+            ['candidate_pipeline', 'shortlisted', 'hiring_manager', 'schedule_interview', 'Schedule interview', 'interview_scheduled'],
+            ['candidate_pipeline', 'shortlisted', 'hr_admin', 'schedule_interview', 'Schedule interview', 'interview_scheduled'],
+            ['candidate_pipeline', 'shortlisted', 'hr_officer', 'schedule_interview', 'Schedule interview', 'interview_scheduled'],
+            ['candidate_pipeline', 'shortlisted', 'hiring_manager', 'reject', 'Reject', 'rejected'],
+            ['candidate_pipeline', 'shortlisted', 'hr_admin', 'reject', 'Reject', 'rejected'],
+            ['candidate_pipeline', 'shortlisted', 'hr_officer', 'reject', 'Reject', 'rejected'],
+
+            ['candidate_pipeline', 'interview_scheduled', 'hiring_manager', 'pass_interview', 'Mark interview passed', 'interview_passed'],
+            ['candidate_pipeline', 'interview_scheduled', 'hr_admin', 'pass_interview', 'Mark interview passed', 'interview_passed'],
+            ['candidate_pipeline', 'interview_scheduled', 'hr_officer', 'pass_interview', 'Mark interview passed', 'interview_passed'],
+            ['candidate_pipeline', 'interview_scheduled', 'hiring_manager', 'fail_interview', 'Mark interview failed', 'interview_failed'],
+            ['candidate_pipeline', 'interview_scheduled', 'hr_admin', 'fail_interview', 'Mark interview failed', 'interview_failed'],
+            ['candidate_pipeline', 'interview_scheduled', 'hr_officer', 'fail_interview', 'Mark interview failed', 'interview_failed'],
+
+            // A second interview round: back to scheduling without losing the
+            // "interview_passed" semantics — spec caps at two rounds total
+            // (Interview::MAX_ROUNDS_PER_APPLICATION); the service layer
+            // enforces the count, not the state machine.
+            ['candidate_pipeline', 'interview_passed', 'hiring_manager', 'schedule_interview', 'Schedule another interview', 'interview_scheduled'],
+            ['candidate_pipeline', 'interview_passed', 'hr_admin', 'schedule_interview', 'Schedule another interview', 'interview_scheduled'],
+            ['candidate_pipeline', 'interview_passed', 'hr_officer', 'schedule_interview', 'Schedule another interview', 'interview_scheduled'],
+            ['candidate_pipeline', 'interview_passed', 'hiring_manager', 'make_offer', 'Extend offer', 'job_offered'],
+            ['candidate_pipeline', 'interview_passed', 'hr_admin', 'make_offer', 'Extend offer', 'job_offered'],
+            ['candidate_pipeline', 'interview_passed', 'hr_officer', 'make_offer', 'Extend offer', 'job_offered'],
+            ['candidate_pipeline', 'interview_passed', 'hiring_manager', 'reject', 'Reject', 'rejected'],
+            ['candidate_pipeline', 'interview_passed', 'hr_admin', 'reject', 'Reject', 'rejected'],
+            ['candidate_pipeline', 'interview_passed', 'hr_officer', 'reject', 'Reject', 'rejected'],
+
+            ['candidate_pipeline', 'job_offered', 'hiring_manager', 'hire', 'Confirm hire', 'hired'],
+            ['candidate_pipeline', 'job_offered', 'hr_admin', 'hire', 'Confirm hire', 'hired'],
+            ['candidate_pipeline', 'job_offered', 'hr_officer', 'hire', 'Confirm hire', 'hired'],
+            ['candidate_pipeline', 'job_offered', 'hiring_manager', 'decline_offer', 'Offer declined', 'offer_declined'],
+            ['candidate_pipeline', 'job_offered', 'hr_admin', 'decline_offer', 'Offer declined', 'offer_declined'],
+            ['candidate_pipeline', 'job_offered', 'hr_officer', 'decline_offer', 'Offer declined', 'offer_declined'],
         ];
 
         foreach ($rows as [$workflow, $from, $actor, $action, $label, $to]) {

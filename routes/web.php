@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CareersFeedController;
 use App\Http\Controllers\EmployeeCsvTemplateController;
 use App\Http\Controllers\PushSubscriptionController;
 use App\Http\Controllers\TimezoneController;
@@ -29,6 +30,18 @@ Route::livewire('/account/update-password', 'pages::account-update-password')->n
 
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middleware('auth');
 
+// Spec D1's public job board — unauthenticated by design ("unauthenticated
+// listing/detail views and an RSS feed limited to published, open
+// vacancies; a public application form for online applicants").
+Route::livewire('/careers', 'pages::careers')->name('careers');
+Route::livewire('/careers/{vacancy}', 'pages::careers-vacancy')->name('careers.show');
+Route::get('/careers.rss', CareersFeedController::class)->name('careers.feed');
+
+// Spec D1's offer-letter e-signature: the candidate has no system account at
+// this point in the pipeline, so this is a signed URL (Laravel's own
+// tamper-proof query-string HMAC), not a login-gated screen.
+Route::livewire('/recruitment/offer/{application}/sign', 'pages::offer-sign')->name('recruitment.offer.sign')->middleware('signed');
+
 // Every screen below is gated by the RBAC engine (App\Services\PermissionService),
 // not a hard-coded role check — 'screen:<key>' matches a row in the `screens`
 // table and is resolved against whichever role(s) the signed-in user's Role
@@ -45,6 +58,7 @@ Route::middleware(['auth', 'password_policy', 'two_factor'])->group(function () 
     Route::livewire('/attendance', 'pages::attendance')->name('attendance')->middleware('screen:timesheets');
     Route::livewire('/attendance/reports', 'pages::attendance-reports')->name('attendance.reports')->middleware('screen:admin.projects');
     Route::livewire('/admin/projects', 'pages::admin-projects')->name('admin.projects')->middleware('screen:admin.projects');
+    Route::livewire('/recruitment', 'pages::recruitment')->name('recruitment')->middleware('screen:recruitment');
     Route::livewire('/profile', 'pages::profile')->name('profile')->middleware('screen:profile');
     Route::livewire('/account/settings', 'pages::account-settings')->name('account.settings')->middleware('screen:profile');
     Route::livewire('/approvals', 'pages::approvals')->name('approvals')->middleware('screen:approvals');

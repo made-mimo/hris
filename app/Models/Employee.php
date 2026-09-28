@@ -110,6 +110,16 @@ class Employee extends Model implements HasMedia
         return $this->hasMany(Employee::class, 'supervisor_id');
     }
 
+    public function hiringManagerVacancies(): HasMany
+    {
+        return $this->hasMany(Vacancy::class, 'hiring_manager_id');
+    }
+
+    public function interviews(): BelongsToMany
+    {
+        return $this->belongsToMany(Interview::class, 'interview_interviewer');
+    }
+
     public function nationality(): BelongsTo
     {
         return $this->belongsTo(MasterListItem::class, 'nationality_id');

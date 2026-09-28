@@ -27,6 +27,7 @@ class RbacSeeder extends Seeder
             ['key' => 'profile', 'label' => 'My Profile', 'nav_group' => 'Workspace', 'sort_order' => 5],
             ['key' => 'approvals', 'label' => 'Approvals', 'nav_group' => 'My Team', 'sort_order' => 6],
             ['key' => 'employees', 'label' => 'Employees', 'nav_group' => 'My Team', 'sort_order' => 7],
+            ['key' => 'recruitment', 'label' => 'Recruitment', 'nav_group' => 'My Team', 'sort_order' => 8, 'module_key' => 'recruitment'],
             ['key' => 'admin.projects', 'label' => 'Customers & Projects', 'nav_group' => 'Admin', 'sort_order' => 6],
             ['key' => 'admin.master-data', 'label' => 'Organization & Master Data', 'nav_group' => 'Admin', 'sort_order' => 6],
             ['key' => 'admin.onboarding-templates', 'label' => 'Onboarding/Offboarding Templates', 'nav_group' => 'Admin', 'sort_order' => 7],
@@ -48,6 +49,7 @@ class RbacSeeder extends Seeder
             ['key' => 'leave', 'label' => 'Leave Management'],
             ['key' => 'claims', 'label' => 'Expense Claims'],
             ['key' => 'timesheets', 'label' => 'Time & Project Tracking'],
+            ['key' => 'recruitment', 'label' => 'Recruitment'],
         ] as $m) {
             ModuleToggle::updateOrCreate(['key' => $m['key']], $m);
         }
@@ -61,6 +63,13 @@ class RbacSeeder extends Seeder
             ['key' => 'disciplinary_case', 'label' => 'Disciplinary Case Data'],
             ['key' => 'approvals_queue', 'label' => 'Approvals Queue'],
             ['key' => 'timesheets', 'label' => 'Timesheets'],
+            // Recruitment (spec D1): 'all' scope means "sees every
+            // requisition/vacancy/candidate," granted to HR only — everyone
+            // else (including a hiring manager with no HR role) is
+            // restricted at the query level to records where they're
+            // specifically the assigned hiring manager, a per-record fact
+            // this data group's scope doesn't otherwise express.
+            ['key' => 'recruitment', 'label' => 'Recruitment'],
         ];
         foreach ($groups as $g) {
             DataGroup::updateOrCreate(['key' => $g['key']], $g);
@@ -87,10 +96,16 @@ class RbacSeeder extends Seeder
 
         // ---- Screen grants per role ----
         $screenGrants = [
-            'admin' => ['home', 'leave.apply', 'claims.create', 'timesheets', 'profile', 'approvals', 'employees', 'admin.master-data', 'admin.onboarding-templates', 'admin.leave-configuration', 'admin.projects', 'settings', 'admin.roles', 'admin.audit-log', 'admin.signatures', 'admin.health-check'],
-            'hr_admin' => ['home', 'leave.apply', 'claims.create', 'timesheets', 'profile', 'approvals', 'employees', 'admin.master-data', 'admin.onboarding-templates', 'admin.leave-configuration', 'admin.projects', 'admin.signatures'],
-            'hr_officer' => ['home', 'leave.apply', 'claims.create', 'timesheets', 'profile', 'approvals', 'employees'],
-            'ess' => ['home', 'leave.apply', 'claims.create', 'timesheets', 'profile'],
+            'admin' => ['home', 'leave.apply', 'claims.create', 'timesheets', 'profile', 'approvals', 'employees', 'recruitment', 'admin.master-data', 'admin.onboarding-templates', 'admin.leave-configuration', 'admin.projects', 'settings', 'admin.roles', 'admin.audit-log', 'admin.signatures', 'admin.health-check'],
+            'hr_admin' => ['home', 'leave.apply', 'claims.create', 'timesheets', 'profile', 'approvals', 'employees', 'recruitment', 'admin.master-data', 'admin.onboarding-templates', 'admin.leave-configuration', 'admin.projects', 'admin.signatures'],
+            'hr_officer' => ['home', 'leave.apply', 'claims.create', 'timesheets', 'profile', 'approvals', 'employees', 'recruitment'],
+            // Recruitment is also granted at the base ESS level (like
+            // 'profile') since a hiring manager may be any employee
+            // regardless of role — the screen itself scopes what a
+            // non-HR/non-hiring-manager visitor sees down to nothing, per
+            // RecruitmentService/PermissionService's 'recruitment' data
+            // group rather than a route-level block.
+            'ess' => ['home', 'leave.apply', 'claims.create', 'timesheets', 'profile', 'recruitment'],
             // Now that the workflow engine (WorkflowSeeder) gives supervisors
             // a real pending_manager stage to act on, they need the Approvals
             // screen too — layered on top of their base role same as any
@@ -118,6 +133,7 @@ class RbacSeeder extends Seeder
                 'disciplinary_case' => ['all', 'view_edit_delete'],
                 'approvals_queue' => ['all', 'view_edit_delete'],
                 'timesheets' => ['all', 'view_edit_delete'],
+                'recruitment' => ['all', 'view_edit_delete'],
             ],
             'hr_admin' => [
                 'employee_personal_details' => ['all', 'view_edit_delete'],
@@ -127,6 +143,7 @@ class RbacSeeder extends Seeder
                 'disciplinary_case' => ['all', 'view_edit_delete'],
                 'approvals_queue' => ['all', 'view_edit'],
                 'timesheets' => ['all', 'view_edit'],
+                'recruitment' => ['all', 'view_edit_delete'],
             ],
             'hr_officer' => [
                 'employee_personal_details' => ['all', 'view_edit'],
@@ -136,15 +153,21 @@ class RbacSeeder extends Seeder
                 'disciplinary_case' => ['none', 'none'],
                 'approvals_queue' => ['all', 'view_edit'],
                 'timesheets' => ['self', 'view_edit'],
+                'recruitment' => ['all', 'view_edit'],
             ],
             'supervisor' => [
                 'employee_personal_details' => ['self_subordinates', 'view'],
                 'compensation' => ['none', 'none'],
                 'leave_requests' => ['self_subordinates', 'view_edit'],
                 'expense_claims' => ['self_subordinates', 'view_edit'],
-                'disciplinary_case' => ['none', 'none'],
+                // Spec D3: "a supervisor may raise a case only against their
+                // own reporting-line subordinates" — corrected from this
+                // stub's original ['none','none'] (pre-seeded ahead of D3
+                // existing at all) now that the feature is actually built.
+                'disciplinary_case' => ['self_subordinates', 'view_edit'],
                 'approvals_queue' => ['self_subordinates', 'view_edit'],
                 'timesheets' => ['self_subordinates', 'view_edit'],
+                'recruitment' => ['none', 'none'],
             ],
             'ess' => [
                 'employee_personal_details' => ['self', 'view_edit'],
@@ -154,6 +177,7 @@ class RbacSeeder extends Seeder
                 'disciplinary_case' => ['none', 'none'],
                 'approvals_queue' => ['none', 'none'],
                 'timesheets' => ['self', 'view_edit'],
+                'recruitment' => ['none', 'none'],
             ],
         ];
         foreach ($matrix as $slug => $grants) {

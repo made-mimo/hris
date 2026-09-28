@@ -25,7 +25,16 @@ class WorkflowEngine
 {
     public function __construct(private NotificationService $notifications) {}
 
-    /** @return array<int, string> */
+    /**
+     * @return array<int, string>
+     *
+     * A record may optionally implement workflowActorTags(User $user): array
+     * to contribute tags beyond owner/supervisor/RBAC-role — Recruitment's
+     * "hiring manager" is the first such case (D1): not the record's owner
+     * or supervisor in the usual employee_id/supervisor_id sense, but still
+     * a legitimate actor-tag concept. Opt-in and additive, so every existing
+     * workflow (Leave/Timesheet/Attendance) is unaffected.
+     */
     public function actorTags(User $user, Model $record): array
     {
         $tags = [];
@@ -42,6 +51,10 @@ class WorkflowEngine
             if ($record->employee && (int) $record->employee->supervisor_id === $employee->id) {
                 $tags[] = 'supervisor';
             }
+        }
+
+        if (method_exists($record, 'workflowActorTags')) {
+            $tags = array_merge($tags, $record->workflowActorTags($user));
         }
 
         return array_values(array_unique($tags));
@@ -112,13 +125,19 @@ class WorkflowEngine
             $recipients = $recipients->merge(match ($tag) {
                 'owner' => $record->employee?->user ? [$record->employee->user] : [],
                 'supervisor' => $record->employee?->supervisor?->user ? [$record->employee->supervisor->user] : [],
+                'hiring_manager' => $record->vacancy?->hiringManager?->user ? [$record->vacancy->hiringManager->user] : [],
                 default => Role::where('slug', $tag)->first()?->users ?? [],
             });
         }
 
         $title = ucfirst(str_replace('_', ' ', $workflow)).' update';
         $body = "\"{$justApplied->label}\" — now {$justApplied->to_state}.";
-        $deepLink = $workflow === 'leave' ? '/leave/apply' : ($workflow === 'expense_claim' ? '/claims/create' : '/approvals');
+        $deepLink = match ($workflow) {
+            'leave' => '/leave/apply',
+            'expense_claim' => '/claims/create',
+            'requisition', 'candidate_pipeline' => '/recruitment',
+            default => '/approvals',
+        };
 
         foreach ($recipients->unique('id') as $recipient) {
             $this->notifications->notify($recipient, $workflow.'.transition', $title, $body, $deepLink, ucfirst($workflow));

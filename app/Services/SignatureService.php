@@ -25,6 +25,12 @@ use Illuminate\Database\Eloquent\Model;
 class SignatureService
 {
     /**
+     * @param  Model  $signable  The document/record being signed.
+     * @param  User|null  $signer  Null for an external signer who has no
+     *                             system account yet (spec D1: a Candidate
+     *                             signing their offer letter) — pass
+     *                             $externalSignerName/$externalSignerEmail
+     *                             in that case instead.
      * @param  string  $content  The exact content signed — e.g. a document's
      *                           body plus its version identifier — hashed,
      *                           never stored in plain form.
@@ -33,18 +39,22 @@ class SignatureService
      */
     public function sign(
         Model $signable,
-        User $signer,
+        ?User $signer,
         string $purpose,
         string $content,
         string $method,
         ?string $ipAddress,
         ?string $userAgent,
         ?string $drawnImageBase64 = null,
+        ?string $externalSignerName = null,
+        ?string $externalSignerEmail = null,
     ): SignatureEvent {
         $event = SignatureEvent::create([
             'signable_type' => get_class($signable),
             'signable_id' => $signable->getKey(),
-            'signer_id' => $signer->id,
+            'signer_id' => $signer?->id,
+            'signer_name' => $signer ? null : $externalSignerName,
+            'signer_email' => $signer ? null : $externalSignerEmail,
             'purpose' => $purpose,
             'content_hash' => hash('sha256', $content),
             'method' => $method,
