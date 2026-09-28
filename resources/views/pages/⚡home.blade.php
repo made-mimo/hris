@@ -1,19 +1,25 @@
 <?php
 
-use App\Models\ExpenseClaim;
+use App\Models\AttendanceRecord;
 use App\Models\LeaveRequest;
 use App\Models\LeaveType;
+use App\Models\ModuleToggle;
+use App\Models\PulseSurveyRun;
+use App\Models\Setting;
+use App\Services\PolicyService;
+use App\Services\PulseSurveyService;
 use Livewire\Component;
 
 new class extends Component
 {
-    public function with(): array
+    public function with(PolicyService $policies, PulseSurveyService $pulseSurveys): array
     {
-        $me = auth()->user()->employee;
+        $user = auth()->user();
+        $me = $user->employee;
         // The greeting/date line is the one place "now" means "now for the
         // viewer" — converted to their browser-declared timezone (never
         // IP/GPS, see PLAN.md), not the server's fixed GMT+1 default.
-        $viewerNow = now()->clone()->setTimezone(auth()->user()->displayTimezone());
+        $viewerNow = now()->clone()->setTimezone($user->displayTimezone());
         $annual = LeaveType::where('slug', 'annual')->first();
         $sick = LeaveType::where('slug', 'sick')->first();
 
@@ -28,20 +34,47 @@ new class extends Component
             ->whereDate('start_date', '<=', $today)
             ->whereDate('end_date', '>=', $today)
             ->where('employee_id', '!=', $me->id)
-            ->when($me->supervisor_id || $me->subordinates()->exists(), fn ($q) => $q->whereIn('employee_id', $me->subordinates()->pluck('id')->push($me->supervisor_id ?? 0)))
+            ->when(
+                Setting::current()->dashboard_who_is_out_scope !== 'everyone',
+                fn ($q) => $q->when(
+                    $me->supervisor_id || $me->subordinates()->exists(),
+                    fn ($q2) => $q2->whereIn('employee_id', $me->subordinates()->pluck('id')->push($me->supervisor_id ?? 0)),
+                    fn ($q2) => $q2->whereRaw('1 = 0'),
+                )
+            )
             ->get();
 
-        $team = null;
-        if ($me->subordinates()->exists()) {
-            $subIds = $me->subordinates()->pluck('id');
-            $team = [
-                'count' => $subIds->count(),
-                'leaveToReview' => LeaveRequest::whereIn('employee_id', $subIds)->where('status', 'pending_manager')->count(),
-                'claimsToReview' => ExpenseClaim::whereIn('employee_id', $subIds)->where('status', 'pending_manager')->count(),
-                'onLeaveThisWeek' => LeaveRequest::whereIn('employee_id', $subIds)->where('status', 'approved')
-                    ->whereDate('start_date', '<=', now()->endOfWeek())->whereDate('end_date', '>=', now()->startOfWeek())->count(),
-            ];
+        $team = $me->subordinates()->exists() ? [
+            'count' => $me->subordinates()->count(),
+            'onLeaveThisWeek' => LeaveRequest::whereIn('employee_id', $me->subordinates()->pluck('id'))->where('status', 'approved')
+                ->whereDate('start_date', '<=', now()->endOfWeek())->whereDate('end_date', '>=', now()->startOfWeek())->count(),
+        ] : null;
+
+        // The "My Attendance" screen is itself gated on the 'timesheets' screen permission (see routes/web.php), not a separate 'attendance' one.
+        $canAttendance = $user->canView('timesheets');
+        $weeklyClockedHours = $canAttendance
+            ? AttendanceRecord::where('employee_id', $me->id)
+                ->whereBetween('punch_in_at_utc', [now()->startOfWeek(), now()->endOfWeek()])
+                ->get()
+                ->sum(fn (AttendanceRecord $r) => $r->durationHours() ?? 0)
+            : null;
+
+        $tasks = [];
+        if (ModuleToggle::isEnabled('policies')) {
+            foreach ($policies->outstandingFor($me) as $doc) {
+                $tasks[] = ['label' => 'Acknowledge: '.$doc->title, 'route' => 'policies', 'urgency' => 'warning'];
+            }
         }
+        if (ModuleToggle::isEnabled('pulse_surveys')) {
+            $openRuns = PulseSurveyRun::with('template')->where('status', 'open')->get()
+                ->filter(fn (PulseSurveyRun $run) => $pulseSurveys->audienceEmployees($run)->contains('id', $me->id)
+                    && ! $pulseSurveys->hasResponded($run, $me));
+            foreach ($openRuns as $run) {
+                $tasks[] = ['label' => $run->template->name.' — closes '.$run->close_date->format('j M'), 'route' => 'pulse-surveys', 'urgency' => 'neutral'];
+            }
+        }
+
+        $canManageHr = in_array($user->role?->slug, ['admin', 'hr_admin'], true);
 
         return [
             'me' => $me,
@@ -55,6 +88,13 @@ new class extends Component
             'outToday' => $outToday,
             'team' => $team,
             'currentPunch' => $me->currentPunch(),
+            'canAttendance' => $canAttendance,
+            'weeklyClockedHours' => $weeklyClockedHours,
+            'tasks' => $tasks,
+            'canManageHr' => $canManageHr,
+            'canHelpdesk' => $user->canView('helpdesk'),
+            'canLeave' => $user->canView('leave.apply'),
+            'canClaims' => $user->canView('claims.create'),
         ];
     }
 };
@@ -69,7 +109,7 @@ new class extends Component
         <livewire:clock-toggle />
     </div>
 
-    <div class="grid grid-4" style="margin-top:14px;">
+    <div class="grid {{ $canAttendance ? 'grid-5' : 'grid-4' }}" style="margin-top:14px;">
         <div class="stat-card">
             <div class="stat-badge is-primary"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18M8 3v4M16 3v4"></path></svg></div>
             @if($annualBalance)
@@ -99,6 +139,14 @@ new class extends Component
             <div class="stat-value">₦{{ number_format($awaitingPayment) }}</div>
             <div class="text-muted" style="font-size:12px;margin-top:6px;">With Finance for payment</div>
         </div>
+        @if($canAttendance)
+            <div class="stat-card">
+                <div class="stat-badge is-info"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg></div>
+                <div class="stat-label">Clocked this week</div>
+                <div class="stat-value">{{ number_format($weeklyClockedHours, 1) }} <span class="text-muted" style="font-size:14px;">hrs</span></div>
+                <div class="text-muted" style="font-size:12px;margin-top:6px;">{{ $currentPunch ? 'Currently clocked in' : 'Not clocked in' }}</div>
+            </div>
+        @endif
     </div>
 
     <div class="grid grid-3" style="margin-top:18px;">
@@ -106,22 +154,30 @@ new class extends Component
 
         <section class="card-dark">
             <h2>Quick actions</h2>
-            <a href="{{ route('leave.apply') }}" wire:navigate class="quick-action-dark">
-                <span style="width:34px;height:34px;border-radius:8px;background:var(--color-primary);display:flex;align-items:center;justify-content:center;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18M8 3v4M16 3v4"></path></svg></span>
-                <span style="flex:1;">Apply for leave</span>
-            </a>
-            <a href="{{ route('claims.create') }}" wire:navigate class="quick-action-dark">
-                <span style="width:34px;height:34px;border-radius:8px;background:var(--color-accent);display:flex;align-items:center;justify-content:center;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"></path><path d="M9 8h6M9 12h6"></path></svg></span>
-                <span style="flex:1;">Submit a claim</span>
-            </a>
-            <span class="quick-action-dark" style="opacity:.6;" title="Use the punch button at the top of the page">
-                <span style="width:34px;height:34px;border-radius:8px;background:var(--color-info);display:flex;align-items:center;justify-content:center;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg></span>
-                <span style="flex:1;">{{ $currentPunch ? 'Punched in '.$currentPunch->punch_in_at_local->format('H:i') : 'Punch in above' }}</span>
-            </span>
-            <span class="quick-action-dark" style="opacity:.6;">
-                <span style="width:34px;height:34px;border-radius:8px;background:var(--color-warning);display:flex;align-items:center;justify-content:center;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v3a2 2 0 0 0 0 4v3a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-3a2 2 0 0 0 0-4z"></path></svg></span>
-                <span style="flex:1;">Raise a helpdesk ticket</span>
-            </span>
+            @if($canLeave)
+                <a href="{{ route('leave.apply') }}" wire:navigate class="quick-action-dark">
+                    <span style="width:34px;height:34px;border-radius:8px;background:var(--color-primary);display:flex;align-items:center;justify-content:center;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18M8 3v4M16 3v4"></path></svg></span>
+                    <span style="flex:1;">Apply for leave</span>
+                </a>
+            @endif
+            @if($canClaims)
+                <a href="{{ route('claims.create') }}" wire:navigate class="quick-action-dark">
+                    <span style="width:34px;height:34px;border-radius:8px;background:var(--color-accent);display:flex;align-items:center;justify-content:center;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"></path><path d="M9 8h6M9 12h6"></path></svg></span>
+                    <span style="flex:1;">Submit a claim</span>
+                </a>
+            @endif
+            @if($canHelpdesk)
+                <a href="{{ route('helpdesk') }}" wire:navigate class="quick-action-dark">
+                    <span style="width:34px;height:34px;border-radius:8px;background:var(--color-warning);display:flex;align-items:center;justify-content:center;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v3a2 2 0 0 0 0 4v3a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-3a2 2 0 0 0 0-4z"></path></svg></span>
+                    <span style="flex:1;">Raise a helpdesk ticket</span>
+                </a>
+            @endif
+            @if($canAttendance)
+                <span class="quick-action-dark" style="opacity:.6;" title="Use the punch button at the top of the page">
+                    <span style="width:34px;height:34px;border-radius:8px;background:var(--color-info);display:flex;align-items:center;justify-content:center;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg></span>
+                    <span style="flex:1;">{{ $currentPunch ? 'Punched in '.$currentPunch->punch_in_at_local->format('H:i') : 'Punch in above' }}</span>
+                </span>
+            @endif
         </section>
     </div>
 
@@ -149,18 +205,16 @@ new class extends Component
         <section class="card">
             <div class="card-header">
                 <h2>Tasks for you</h2>
-                <span class="pill pill-danger">2 due</span>
+                @if(count($tasks) > 0)<span class="pill pill-danger">{{ count($tasks) }} due</span>@endif
             </div>
             <div style="display:flex;flex-direction:column;gap:10px;">
-                <label style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border:1px solid var(--color-border);border-radius:10px;cursor:pointer;">
-                    <input type="checkbox" style="width:16px;height:16px;margin-top:2px;accent-color:var(--color-primary);">
-                    <span><span style="display:block;font-size:14px;font-weight:600;">Acknowledge: Data Protection Policy v3</span><span style="display:block;font-size:12px;color:var(--color-warning);margin-top:2px;">Due in 3 days</span></span>
-                </label>
-                <label style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border:1px solid var(--color-border);border-radius:10px;cursor:pointer;">
-                    <input type="checkbox" style="width:16px;height:16px;margin-top:2px;accent-color:var(--color-primary);">
-                    <span><span style="display:block;font-size:14px;font-weight:600;">Q3 pulse survey</span><span style="display:block;font-size:12px;color:var(--color-text-muted);margin-top:2px;">5 questions · closes in 5 days</span></span>
-                </label>
-                <div class="hint">Policy Documents (E4) and Pulse Surveys (F8) aren't built in this prototype slice — see PLAN.md §4.</div>
+                @forelse($tasks as $task)
+                    <a href="{{ route($task['route']) }}" wire:navigate style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border:1px solid var(--color-border);border-radius:10px;text-decoration:none;color:inherit;">
+                        <span style="display:block;font-size:14px;font-weight:600;">{{ $task['label'] }}</span>
+                    </a>
+                @empty
+                    <p class="text-muted">Nothing outstanding right now.</p>
+                @endforelse
             </div>
         </section>
 
@@ -171,12 +225,6 @@ new class extends Component
             </div>
             @if($team)
                 <div style="display:flex;flex-direction:column;gap:10px;flex:1;">
-                    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--color-bg);border-radius:10px;">
-                        <span>Leave requests to review</span><span class="font-mono" style="font-weight:600;">{{ $team['leaveToReview'] }}</span>
-                    </div>
-                    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--color-bg);border-radius:10px;">
-                        <span>Claims to review</span><span class="font-mono" style="font-weight:600;">{{ $team['claimsToReview'] }}</span>
-                    </div>
                     <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--color-bg);border-radius:10px;">
                         <span>On leave this week</span><span class="font-mono" style="font-weight:600;">{{ $team['onLeaveThisWeek'] }}</span>
                     </div>
@@ -189,4 +237,22 @@ new class extends Component
             @endif
         </section>
     </div>
+
+    <div style="margin-top:18px;max-width:520px;">
+        <livewire:dashboard-action-summary />
+    </div>
+
+    @if($canManageHr)
+        <div style="margin-top:18px;">
+            <livewire:dashboard-headcount-charts />
+        </div>
+
+        <div style="margin-top:18px;">
+            <livewire:dashboard-renewals-widget />
+        </div>
+
+        <div style="margin-top:18px;">
+            <livewire:dashboard-hr-insights />
+        </div>
+    @endif
 </x-layouts.app>

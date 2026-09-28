@@ -56,6 +56,8 @@ new class extends Component
     public string $expenseClaimSecondApprovalThreshold = '';
     public int $travelAdvanceReconciliationWindowDays = 30;
 
+    public string $dashboardWhoIsOutScope = 'scoped';
+
     public function mount(): void
     {
         $settings = Setting::current();
@@ -94,6 +96,7 @@ new class extends Component
         $this->attendanceAllowSupervisorProxy = $settings->attendance_allow_supervisor_proxy;
         $this->expenseClaimSecondApprovalThreshold = $settings->expense_claim_second_approval_threshold !== null ? (string) $settings->expense_claim_second_approval_threshold : '';
         $this->travelAdvanceReconciliationWindowDays = $settings->travel_advance_reconciliation_window_days;
+        $this->dashboardWhoIsOutScope = $settings->dashboard_who_is_out_scope;
     }
 
     /** Spec E1: "an Admin-configurable claim-amount threshold (unset by default — single-level approval until an Admin sets one)." */
@@ -169,6 +172,14 @@ new class extends Component
         Setting::current()->update(['time_display_format' => $value]);
         Setting::forget();
         session()->flash('status', 'Time display format updated.');
+    }
+
+    /** Spec F2: "'who's on leave today' (with a configurable scope: everyone vs. only employees the viewer has access to)." */
+    public function updatedDashboardWhoIsOutScope($value): void
+    {
+        Setting::current()->update(['dashboard_who_is_out_scope' => $value]);
+        Setting::forget();
+        session()->flash('status', 'Dashboard "who\'s out today" scope updated.');
     }
 
     /** Spec C3: three independently toggleable, Admin-configurable permissions — all off by default. */
@@ -624,6 +635,20 @@ new class extends Component
                         <span class="mt-0.5 block text-xs text-text-muted">Spec B2 — when off, hides the non-required profile tabs (Family, Immigration, Compensation, Qualifications, Career, Attachments) for everyone. Job Details, Personal, Contact, Reporting, Termination, and Activity stay visible either way.</span>
                     </span>
                 </label>
+            </div>
+        </section>
+
+        <section class="rounded-md border border-border bg-surface p-5 shadow-sm">
+            <div class="mb-3.5 flex items-center justify-between">
+                <h2 class="font-display text-base font-bold text-text">Dashboard</h2>
+            </div>
+            <div>
+                <label for="dashboardWhoIsOutScope" class="mb-1.5 block text-xs font-semibold text-text">"Who's out today" visibility</label>
+                <select id="dashboardWhoIsOutScope" wire:model.live="dashboardWhoIsOutScope" class="w-full max-w-xs rounded-sm border border-border bg-surface px-3 py-2 text-sm text-text outline-none focus:border-primary">
+                    <option value="scoped">Only employees the viewer has access to</option>
+                    <option value="everyone">Everyone in the company</option>
+                </select>
+                <div class="mt-1 text-xs text-text-muted">Spec F2 — controls the Home dashboard's "who's out today" widget scope for every viewer.</div>
             </div>
         </section>
 

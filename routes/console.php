@@ -28,3 +28,6 @@ Schedule::command('buzz:reconcile-counts')->daily();
 
 // Spec F8's Pulse Survey lifecycle: scheduled -> open, midpoint reminders, open -> closed (+ recurring spawn).
 Schedule::command('pulse-surveys:process')->daily();
+
+// Spec F2's nightly HR-metrics snapshot — run early each day so the Dashboard's trend widget always has a same-day point.
+Schedule::command('hr-metrics:snapshot')->daily();

@@ -33,6 +33,7 @@ class Setting extends Model implements HasMedia
         'attendance_allow_backdate', 'attendance_allow_self_edit', 'attendance_allow_supervisor_proxy',
         'expense_claim_second_approval_threshold', 'travel_advance_reconciliation_window_days',
         'pulse_survey_min_responses',
+        'dashboard_who_is_out_scope',
     ];
 
     protected function casts(): array
