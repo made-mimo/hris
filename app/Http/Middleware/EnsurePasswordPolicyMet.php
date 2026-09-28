@@ -13,6 +13,11 @@ use Symfony\Component\HttpFoundation\Response;
  * bumps whenever Admin actually changes a policy field; a user whose own
  * `password_policy_version` is behind that is routed through a forced
  * password change before reaching anything else.
+ *
+ * Exempts the current session when it authenticated via SSO (see
+ * SsoController) — that forced change asks for the account's *current*
+ * password, which an SSO-only user may never have set or known, turning an
+ * unrelated policy bump into a lockout for them.
  */
 class EnsurePasswordPolicyMet
 {
@@ -20,7 +25,9 @@ class EnsurePasswordPolicyMet
     {
         $user = $request->user();
 
-        if (! $user || $user->password_policy_version >= Setting::current()->password_policy_version) {
+        if (! $user
+            || $user->password_policy_version >= Setting::current()->password_policy_version
+            || $request->session()->get('sso_authenticated')) {
             return $next($request);
         }
 

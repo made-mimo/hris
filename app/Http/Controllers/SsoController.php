@@ -90,6 +90,11 @@ class SsoController extends Controller
         // successful SSO round-trip satisfies this app's own 2FA gate the
         // same way a trusted-device cookie does.
         request()->session()->put('two_factor_verified', true);
+        // EnsurePasswordPolicyMet forces a "current password" change when
+        // the org's password policy has tightened since this account was
+        // created — meaningless (and a lockout risk) for a user who signs
+        // in only via SSO and may not know/have ever used a local password.
+        request()->session()->put('sso_authenticated', true);
         SecurityEvent::record('sso_login_succeeded', $user, $provider);
 
         return redirect()->route('home');
