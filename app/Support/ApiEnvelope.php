@@ -13,10 +13,18 @@ class ApiEnvelope
 {
     public static function success(mixed $data, array $meta = []): array
     {
-        return array_filter([
-            'data' => $data,
-            'meta' => $meta ?: null,
-        ], fn ($v) => ! is_null($v));
+        // `data` must always be present, even when it is legitimately null
+        // (e.g. "no attendance record currently open") — array_filter()
+        // over the whole array would silently drop a null `data` entry too,
+        // collapsing the envelope to {} and making "nothing here" and "an
+        // explicit null" indistinguishable to a client.
+        $envelope = ['data' => $data];
+
+        if ($meta) {
+            $envelope['meta'] = $meta;
+        }
+
+        return $envelope;
     }
 
     public static function error(int $code, string $message, array $details = []): array

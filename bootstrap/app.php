@@ -5,6 +5,7 @@ use App\Http\Middleware\EnsureScreenAccess;
 use App\Http\Middleware\EnsureTwoFactorVerified;
 use App\Support\ApiEnvelope;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -39,6 +40,17 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->render(function (ValidationException $e, Request $request) {
             if ($request->is('api/*')) {
                 return response()->json(ApiEnvelope::error(400, 'The given data was invalid.', $e->errors()), 400);
+            }
+        });
+
+        // Spec F6 expanded this surface from 4 routes behind auth:sanctum to
+        // 39 — an expired/missing/revoked token is now a routine, expected
+        // client-facing case, not a corner one, so it gets the same envelope
+        // as every other error rather than Laravel's default bare
+        // {"message": "Unauthenticated."} shape.
+        $exceptions->render(function (AuthenticationException $e, Request $request) {
+            if ($request->is('api/*')) {
+                return response()->json(ApiEnvelope::error(401, 'Unauthenticated.'), 401);
             }
         });
 

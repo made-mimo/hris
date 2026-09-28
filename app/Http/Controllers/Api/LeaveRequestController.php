@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Api;
 use App\Http\Resources\LeaveRequestResource;
 use App\Models\Employee;
 use App\Models\LeaveRequest;
+use App\Services\LeaveRequestService;
 use App\Services\PermissionService;
+use App\Services\WorkflowEngine;
 use Illuminate\Http\Request;
 
 /**
@@ -115,6 +117,42 @@ class LeaveRequestController extends ApiController
         }
 
         return $this->success(['cancelled' => $cancelled]);
+    }
+
+    /**
+     * Spec F6: "leave application/approval" — the approval half. Mirrors
+     * ⚡approvals-board.blade.php's own approve()/reject() methods exactly
+     * (same domain-specific column stamping, same LeaveRequestService
+     * call), since that logic lives on the Livewire component rather than
+     * an extracted shared service; duplicated deliberately here rather than
+     * risking a refactor of already-proven approval logic.
+     */
+    public function approve(Request $request, LeaveRequest $leaveRequest, WorkflowEngine $engine, LeaveRequestService $leaveRequests)
+    {
+        $fromStatus = $leaveRequest->status;
+
+        $engine->apply('leave_request', $leaveRequest, $request->user(), 'approve');
+
+        $leaveRequest->update(match ($fromStatus) {
+            'pending_manager' => ['manager_approved_by' => $request->user()->id, 'manager_approved_at' => now()],
+            default => ['hr_approved_by' => $request->user()->id, 'hr_approved_at' => now()],
+        });
+
+        $leaveRequests->syncAfterTransition($leaveRequest);
+
+        return $this->success(new LeaveRequestResource($leaveRequest->fresh()));
+    }
+
+    public function reject(Request $request, LeaveRequest $leaveRequest, WorkflowEngine $engine, LeaveRequestService $leaveRequests)
+    {
+        $data = $request->validate(['reason' => ['nullable', 'string', 'max:1000']]);
+
+        $engine->apply('leave_request', $leaveRequest, $request->user(), 'reject');
+        $leaveRequest->update(['rejected_at' => now(), 'rejection_reason' => $data['reason'] ?? 'No reason given.']);
+
+        $leaveRequests->syncAfterTransition($leaveRequest);
+
+        return $this->success(new LeaveRequestResource($leaveRequest->fresh()));
     }
 
     private function scopedQuery(Request $request, PermissionService $permissions)
