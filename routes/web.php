@@ -50,6 +50,7 @@ Route::livewire('/recruitment/offer/{application}/sign', 'pages::offer-sign')->n
 // Permission Matrix grants it to (spec Section 3.2/A2).
 Route::middleware(['auth', 'password_policy', 'two_factor'])->group(function () {
     Route::livewire('/', 'pages::home')->name('home')->middleware('screen:home');
+    Route::livewire('/buzz', 'pages::buzz')->name('buzz')->middleware('screen:buzz');
     Route::livewire('/leave/apply', 'pages::leave-apply')->name('leave.apply')->middleware('screen:leave.apply');
     Route::livewire('/leave/assign', 'pages::leave-assign')->name('leave.assign')->middleware('screen:approvals');
     Route::livewire('/leave/reports', 'pages::leave-reports')->name('leave.reports')->middleware('screen:admin.leave-configuration');

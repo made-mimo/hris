@@ -22,3 +22,6 @@ Schedule::command('leave:mark-past-days-taken')->daily();
 // Spec B2's ad-hoc report scheduling — checked daily; ReportSchedule::isDue()
 // gates each schedule's own daily/weekly/monthly frequency off last_run_at.
 Schedule::command('reports:run-scheduled')->daily();
+
+// Spec F1's Buzz denormalized-count reconciliation backstop.
+Schedule::command('buzz:reconcile-counts')->daily();

@@ -21,6 +21,11 @@ class RbacSeeder extends Seeder
         // ---- Screens (one per route this app actually has) ----
         $screens = [
             ['key' => 'home', 'label' => 'Home', 'nav_group' => 'Workspace', 'sort_order' => 1],
+            // Spec F1: company-wide feed, "no other audience/visibility
+            // scoping (company-wide by design)" — granted at base level for
+            // every role; the 'buzz' data group below governs only
+            // edit/delete-others moderation rights, never what's visible.
+            ['key' => 'buzz', 'label' => 'Buzz', 'nav_group' => 'Workspace', 'sort_order' => 2, 'module_key' => 'buzz'],
             ['key' => 'leave.apply', 'label' => 'My Leave', 'nav_group' => 'Workspace', 'sort_order' => 2, 'module_key' => 'leave'],
             ['key' => 'claims.create', 'label' => 'My Claims', 'nav_group' => 'Workspace', 'sort_order' => 3, 'module_key' => 'claims'],
             ['key' => 'timesheets', 'label' => 'My Timesheets', 'nav_group' => 'Workspace', 'sort_order' => 4, 'module_key' => 'timesheets'],
@@ -89,6 +94,7 @@ class RbacSeeder extends Seeder
             ['key' => 'vehicles', 'label' => 'Vehicle Fleet Management'],
             ['key' => 'policies', 'label' => 'Policy Document Management'],
             ['key' => 'directory', 'label' => 'Corporate Directory'],
+            ['key' => 'buzz', 'label' => 'Employee Social Feed'],
         ] as $m) {
             ModuleToggle::updateOrCreate(['key' => $m['key']], $m);
         }
@@ -125,6 +131,13 @@ class RbacSeeder extends Seeder
             // Admin/HR Admin/HR Officer, self-only for everyone else, no
             // supervisor tier.
             ['key' => 'vehicles', 'label' => 'Vehicle Fleet Management'],
+            // Spec F1: "ownership-based edit/delete rights (authors manage
+            // their own content; administrators can moderate others') via
+            // the standard data-group permission model" — 'all' scope means
+            // "may moderate anyone's post/share/comment," 'self' means
+            // "own content only." This never restricts what's *visible* in
+            // the feed (always company-wide), only who may edit/delete.
+            ['key' => 'buzz', 'label' => 'Employee Social Feed'],
         ];
         foreach ($groups as $g) {
             DataGroup::updateOrCreate(['key' => $g['key']], $g);
@@ -151,15 +164,15 @@ class RbacSeeder extends Seeder
 
         // ---- Screen grants per role ----
         $screenGrants = [
-            'admin' => ['home', 'leave.apply', 'claims.create', 'timesheets', 'performance', 'assets', 'vehicles', 'discipline', 'directory', 'policies', 'profile', 'approvals', 'employees', 'recruitment', 'admin.master-data', 'admin.onboarding-templates', 'admin.leave-configuration', 'admin.performance-configuration', 'admin.asset-configuration', 'admin.vehicle-configuration', 'admin.policy-configuration', 'admin.company-documents', 'admin.claims-management', 'admin.projects', 'settings', 'admin.roles', 'admin.audit-log', 'admin.signatures', 'admin.health-check'],
-            'hr_admin' => ['home', 'leave.apply', 'claims.create', 'timesheets', 'performance', 'assets', 'vehicles', 'discipline', 'directory', 'policies', 'profile', 'approvals', 'employees', 'recruitment', 'admin.master-data', 'admin.onboarding-templates', 'admin.leave-configuration', 'admin.performance-configuration', 'admin.asset-configuration', 'admin.vehicle-configuration', 'admin.policy-configuration', 'admin.company-documents', 'admin.claims-management', 'admin.projects', 'admin.signatures'],
+            'admin' => ['home', 'buzz', 'leave.apply', 'claims.create', 'timesheets', 'performance', 'assets', 'vehicles', 'discipline', 'directory', 'policies', 'profile', 'approvals', 'employees', 'recruitment', 'admin.master-data', 'admin.onboarding-templates', 'admin.leave-configuration', 'admin.performance-configuration', 'admin.asset-configuration', 'admin.vehicle-configuration', 'admin.policy-configuration', 'admin.company-documents', 'admin.claims-management', 'admin.projects', 'settings', 'admin.roles', 'admin.audit-log', 'admin.signatures', 'admin.health-check'],
+            'hr_admin' => ['home', 'buzz', 'leave.apply', 'claims.create', 'timesheets', 'performance', 'assets', 'vehicles', 'discipline', 'directory', 'policies', 'profile', 'approvals', 'employees', 'recruitment', 'admin.master-data', 'admin.onboarding-templates', 'admin.leave-configuration', 'admin.performance-configuration', 'admin.asset-configuration', 'admin.vehicle-configuration', 'admin.policy-configuration', 'admin.company-documents', 'admin.claims-management', 'admin.projects', 'admin.signatures'],
             // HR Officer deliberately does NOT get 'discipline' or
             // 'admin.policy-configuration' — spec's own "only HR/Admin
             // manage categories, documents, and versions" reads as Admin/HR
             // Admin specifically. It does get claims-management, assets,
             // vehicles, and the base 'policies' browse/acknowledge screen,
             // since spec never excludes HR Officer from any of those.
-            'hr_officer' => ['home', 'leave.apply', 'claims.create', 'timesheets', 'performance', 'assets', 'vehicles', 'directory', 'policies', 'profile', 'approvals', 'employees', 'recruitment', 'admin.claims-management'],
+            'hr_officer' => ['home', 'buzz', 'leave.apply', 'claims.create', 'timesheets', 'performance', 'assets', 'vehicles', 'directory', 'policies', 'profile', 'approvals', 'employees', 'recruitment', 'admin.claims-management'],
             // Recruitment/Performance/Discipline/Assets/Vehicles/Policies are
             // also granted at the base ESS level (like 'profile') since a
             // hiring manager may be any employee regardless of role, every
@@ -172,7 +185,7 @@ class RbacSeeder extends Seeder
             // scope (or, for Recruitment, the per-record hiring-manager
             // fact; for Policies, restricted-category file grants) rather
             // than a route-level block.
-            'ess' => ['home', 'leave.apply', 'claims.create', 'timesheets', 'performance', 'assets', 'vehicles', 'discipline', 'directory', 'policies', 'profile', 'recruitment'],
+            'ess' => ['home', 'buzz', 'leave.apply', 'claims.create', 'timesheets', 'performance', 'assets', 'vehicles', 'discipline', 'directory', 'policies', 'profile', 'recruitment'],
             // Now that the workflow engine (WorkflowSeeder) gives supervisors
             // a real pending_manager stage to act on, they need the Approvals
             // screen too — layered on top of their base role same as any
@@ -204,6 +217,7 @@ class RbacSeeder extends Seeder
                 'performance' => ['all', 'view_edit_delete'],
                 'assets' => ['all', 'view_edit_delete'],
                 'vehicles' => ['all', 'view_edit_delete'],
+                'buzz' => ['all', 'view_edit_delete'],
             ],
             'hr_admin' => [
                 'employee_personal_details' => ['all', 'view_edit_delete'],
@@ -217,6 +231,7 @@ class RbacSeeder extends Seeder
                 'performance' => ['all', 'view_edit_delete'],
                 'assets' => ['all', 'view_edit_delete'],
                 'vehicles' => ['all', 'view_edit_delete'],
+                'buzz' => ['all', 'view_edit_delete'],
             ],
             'hr_officer' => [
                 'employee_personal_details' => ['all', 'view_edit'],
@@ -230,6 +245,7 @@ class RbacSeeder extends Seeder
                 'performance' => ['all', 'view_edit'],
                 'assets' => ['all', 'view_edit'],
                 'vehicles' => ['all', 'view_edit'],
+                'buzz' => ['all', 'view_edit_delete'],
             ],
             'supervisor' => [
                 'employee_personal_details' => ['self_subordinates', 'view'],
@@ -250,6 +266,7 @@ class RbacSeeder extends Seeder
                 // sees only assets assigned to themselves, same as any ESS.
                 'assets' => ['self', 'view'],
                 'vehicles' => ['self', 'view'],
+                'buzz' => ['self', 'view_edit_delete'],
             ],
             'ess' => [
                 'employee_personal_details' => ['self', 'view_edit'],
@@ -267,6 +284,7 @@ class RbacSeeder extends Seeder
                 'performance' => ['self', 'view_edit'],
                 'assets' => ['self', 'view'],
                 'vehicles' => ['self', 'view'],
+                'buzz' => ['self', 'view_edit_delete'],
             ],
         ];
         foreach ($matrix as $slug => $grants) {
