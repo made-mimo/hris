@@ -60,7 +60,14 @@ new class extends Component
         $vacancy->update(['is_published' => ! $vacancy->is_published]);
     }
 
-    public function upload(): void
+    /**
+     * Not named upload() — that name collides with Livewire's own built-in
+     * $wire.upload() JS helper (used for file-upload progress), so a
+     * wire:click bound to an action of that exact name silently calls
+     * Livewire's helper instead of this method (found via the SI PIM
+     * session, which hit the identical bug there).
+     */
+    public function uploadAttachment(): void
     {
         $this->validate(['file' => ['required', 'file', 'mimes:pdf,doc,docx,jpg,jpeg,png', 'max:10240']]);
 
@@ -159,7 +166,7 @@ new class extends Component
                     @endforeach
                     @if($uploadingFor === $v->id)
                         <input type="file" wire:model="file" class="text-xs">
-                        <button wire:click="upload" class="text-xs font-semibold text-primary">Upload</button>
+                        <button wire:click="uploadAttachment" class="text-xs font-semibold text-primary">Upload</button>
                         <button wire:click="$set('uploadingFor', null)" class="text-xs font-semibold text-text-muted">Cancel</button>
                         @error('file') <div class="text-xs text-danger">{{ $message }}</div> @enderror
                     @else

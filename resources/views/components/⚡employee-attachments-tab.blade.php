@@ -28,7 +28,14 @@ new class extends Component
         }
     }
 
-    public function upload(): void
+    /**
+     * Not named upload() — that name collides with Livewire's own built-in
+     * $wire.upload() JS helper (used for file-upload progress), so a
+     * wire:submit/wire:click bound to an action of that exact name silently
+     * calls Livewire's helper instead of this method (found via the SI PIM
+     * session, which hit the identical bug there).
+     */
+    public function uploadDocument(): void
     {
         $this->validate([
             'file' => ['required', 'file', 'mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png', 'max:10240'],
@@ -80,7 +87,7 @@ new class extends Component
 
     <section class="rounded-md border border-border bg-surface p-5 shadow-sm">
         <h2 class="mb-3.5 font-display text-base font-bold text-text">Attachments</h2>
-        <form wire:submit="upload" class="mb-4 flex flex-wrap items-end gap-3">
+        <form wire:submit="uploadDocument" class="mb-4 flex flex-wrap items-end gap-3">
             <div>
                 <label class="mb-1.5 block text-xs font-semibold text-text">File</label>
                 <input type="file" wire:model="file" class="text-sm text-text">

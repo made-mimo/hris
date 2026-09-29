@@ -2645,3 +2645,21 @@ uses for its job title/sub-unit/location lookups.
 Verified live in the browser after reseeding: the Employee list's Hired column, the Audit Log's both
 tabs, and the home page's weekday greeting all render in the confirmed convention. Full test suite
 (27/27) and `vendor/bin/pint` stayed green throughout.
+
+### 15 — `upload()` name collision with Livewire's `$wire.upload()` (from SI PIM)
+
+Flagged as an optional cross-check by the SI PIM session, which had hit the identical bug in its own
+codebase: a Livewire action named exactly `upload` (or any of `$wire`'s other built-in helper names —
+`uploadMultiple`, `set`, `get`, `call`, `dispatch`, etc.) is shadowed by that built-in in the browser, so
+`wire:submit`/`wire:click` bound to it silently calls Livewire's own JS helper instead of the PHP
+method. A grep across every Volt (`⚡`) component turned up two real hits — not just the name pattern, but
+confirmed broken live in the browser first: `⚡employee-attachments-tab.blade.php`'s document-upload form
+(`wire:submit="upload"`) and `⚡vacancies-manager.blade.php`'s attachment upload (`wire:click="upload"`).
+Clicking "Upload" in either produced zero server requests and a JS `TypeError: Cannot read properties of
+undefined (reading 'name')` inside Livewire's own compiled JS — confirmed, not theoretical. Checked with
+the user before changing anything, per the requesting session's own instruction. Fixed by renaming to
+`uploadDocument()`/`uploadAttachment()` respectively and updating the matching `wire:submit`/`wire:click`
+attribute — no behavior change otherwise. Re-verified live in the browser afterward (a validation error
+now correctly appears when submitting with no file selected, proving the PHP action is reached). A
+repository-wide scan for the second bug PIM reported — a public method and public property sharing a
+name on the same component — found no matches in HRIS.
