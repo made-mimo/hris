@@ -87,17 +87,17 @@ new class extends Component
 
     <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:0 18px 16px;border-bottom:1px solid var(--color-border);">
         <input type="text" wire:model.live.debounce.400ms="actor" placeholder="Filter by actor email"
-               style="flex:1;min-width:180px;padding:8px 12px;border:1px solid var(--color-border);border-radius:8px;font-size:13px;">
+               style="flex:1;min-width:180px;padding:8px 12px;border:1px solid var(--color-border);border-radius:8px;font-size:var(--fs-sm);">
 
         @if($tab === 'changes')
-            <select wire:model.live="entityType" style="padding:8px 12px;border:1px solid var(--color-border);border-radius:8px;font-size:13px;">
+            <select wire:model.live="entityType" style="padding:8px 12px;border:1px solid var(--color-border);border-radius:8px;font-size:var(--fs-sm);">
                 <option value="">All entities</option>
                 @foreach($entityTypes as $type)
                     <option value="{{ $type }}">{{ class_basename($type) }}</option>
                 @endforeach
             </select>
         @else
-            <select wire:model.live="securityEvent" style="padding:8px 12px;border:1px solid var(--color-border);border-radius:8px;font-size:13px;">
+            <select wire:model.live="securityEvent" style="padding:8px 12px;border:1px solid var(--color-border);border-radius:8px;font-size:var(--fs-sm);">
                 <option value="">All events</option>
                 @foreach($securityEventTypes as $type)
                     <option value="{{ $type }}">{{ str($type)->replace('_', ' ')->ucfirst() }}</option>
@@ -105,32 +105,32 @@ new class extends Component
             </select>
         @endif
 
-        <input type="date" wire:model.live="dateFrom" style="padding:8px 12px;border:1px solid var(--color-border);border-radius:8px;font-size:13px;">
-        <span class="text-muted" style="font-size:12px;">to</span>
-        <input type="date" wire:model.live="dateTo" style="padding:8px 12px;border:1px solid var(--color-border);border-radius:8px;font-size:13px;">
+        <input type="date" wire:model.live="dateFrom" style="padding:8px 12px;border:1px solid var(--color-border);border-radius:8px;font-size:var(--fs-sm);">
+        <span class="text-muted" style="font-size:var(--fs-xs);">to</span>
+        <input type="date" wire:model.live="dateTo" style="padding:8px 12px;border:1px solid var(--color-border);border-radius:8px;font-size:var(--fs-sm);">
 
         <button type="button" wire:click="resetFilters" class="btn btn-outline btn-sm">Clear</button>
     </div>
 
     @if($tab === 'changes')
-        <div style="display:grid;grid-template-columns:150px 100px 160px minmax(0,1fr) 40px;gap:12px;padding:10px 18px;border-bottom:1px solid var(--color-border);font-size:11px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--color-text-faint);">
+        <div style="display:grid;grid-template-columns:150px 100px 160px minmax(0,1fr) 40px;gap:12px;padding:10px 18px;border-bottom:1px solid var(--color-border);font-size:var(--fs-2xs);font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--color-text-faint);">
             <span>When</span><span>Action</span><span>Entity</span><span>Actor</span><span></span>
         </div>
 
         @forelse($changeRows as $row)
             <div style="border-bottom:1px solid var(--color-border);">
                 <div style="display:grid;grid-template-columns:150px 100px 160px minmax(0,1fr) 40px;gap:12px;align-items:center;padding:12px 18px;">
-                    <span class="font-mono text-muted" style="font-size:12.5px;">{{ $row->created_at->format(\App\Support\Dates::DATE_TIME) }}</span>
+                    <span class="font-mono text-muted" style="font-size:var(--fs-xs);">{{ $row->created_at->format(\App\Support\Dates::DATE_TIME) }}</span>
                     <span class="pill {{ match($row->action) { 'created' => 'pill-success', 'deleted' => 'pill-danger', default => 'pill-neutral' } }}">{{ $row->action }}</span>
-                    <span style="font-size:13px;font-weight:600;">{{ $row->subjectLabel() }}</span>
-                    <span style="font-size:13px;">{{ $row->actor_label ?? 'System' }}</span>
+                    <span style="font-size:var(--fs-sm);font-weight:600;">{{ $row->subjectLabel() }}</span>
+                    <span style="font-size:var(--fs-sm);">{{ $row->actor_label ?? 'System' }}</span>
                     <button type="button" wire:click="toggleExpand({{ $row->id }})" class="icon-btn" style="background:none;border:none;cursor:pointer;">
                         {{ $expandedId === $row->id ? '▲' : '▼' }}
                     </button>
                 </div>
                 @if($expandedId === $row->id)
                     <div style="padding:0 18px 16px;">
-                        <div style="background:var(--color-bg);border:1px solid var(--color-border);border-radius:8px;padding:12px 14px;font-family:'Courier New',monospace;font-size:12.5px;">
+                        <div style="background:var(--color-bg);border:1px solid var(--color-border);border-radius:8px;padding:12px 14px;font-family:'Courier New',monospace;font-size:var(--fs-xs);">
                             @if($row->action === 'updated')
                                 @foreach($row->changes as $field => $pair)
                                     <div style="padding:3px 0;"><strong>{{ $field }}</strong>: {{ json_encode($pair[0]) }} &rarr; {{ json_encode($pair[1]) }}</div>
@@ -150,17 +150,17 @@ new class extends Component
 
         <div style="padding:14px 18px;">{{ $changeRows->links() }}</div>
     @else
-        <div style="display:grid;grid-template-columns:150px 200px minmax(0,1fr) 100px 130px;gap:12px;padding:10px 18px;border-bottom:1px solid var(--color-border);font-size:11px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--color-text-faint);">
+        <div style="display:grid;grid-template-columns:150px 200px minmax(0,1fr) 100px 130px;gap:12px;padding:10px 18px;border-bottom:1px solid var(--color-border);font-size:var(--fs-2xs);font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--color-text-faint);">
             <span>When</span><span>Event</span><span>User</span><span>Method</span><span>IP</span>
         </div>
 
         @forelse($securityRows as $row)
             <div style="display:grid;grid-template-columns:150px 200px minmax(0,1fr) 100px 130px;gap:12px;align-items:center;padding:12px 18px;border-bottom:1px solid var(--color-border);">
-                <span class="font-mono text-muted" style="font-size:12.5px;">{{ $row->created_at->format(\App\Support\Dates::DATE_TIME) }}</span>
+                <span class="font-mono text-muted" style="font-size:var(--fs-xs);">{{ $row->created_at->format(\App\Support\Dates::DATE_TIME) }}</span>
                 <span class="pill {{ str($row->event)->contains('failed') ? 'pill-danger' : 'pill-neutral' }}">{{ $row->label() }}</span>
-                <span style="font-size:13px;">{{ $row->user_label ?? $row->metadata['email'] ?? '—' }}</span>
-                <span style="font-size:12.5px;color:var(--color-text-muted);">{{ $row->method ?? '—' }}</span>
-                <span class="font-mono text-muted" style="font-size:12px;">{{ $row->ip_address ?? '—' }}</span>
+                <span style="font-size:var(--fs-sm);">{{ $row->user_label ?? $row->metadata['email'] ?? '—' }}</span>
+                <span style="font-size:var(--fs-xs);color:var(--color-text-muted);">{{ $row->method ?? '—' }}</span>
+                <span class="font-mono text-muted" style="font-size:var(--fs-xs);">{{ $row->ip_address ?? '—' }}</span>
             </div>
         @empty
             <div class="hint" style="padding:24px 18px;">No security events match these filters.</div>

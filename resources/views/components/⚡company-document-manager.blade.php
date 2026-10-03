@@ -159,7 +159,7 @@ new class extends Component
                                     </div>
                                 @endif
                                 <textarea wire:model="notes" rows="2" placeholder="Notes" class="mt-2 w-full rounded-sm border border-border bg-surface px-2.5 py-1.5 text-xs text-text outline-none focus:border-primary"></textarea>
-                                <input type="file" wire:model="file" class="mt-2 w-full text-xs">
+                                <div class="mt-2"><x-file-input model="file" :selected="$file" /></div>
                                 @error('issueDate') <div class="mt-1 text-xs text-danger">{{ $message }}</div> @enderror
                                 @error('expiryDate') <div class="mt-1 text-xs text-danger">{{ $message }}</div> @enderror
                                 @error('file') <div class="mt-1 text-xs text-danger">{{ $message }}</div> @enderror

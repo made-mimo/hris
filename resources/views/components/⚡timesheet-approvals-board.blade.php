@@ -93,7 +93,7 @@ new class extends Component
                 <div wire:click="select({{ $timesheet->id }})" style="display:flex;justify-content:space-between;align-items:center;padding:12px 18px;border-bottom:1px solid var(--color-border);cursor:pointer;{{ $selected?->id === $timesheet->id ? 'background:var(--color-bg);' : '' }}">
                     <div>
                         <div style="font-weight:600;">{{ $timesheet->employee->fullName() }}</div>
-                        <div class="text-muted" style="font-size:12px;">{{ $timesheet->week_start_date->format('j M') }} – {{ $timesheet->week_end_date->format('j M Y') }} · {{ number_format($timesheet->totalHours(), 2) }}h</div>
+                        <div class="text-muted" style="font-size:var(--fs-xs);">{{ $timesheet->week_start_date->format('j M') }} – {{ $timesheet->week_end_date->format('j M Y') }} · {{ number_format($timesheet->totalHours(), 2) }}h</div>
                     </div>
                     <span class="pill pill-warning">Submitted</span>
                 </div>
@@ -107,11 +107,11 @@ new class extends Component
     <section class="card">
         @if($selected)
             <div class="card-header"><h2>{{ $selected->employee->fullName() }}</h2></div>
-            <div class="text-muted" style="font-size:13px;margin-bottom:14px;">{{ $selected->week_start_date->format('j M') }} – {{ $selected->week_end_date->format('j M Y') }}</div>
+            <div class="text-muted" style="font-size:var(--fs-sm);margin-bottom:14px;">{{ $selected->week_start_date->format('j M') }} – {{ $selected->week_end_date->format('j M Y') }}</div>
 
             <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;">
                 @foreach($selected->lines as $line)
-                    <div style="display:flex;justify-content:space-between;font-size:13px;">
+                    <div style="display:flex;justify-content:space-between;font-size:var(--fs-sm);">
                         <span>{{ $line->project->name }} · {{ $line->activity->name }}</span>
                         <span class="font-mono" style="font-weight:600;">{{ number_format($line->totalHours(), 2) }}h</span>
                     </div>
@@ -141,7 +141,7 @@ new class extends Component
             <div class="table-wrap">
                 @foreach($recentlyApproved as $timesheet)
                     <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--color-border);">
-                        <span style="font-size:13px;">{{ $timesheet->employee->fullName() }} — {{ $timesheet->week_start_date->format('j M') }} to {{ $timesheet->week_end_date->format('j M Y') }}</span>
+                        <span style="font-size:var(--fs-sm);">{{ $timesheet->employee->fullName() }} — {{ $timesheet->week_start_date->format('j M') }} to {{ $timesheet->week_end_date->format('j M Y') }}</span>
                         <button wire:click="resetApproval({{ $timesheet->id }})" wire:confirm="Undo this approval and send it back to submitted?" class="text-xs font-semibold" style="color:var(--color-danger);background:none;border:none;cursor:pointer;">Undo approval</button>
                     </div>
                 @endforeach

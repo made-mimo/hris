@@ -212,17 +212,17 @@ new class extends Component
 <section class="card" style="padding:0;overflow:hidden;">
     <div style="padding:16px 18px;border-bottom:1px solid var(--color-border);display:flex;flex-wrap:wrap;gap:10px;align-items:center;">
         <input type="text" wire:model.live.debounce.400ms="search" placeholder="Search by name or employee ID"
-               style="flex:1;min-width:220px;max-width:320px;padding:9px 12px;border:1px solid var(--color-border);border-radius:8px;font-size:13px;">
+               style="flex:1;min-width:220px;max-width:320px;padding:9px 12px;border:1px solid var(--color-border);border-radius:8px;font-size:var(--fs-sm);">
 
         <button type="button" wire:click="toggleFilters" class="btn btn-outline btn-sm" style="gap:6px;">
             {{ $filtersOpen ? 'Hide filters' : 'Show filters' }}
             @if($activeFilterCount > 0)
-                <span class="pill pill-neutral" style="padding:1px 7px;font-size:11px;">{{ $activeFilterCount }}</span>
+                <span class="pill pill-neutral" style="padding:1px 7px;font-size:var(--fs-2xs);">{{ $activeFilterCount }}</span>
             @endif
         </button>
 
         @if(! $filtersOpen && $filterSummary !== '')
-            <span class="text-muted" style="font-size:12.5px;">{{ $filterSummary }}</span>
+            <span class="text-muted" style="font-size:var(--fs-xs);">{{ $filterSummary }}</span>
         @endif
 
         @if($activeFilterCount > 0 || $search !== '')
@@ -232,7 +232,7 @@ new class extends Component
         <div style="display:inline-flex;border:1px solid var(--color-border);border-radius:8px;overflow:hidden;margin-left:auto;">
             @foreach(['current' => 'Current', 'past' => 'Past', 'both' => 'Both'] as $key => $label)
                 <button type="button" wire:click="$set('statusFilter', '{{ $key }}')"
-                    style="padding:8px 12px;font-size:12px;font-weight:600;border:none;cursor:pointer;background:{{ $statusFilter === $key ? 'var(--color-primary)' : 'transparent' }};color:{{ $statusFilter === $key ? '#fff' : 'var(--color-text)' }};">
+                    style="padding:8px 12px;font-size:var(--fs-xs);font-weight:600;border:none;cursor:pointer;background:{{ $statusFilter === $key ? 'var(--color-primary)' : 'transparent' }};color:{{ $statusFilter === $key ? '#fff' : 'var(--color-text)' }};">
                     {{ $label }}
                 </button>
             @endforeach
@@ -242,52 +242,52 @@ new class extends Component
     @if($filtersOpen)
         <div style="padding:16px 18px;border-bottom:1px solid var(--color-border);display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:18px;background:var(--color-bg);">
             <div>
-                <div class="text-faint" style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:8px;">Job title</div>
+                <div class="text-faint" style="font-size:var(--fs-2xs);font-weight:700;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:8px;">Job title</div>
                 <div style="max-height:180px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;">
                     @foreach($jobTitles as $jt)
-                        <label style="display:flex;align-items:center;gap:7px;font-size:12.5px;cursor:pointer;{{ $jt['count'] === 0 && ! in_array($jt['id'], $jobTitleIds, true) ? 'opacity:0.45;' : '' }}">
+                        <label style="display:flex;align-items:center;gap:7px;font-size:var(--fs-xs);cursor:pointer;{{ $jt['count'] === 0 && ! in_array($jt['id'], $jobTitleIds, true) ? 'opacity:0.45;' : '' }}">
                             <input type="checkbox" wire:model.live="jobTitleIds" value="{{ $jt['id'] }}" style="accent-color:var(--color-primary);">
                             <span style="flex:1;">{{ $jt['name'] }}</span>
-                            <span class="text-faint font-mono" style="font-size:11px;">{{ $jt['count'] }}</span>
+                            <span class="text-faint font-mono" style="font-size:var(--fs-2xs);">{{ $jt['count'] }}</span>
                         </label>
                     @endforeach
                 </div>
             </div>
 
             <div>
-                <div class="text-faint" style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:8px;">Department</div>
+                <div class="text-faint" style="font-size:var(--fs-2xs);font-weight:700;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:8px;">Department</div>
                 <div style="max-height:180px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;">
                     @foreach($subUnits as $su)
-                        <label style="display:flex;align-items:center;gap:7px;font-size:12.5px;cursor:pointer;{{ $su['count'] === 0 && ! in_array($su['id'], $subUnitIds, true) ? 'opacity:0.45;' : '' }}">
+                        <label style="display:flex;align-items:center;gap:7px;font-size:var(--fs-xs);cursor:pointer;{{ $su['count'] === 0 && ! in_array($su['id'], $subUnitIds, true) ? 'opacity:0.45;' : '' }}">
                             <input type="checkbox" wire:model.live="subUnitIds" value="{{ $su['id'] }}" style="accent-color:var(--color-primary);">
                             <span style="flex:1;">{{ $su['name'] }}</span>
-                            <span class="text-faint font-mono" style="font-size:11px;">{{ $su['count'] }}</span>
+                            <span class="text-faint font-mono" style="font-size:var(--fs-2xs);">{{ $su['count'] }}</span>
                         </label>
                     @endforeach
                 </div>
             </div>
 
             <div>
-                <div class="text-faint" style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:8px;">Supervisor</div>
+                <div class="text-faint" style="font-size:var(--fs-2xs);font-weight:700;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:8px;">Supervisor</div>
                 <div style="max-height:180px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;">
                     @foreach($supervisors as $s)
-                        <label style="display:flex;align-items:center;gap:7px;font-size:12.5px;cursor:pointer;{{ $s['count'] === 0 && ! in_array($s['id'], $supervisorIds, true) ? 'opacity:0.45;' : '' }}">
+                        <label style="display:flex;align-items:center;gap:7px;font-size:var(--fs-xs);cursor:pointer;{{ $s['count'] === 0 && ! in_array($s['id'], $supervisorIds, true) ? 'opacity:0.45;' : '' }}">
                             <input type="checkbox" wire:model.live="supervisorIds" value="{{ $s['id'] }}" style="accent-color:var(--color-primary);">
                             <span style="flex:1;">{{ $s['name'] }}</span>
-                            <span class="text-faint font-mono" style="font-size:11px;">{{ $s['count'] }}</span>
+                            <span class="text-faint font-mono" style="font-size:var(--fs-2xs);">{{ $s['count'] }}</span>
                         </label>
                     @endforeach
                 </div>
             </div>
 
             <div>
-                <div class="text-faint" style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:8px;">Location</div>
+                <div class="text-faint" style="font-size:var(--fs-2xs);font-weight:700;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:8px;">Location</div>
                 <div style="max-height:180px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;">
                     @foreach($locations as $loc)
-                        <label style="display:flex;align-items:center;gap:7px;font-size:12.5px;cursor:pointer;{{ $loc['count'] === 0 && ! in_array($loc['id'], $locationIds, true) ? 'opacity:0.45;' : '' }}">
+                        <label style="display:flex;align-items:center;gap:7px;font-size:var(--fs-xs);cursor:pointer;{{ $loc['count'] === 0 && ! in_array($loc['id'], $locationIds, true) ? 'opacity:0.45;' : '' }}">
                             <input type="checkbox" wire:model.live="locationIds" value="{{ $loc['id'] }}" style="accent-color:var(--color-primary);">
                             <span style="flex:1;">{{ $loc['name'] }}</span>
-                            <span class="text-faint font-mono" style="font-size:11px;">{{ $loc['count'] }}</span>
+                            <span class="text-faint font-mono" style="font-size:var(--fs-2xs);">{{ $loc['count'] }}</span>
                         </label>
                     @endforeach
                 </div>
@@ -295,17 +295,17 @@ new class extends Component
         </div>
     @endif
 
-    <div style="display:grid;grid-template-columns:130px minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) 110px;gap:12px;padding:10px 18px;border-bottom:1px solid var(--color-border);font-size:11px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--color-text-faint);">
+    <div style="display:grid;grid-template-columns:130px minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) 110px;gap:12px;padding:10px 18px;border-bottom:1px solid var(--color-border);font-size:var(--fs-2xs);font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--color-text-faint);">
         <span>Employee ID</span><span>Name</span><span>Job title</span><span>Department</span><span>Hired</span>
     </div>
 
     @forelse($employees as $employee)
         <a href="{{ route('employees.show', $employee) }}" wire:navigate style="display:grid;grid-template-columns:130px minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) 110px;gap:12px;align-items:center;padding:12px 18px;border-bottom:1px solid var(--color-border);text-decoration:none;color:inherit;">
-            <span class="font-mono text-muted" style="font-size:12.5px;">{{ $employee->employee_id }}</span>
-            <span style="font-size:13.5px;font-weight:600;">{{ $employee->fullName() }}</span>
-            <span style="font-size:13px;" class="text-muted">{{ $employee->jobTitleName() ?? '—' }}</span>
-            <span style="font-size:13px;" class="text-muted">{{ $employee->departmentName() ?? '—' }}</span>
-            <span class="font-mono text-muted" style="font-size:12.5px;">{{ $employee->hire_date->format(\App\Support\Dates::DATE) }}</span>
+            <span class="font-mono text-muted" style="font-size:var(--fs-xs);">{{ $employee->employee_id }}</span>
+            <span style="font-size:var(--fs-sm);font-weight:600;">{{ $employee->fullName() }}</span>
+            <span style="font-size:var(--fs-sm);" class="text-muted">{{ $employee->jobTitleName() ?? '—' }}</span>
+            <span style="font-size:var(--fs-sm);" class="text-muted">{{ $employee->departmentName() ?? '—' }}</span>
+            <span class="font-mono text-muted" style="font-size:var(--fs-xs);">{{ $employee->hire_date->format(\App\Support\Dates::DATE) }}</span>
         </a>
     @empty
         <div class="hint" style="padding:24px 18px;">No employees match this search.</div>

@@ -30,7 +30,7 @@ new class extends Component
     <section class="card" style="padding:0;overflow:hidden;">
         @foreach($results as $result)
             <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--color-border);">
-                <span style="font-size:13.5px;font-weight:600;">{{ $result['label'] }}</span>
+                <span style="font-size:var(--fs-sm);font-weight:600;">{{ $result['label'] }}</span>
                 <span class="pill {{ $result['ok'] ? 'pill-success' : 'pill-danger' }}">{{ $result['ok'] ? 'OK' : $result['detail'] }}</span>
             </div>
         @endforeach

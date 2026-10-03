@@ -109,10 +109,15 @@ new class extends Component
 
     public function with(EmployeeReportService $reports): array
     {
+        $matching = $reports->query($this->filters())->with('subUnit')->get();
+
+        $byDepartment = $matching->groupBy(fn ($e) => $e->subUnit?->name ?? 'Unassigned')->map->count()->sortDesc();
+
         return [
             'availableFields' => EmployeeReportService::AVAILABLE_FIELDS,
-            'preview' => $reports->query($this->filters())->limit(20)->get(),
-            'totalCount' => $reports->query($this->filters())->count(),
+            'preview' => $matching->take(20),
+            'totalCount' => $matching->count(),
+            'byDepartment' => $byDepartment,
             'jobTitles' => JobTitle::where('is_active', true)->orderBy('name')->get(),
             'subUnits' => SubUnit::where('is_active', true)->orderBy('name')->get(),
             'locations' => Location::where('is_active', true)->orderBy('name')->get(),
@@ -172,6 +177,21 @@ new class extends Component
             </div>
         </div>
     </section>
+
+    @if($byDepartment->isNotEmpty())
+        <section class="rounded-md border border-border bg-surface p-5 shadow-sm">
+            <h2 class="mb-3.5 font-display text-base font-bold text-text">Headcount by department (matching employees)</h2>
+            <div style="max-width:360px;">
+                <x-chart-canvas
+                    id="employee-report-by-department"
+                    type="doughnut"
+                    :labels="$byDepartment->keys()->all()"
+                    :datasets="[['data' => $byDepartment->values()->all(), 'backgroundColor' => ['#D9251E', '#1E9E63', '#2563EB', '#B45309', '#7C3AED', '#DB2777', '#0891B2', '#65A30D']]]"
+                    :height="280"
+                />
+            </div>
+        </section>
+    @endif
 
     <section class="overflow-x-auto rounded-md border border-border bg-surface shadow-sm">
         <table class="w-full text-left text-sm">

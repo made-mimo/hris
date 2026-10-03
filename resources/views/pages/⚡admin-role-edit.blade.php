@@ -17,7 +17,7 @@ new class extends Component
 <x-layouts.app title="{{ $role->name }}">
     <div class="page-header">
         <div>
-            <div class="text-muted" style="font-size:13px;margin-bottom:6px;">
+            <div class="text-muted" style="font-size:var(--fs-sm);margin-bottom:6px;">
                 <a href="{{ route('admin.roles') }}" wire:navigate class="text-muted">Roles &amp; Permissions</a> <span>/</span> <span style="color:var(--color-text);font-weight:600;">{{ $role->name }}</span>
             </div>
             <div style="display:flex;align-items:center;gap:12px;">

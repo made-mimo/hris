@@ -44,7 +44,7 @@
 
         var message = document.createElement('p');
         message.className = 'text-muted';
-        message.style.cssText = 'font-size:13.5px;line-height:1.5;margin-bottom:18px;';
+        message.style.cssText = 'font-size:var(--fs-sm);line-height:1.5;margin-bottom:18px;';
         message.id = 'idle-timeout-message';
 
         var button = document.createElement('button');

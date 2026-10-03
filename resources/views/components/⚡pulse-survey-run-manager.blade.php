@@ -11,6 +11,8 @@ new class extends Component
 {
     public ?int $templateId = null;
 
+    public array $questionIds = [];
+
     public string $launchDate = '';
 
     public string $closeDate = '';
@@ -31,10 +33,17 @@ new class extends Component
         $this->closeDate = now()->addDays(7)->toDateString();
     }
 
+    public function updatedTemplateId(): void
+    {
+        $this->questionIds = [];
+    }
+
     public function launch(PulseSurveyService $pulseSurveys): void
     {
         $data = $this->validate([
             'templateId' => ['required', 'exists:pulse_survey_templates,id'],
+            'questionIds' => ['required', 'array', 'min:1', 'max:'.PulseSurveyTemplate::MAX_QUESTIONS_PER_RUN],
+            'questionIds.*' => ['integer', 'exists:pulse_survey_questions,id'],
             'launchDate' => ['required', 'date'],
             'closeDate' => ['required', 'date', 'after:launchDate'],
             'audienceScope' => ['required', 'in:all,department,location'],
@@ -42,7 +51,7 @@ new class extends Component
             'locationId' => ['required_if:audienceScope,location', 'nullable', 'exists:locations,id'],
             'isRecurring' => ['boolean'],
             'recurrenceMonths' => ['required_if:isRecurring,true', 'nullable', 'integer', 'min:1', 'max:24'],
-        ]);
+        ], [], ['questionIds' => 'questions', 'questionIds.*' => 'question']);
 
         $pulseSurveys->launchRun(
             PulseSurveyTemplate::findOrFail($data['templateId']),
@@ -53,9 +62,10 @@ new class extends Component
             $data['audienceScope'] === 'location' ? Location::findOrFail($data['locationId']) : null,
             $this->isRecurring,
             $this->isRecurring ? $data['recurrenceMonths'] : null,
+            $data['questionIds'],
         );
 
-        $this->reset('templateId', 'subUnitId', 'locationId', 'isRecurring', 'recurrenceMonths');
+        $this->reset('templateId', 'questionIds', 'subUnitId', 'locationId', 'isRecurring', 'recurrenceMonths');
         $this->audienceScope = 'all';
         $this->recurrenceMonths = 3;
         $this->launchDate = now()->toDateString();
@@ -66,7 +76,7 @@ new class extends Component
     public function with(): array
     {
         return [
-            'templates' => PulseSurveyTemplate::orderBy('name')->get(),
+            'templates' => PulseSurveyTemplate::with('questions')->orderBy('name')->get(),
             'subUnits' => SubUnit::where('is_active', true)->orderBy('name')->get(),
             'locations' => Location::where('is_active', true)->orderBy('name')->get(),
         ];
@@ -89,6 +99,25 @@ new class extends Component
                 </select>
                 @error('templateId') <div class="mt-1 text-xs text-danger">{{ $message }}</div> @enderror
             </div>
+
+            @if($templateId)
+                @php($selectedTemplate = $templates->firstWhere('id', $templateId))
+                <div>
+                    <label class="mb-1.5 block text-xs font-semibold text-text">Questions to ask <span class="text-text-muted">(up to {{ \App\Models\PulseSurveyTemplate::MAX_QUESTIONS_PER_RUN }})</span></label>
+                    <div class="flex flex-col gap-1.5">
+                        @forelse($selectedTemplate?->questions ?? [] as $q)
+                            <label class="flex items-center gap-2 rounded-sm border border-border bg-surface px-3 py-2 text-sm text-text">
+                                <input type="checkbox" wire:model="questionIds" value="{{ $q->id }}" class="h-3.5 w-3.5 accent-primary">
+                                {{ $q->prompt }} <span class="text-xs text-text-muted">({{ $q->type === 'scale' ? ($q->scale_type === 'enps_0_10' ? 'eNPS 0-10' : 'Likert 1-5') : 'Free text' }})</span>
+                            </label>
+                        @empty
+                            <div class="text-sm text-text-muted">This template has no questions yet — add some on the Templates tab first.</div>
+                        @endforelse
+                    </div>
+                    @error('questionIds') <div class="mt-1 text-xs text-danger">{{ $message }}</div> @enderror
+                    @error('questionIds.*') <div class="mt-1 text-xs text-danger">{{ $message }}</div> @enderror
+                </div>
+            @endif
 
             <div class="flex flex-wrap gap-3">
                 <div>

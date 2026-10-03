@@ -61,6 +61,7 @@ Route::livewire('/recruitment/offer/{application}/sign', 'pages::offer-sign')->n
 // Permission Matrix grants it to (spec Section 3.2/A2).
 Route::middleware(['auth', 'password_policy', 'two_factor'])->group(function () {
     Route::livewire('/', 'pages::home')->name('home')->middleware('screen:home');
+    Route::livewire('/my-requests', 'pages::my-requests')->name('my-requests')->middleware('screen:my-requests');
     Route::livewire('/buzz', 'pages::buzz')->name('buzz')->middleware('screen:buzz');
     Route::livewire('/helpdesk', 'pages::helpdesk')->name('helpdesk')->middleware('screen:helpdesk');
     Route::livewire('/leave/apply', 'pages::leave-apply')->name('leave.apply')->middleware('screen:leave.apply');
@@ -103,6 +104,7 @@ Route::middleware(['auth', 'password_policy', 'two_factor'])->group(function () 
     Route::livewire('/admin/helpdesk-configuration', 'pages::admin-helpdesk-configuration')->name('admin.helpdesk-configuration')->middleware('screen:admin.helpdesk-configuration');
     Route::livewire('/pulse-surveys', 'pages::pulse-surveys')->name('pulse-surveys')->middleware('screen:pulse-surveys');
     Route::livewire('/admin/pulse-survey-configuration', 'pages::admin-pulse-survey-configuration')->name('admin.pulse-survey-configuration')->middleware('screen:admin.pulse-survey-configuration');
+    Route::livewire('/pulse-surveys/runs', 'pages::pulse-survey-runs')->name('pulse-survey-runs')->middleware('screen:pulse-survey-runs');
     Route::livewire('/admin/renewal-configuration', 'pages::admin-renewal-configuration')->name('admin.renewal-configuration')->middleware('screen:admin.renewal-configuration');
     // No screen middleware here: authorization is entirely inside CompanyDocumentService::canAccessFile()
     // so a specifically-granted non-admin employee (spec E5's "external auditor" case) can still reach the file.

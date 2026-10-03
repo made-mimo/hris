@@ -93,8 +93,8 @@ new class extends Component
         @endif
     @endif
 
-    <form wire:submit="import" class="flex items-end gap-3">
-        <input type="file" wire:model="file" accept=".csv,.txt" class="text-sm text-text">
+    <form wire:submit="import" class="flex flex-wrap items-end gap-3">
+        <x-file-input model="file" accept=".csv,.txt" :selected="$file" />
         <button type="submit" class="rounded-sm bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-dark">Import</button>
     </form>
     @error('file') <div class="mt-2 text-xs text-danger">{{ $message }}</div> @enderror

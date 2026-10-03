@@ -16,7 +16,7 @@ new class extends Component
 
     public array $tabs = [
         'job_titles' => 'Job Titles',
-        'sub_units' => 'Sub-units',
+        'sub_units' => 'Departments',
         'locations' => 'Locations',
         'work_shifts' => 'Work Shifts',
         'pay_grades' => 'Pay Grades',

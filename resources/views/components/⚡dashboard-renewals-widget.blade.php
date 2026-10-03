@@ -55,8 +55,8 @@ new class extends Component
         @forelse($renewables as $r)
             <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px;background:var(--color-bg);border-radius:10px;">
                 <div>
-                    <div style="font-size:14px;font-weight:600;">{{ $r['label'] }}</div>
-                    <div class="text-muted" style="font-size:12px;">{{ $r['type'] }}</div>
+                    <div style="font-size:var(--fs-base);font-weight:600;">{{ $r['label'] }}</div>
+                    <div class="text-muted" style="font-size:var(--fs-xs);">{{ $r['type'] }}</div>
                 </div>
                 <span class="pill {{ $r['isExpired'] ? 'pill-danger' : 'pill-warning' }}">
                     {{ $r['isExpired'] ? 'Expired '.$r['expiryDate']->format('j M Y') : 'Due '.$r['expiryDate']->format('j M Y') }}

@@ -282,7 +282,7 @@ new class extends Component
                                 @foreach($app->candidate->getMedia('attachments') as $media)
                                     <a href="{{ route('private-media.show', $media) }}" target="_blank" class="rounded-pill bg-text-faint/15 px-2.5 py-1 text-xs font-semibold text-text hover:bg-text-faint/25">{{ $media->name }}</a>
                                 @endforeach
-                                <input type="file" wire:model="file" class="text-xs">
+                                <x-file-input model="file" :selected="$file" label="Choose CV" />
                                 <button wire:click="uploadCv({{ $app->candidate->id }})" class="text-xs font-semibold text-primary">Upload CV</button>
                             </div>
                         </div>

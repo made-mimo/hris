@@ -4,7 +4,9 @@ namespace App\Services;
 
 use App\Models\Employee;
 use App\Models\Location;
+use App\Models\PulseSurveyAnswer;
 use App\Models\PulseSurveyParticipation;
+use App\Models\PulseSurveyQuestion;
 use App\Models\PulseSurveyResponse;
 use App\Models\PulseSurveyRun;
 use App\Models\PulseSurveyTemplate;
@@ -28,6 +30,7 @@ class PulseSurveyService
 
     public function __construct(private NotificationService $notifications) {}
 
+    /** @param  Collection<int, int>|array<int>  $questionIds  subset of $template's own question bank, in the order the run should ask them */
     public function launchRun(
         PulseSurveyTemplate $template,
         Carbon $launchDate,
@@ -37,9 +40,16 @@ class PulseSurveyService
         ?Location $location,
         bool $isRecurring,
         ?int $recurrenceMonths,
+        array $questionIds,
         ?PulseSurveyRun $parent = null,
     ): PulseSurveyRun {
-        return DB::transaction(function () use ($template, $launchDate, $closeDate, $audienceScope, $subUnit, $location, $isRecurring, $recurrenceMonths, $parent) {
+        abort_if(count($questionIds) === 0, 422, 'Select at least one question for this run.');
+        abort_if(count($questionIds) > PulseSurveyTemplate::MAX_QUESTIONS_PER_RUN, 422, 'A run may ask at most '.PulseSurveyTemplate::MAX_QUESTIONS_PER_RUN.' questions.');
+
+        $questions = $template->questions()->whereIn('id', $questionIds)->get();
+        abort_unless($questions->count() === count($questionIds), 422, 'One or more selected questions do not belong to this template.');
+
+        return DB::transaction(function () use ($template, $launchDate, $closeDate, $audienceScope, $subUnit, $location, $isRecurring, $recurrenceMonths, $questionIds, $parent) {
             $run = PulseSurveyRun::create([
                 'pulse_survey_template_id' => $template->id,
                 'launch_date' => $launchDate,
@@ -52,6 +62,8 @@ class PulseSurveyService
                 'recurrence_months' => $recurrenceMonths,
                 'parent_run_id' => $parent?->id,
             ]);
+
+            $run->questions()->attach($questionIds);
 
             foreach ($this->audienceEmployees($run) as $employee) {
                 PulseSurveyParticipation::firstOrCreate(['pulse_survey_run_id' => $run->id, 'employee_id' => $employee->id]);
@@ -93,7 +105,8 @@ class PulseSurveyService
         return $this->audienceEmployees($run)->reject(fn (Employee $e) => $respondedIds->contains($e->id))->values();
     }
 
-    public function respond(PulseSurveyRun $run, Employee $employee, int $scaleValue, ?string $freeText): PulseSurveyResponse
+    /** @param  array<int, array{scale_value?: int|null, free_text?: string|null}>  $answers  keyed by pulse_survey_question_id */
+    public function respond(PulseSurveyRun $run, Employee $employee, array $answers): PulseSurveyResponse
     {
         abort_if($run->status !== 'open', 422, 'This survey is not currently open.');
         abort_if($this->hasResponded($run, $employee), 422, 'You have already responded to this survey.');
@@ -106,13 +119,25 @@ class PulseSurveyService
         // score.
         abort_unless($this->audienceEmployees($run)->contains('id', $employee->id), 403, 'You are not part of the audience for this survey.');
 
-        return DB::transaction(function () use ($run, $employee, $scaleValue, $freeText) {
-            $response = PulseSurveyResponse::create([
-                'pulse_survey_run_id' => $run->id,
-                'scale_value' => $scaleValue,
-                'free_text' => $freeText,
-                'is_flagged' => $freeText ? $this->isFlagged($freeText) : false,
-            ]);
+        $questions = $run->questions()->get()->keyBy('id');
+        abort_unless(collect(array_keys($answers))->every(fn ($id) => $questions->has($id)), 422, 'One or more answers do not belong to this run.');
+
+        return DB::transaction(function () use ($run, $employee, $answers, $questions) {
+            $response = PulseSurveyResponse::create(['pulse_survey_run_id' => $run->id]);
+
+            foreach ($answers as $questionId => $answer) {
+                /** @var PulseSurveyQuestion $question */
+                $question = $questions->get($questionId);
+                $freeText = $question->type === 'free_text' ? trim((string) ($answer['free_text'] ?? '')) ?: null : null;
+
+                PulseSurveyAnswer::create([
+                    'pulse_survey_response_id' => $response->id,
+                    'pulse_survey_question_id' => $questionId,
+                    'scale_value' => $question->type === 'scale' ? $answer['scale_value'] ?? null : null,
+                    'free_text' => $freeText,
+                    'is_flagged' => $freeText ? $this->isFlagged($freeText) : false,
+                ]);
+            }
 
             PulseSurveyParticipation::updateOrCreate(
                 ['pulse_survey_run_id' => $run->id, 'employee_id' => $employee->id],
@@ -157,38 +182,69 @@ class PulseSurveyService
 
     /**
      * Spec F8: "a minimum-N threshold before any breakdown is shown, so no
-     * individual can be inferred from a small group's aggregate."
+     * individual can be inferred from a small group's aggregate." Backlog
+     * #11: the threshold still gates on total response (submission) count —
+     * that's what protects anonymity — but the breakdown itself is now
+     * per-question, since a run can ask more than one.
      *
-     * @return array{sufficient: bool, count: int, average?: float, enps?: int, freeText?: Collection}
+     * @return array{sufficient: bool, count: int, minRequired?: int, questions?: Collection}
      */
     public function aggregatedResults(PulseSurveyRun $run): array
     {
         $minResponses = Setting::current()->pulse_survey_min_responses;
-        // Query fresh rather than the cached `responses` relation property —
-        // this method is often called right after new responses are
-        // inserted on the same $run instance within one request.
-        $responses = $run->responses()->get();
-        $count = $responses->count();
+        // Query fresh rather than a cached relation property — this method
+        // is often called right after new responses are inserted on the
+        // same $run instance within one request.
+        $responseIds = $run->responses()->pluck('id');
+        $count = $responseIds->count();
 
         if ($count < $minResponses) {
             return ['sufficient' => false, 'count' => $count, 'minRequired' => $minResponses];
         }
 
-        $result = [
+        $questions = $run->questions()->get()->map(function (PulseSurveyQuestion $question) use ($responseIds) {
+            $answers = PulseSurveyAnswer::where('pulse_survey_question_id', $question->id)
+                ->whereIn('pulse_survey_response_id', $responseIds)
+                ->get();
+
+            if ($question->type === 'free_text') {
+                return [
+                    'question' => $question,
+                    'freeText' => $answers->whereNotNull('free_text')->where('is_flagged', false)->pluck('free_text')->values(),
+                    'flaggedCount' => $answers->where('is_flagged', true)->count(),
+                ];
+            }
+
+            $scaleAnswers = $answers->whereNotNull('scale_value');
+            $answeredCount = $scaleAnswers->count();
+
+            $distribution = collect(range($question->scaleMin(), $question->scaleMax()))
+                ->mapWithKeys(fn ($value) => [$value => $scaleAnswers->where('scale_value', $value)->count()]);
+
+            $result = [
+                'question' => $question,
+                'count' => $answeredCount,
+                'average' => $answeredCount ? round($scaleAnswers->avg('scale_value'), 2) : null,
+                'distribution' => $distribution,
+            ];
+
+            if ($question->scale_type === 'enps_0_10' && $answeredCount) {
+                $promoters = $scaleAnswers->where('scale_value', '>=', 9)->count();
+                $detractors = $scaleAnswers->where('scale_value', '<=', 6)->count();
+                $result['enps'] = (int) round((($promoters / $answeredCount) - ($detractors / $answeredCount)) * 100);
+                $result['promoters'] = $promoters;
+                $result['passives'] = $answeredCount - $promoters - $detractors;
+                $result['detractors'] = $detractors;
+            }
+
+            return $result;
+        });
+
+        return [
             'sufficient' => true,
             'count' => $count,
-            'average' => round($responses->avg('scale_value'), 2),
-            'freeText' => $responses->whereNotNull('free_text')->where('is_flagged', false)->pluck('free_text')->values(),
-            'flaggedCount' => $responses->where('is_flagged', true)->count(),
+            'questions' => $questions,
         ];
-
-        if ($run->template->scale_type === 'enps_0_10') {
-            $promoters = $responses->where('scale_value', '>=', 9)->count();
-            $detractors = $responses->where('scale_value', '<=', 6)->count();
-            $result['enps'] = (int) round((($promoters / $count) - ($detractors / $count)) * 100);
-        }
-
-        return $result;
     }
 
     /** Spec F8: "if a run's close, spawn the next recurring instance automatically." Idempotent via parent_run_id — never spawns a second child. */
@@ -217,6 +273,7 @@ class PulseSurveyService
             $run->audienceLocation,
             true,
             $run->recurrence_months,
+            $run->questions()->pluck('pulse_survey_questions.id')->all(),
             $run,
         );
     }

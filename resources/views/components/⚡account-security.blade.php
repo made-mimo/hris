@@ -138,7 +138,7 @@ new class extends Component
 
     @if((! $enrolled || $needsReEnrollment) && ! $switchingToTotp)
         @if(! $enrolled)
-            <p class="text-muted" style="font-size:13.5px;margin-bottom:14px;">You haven't set up two-factor sign-in yet.</p>
+            <p class="text-muted" style="font-size:var(--fs-sm);margin-bottom:14px;">You haven't set up two-factor sign-in yet.</p>
         @endif
         <div style="display:flex;gap:10px;flex-wrap:wrap;">
             @if(in_array('totp', $allowedMethods, true))
@@ -156,7 +156,7 @@ new class extends Component
         <div class="hint" style="margin-bottom:16px;word-break:break-all;font-family:'Courier New',monospace;">{{ $secret }}</div>
 
         <form wire:submit="confirmTotpSwitch" style="max-width:260px;">
-            <label for="ts-code" style="font-size:13px;font-weight:600;display:block;margin-bottom:8px;">Enter the 6-digit code to confirm</label>
+            <label for="ts-code" style="font-size:var(--fs-sm);font-weight:600;display:block;margin-bottom:8px;">Enter the 6-digit code to confirm</label>
             <input id="ts-code" wire:model="code" inputmode="numeric" maxlength="6" autocomplete="one-time-code"
                    class="otp-input" style="width:100%;letter-spacing:0.4em;font-size:20px;margin-bottom:8px;" placeholder="••••••">
             @error('code') <div class="hint" style="color:var(--color-danger);margin-bottom:10px;">{{ $message }}</div> @enderror
@@ -168,7 +168,7 @@ new class extends Component
     @else
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
             <div>
-                <div style="font-size:13.5px;font-weight:600;">
+                <div style="font-size:var(--fs-sm);font-weight:600;">
                     {{ $method === 'totp' ? 'Authenticator app' : 'Email code' }}
                 </div>
                 <div class="hint">
@@ -197,11 +197,11 @@ new class extends Component
     @if(! empty($newBackupCodes))
         <div style="padding:16px;background:var(--color-bg);border:1px solid var(--color-border);border-radius:12px;margin-top:6px;">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-                <h3 style="font-size:14px;margin:0;">New backup codes</h3>
+                <h3 style="font-size:var(--fs-base);margin:0;">New backup codes</h3>
                 <button type="button" wire:click="dismissBackupCodes" class="hint" style="background:none;border:none;padding:0;cursor:pointer;font-weight:600;">Done</button>
             </div>
             <p class="hint" style="margin-bottom:12px;">Save these now — each works once, and this is the only time they're shown. Your old codes no longer work.</p>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-family:'Courier New',monospace;font-size:13px;font-weight:600;">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-family:'Courier New',monospace;font-size:var(--fs-sm);font-weight:600;">
                 @foreach($newBackupCodes as $backupCode)
                     <div>{{ $backupCode }}</div>
                 @endforeach
@@ -212,7 +212,7 @@ new class extends Component
     @if($enrolled)
         <div style="margin-top:22px;padding-top:18px;border-top:1px solid var(--color-border);">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-                <h3 style="font-size:14px;margin:0;">Trusted devices</h3>
+                <h3 style="font-size:var(--fs-base);margin:0;">Trusted devices</h3>
                 @if($devices->isNotEmpty())
                     <button type="button" wire:click="revokeAllDevices" class="hint" style="background:none;border:none;padding:0;cursor:pointer;font-weight:600;color:var(--color-danger);">Revoke all</button>
                 @endif
@@ -223,7 +223,7 @@ new class extends Component
             @endunless
 
             @forelse($devices as $device)
-                <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--color-border);font-size:13px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--color-border);font-size:var(--fs-sm);">
                     <div>
                         <div style="font-weight:600;">{{ $device->label ?: $device->deviceGuess() }}</div>
                         <div class="hint">

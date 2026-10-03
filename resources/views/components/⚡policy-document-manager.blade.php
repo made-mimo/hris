@@ -145,7 +145,7 @@ new class extends Component
                                     <input type="date" wire:model="effectiveDate" class="rounded-sm border border-border bg-surface px-2.5 py-1.5 text-xs text-text outline-none focus:border-primary">
                                 </div>
                                 <textarea wire:model="changeNotes" rows="2" placeholder="Change notes" class="mt-2 w-full rounded-sm border border-border bg-surface px-2.5 py-1.5 text-xs text-text outline-none focus:border-primary"></textarea>
-                                <input type="file" wire:model="file" class="mt-2 w-full text-xs">
+                                <div class="mt-2"><x-file-input model="file" :selected="$file" /></div>
                                 @error('versionLabel') <div class="mt-1 text-xs text-danger">{{ $message }}</div> @enderror
                                 @error('effectiveDate') <div class="mt-1 text-xs text-danger">{{ $message }}</div> @enderror
                                 @error('file') <div class="mt-1 text-xs text-danger">{{ $message }}</div> @enderror

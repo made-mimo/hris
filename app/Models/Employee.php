@@ -32,7 +32,6 @@ class Employee extends Model implements HasMedia
         'sub_unit_id',
         'location_id',
         'hire_date',
-        'preferred_name',
         'date_of_birth',
         'gender',
         'marital_status',
@@ -358,7 +357,7 @@ class Employee extends Model implements HasMedia
         $this->clearMediaCollection('documents');
 
         $redactedFields = [
-            'preferred_name', 'date_of_birth', 'gender', 'marital_status',
+            'date_of_birth', 'gender', 'marital_status',
             'nationality_id', 'government_id_type', 'government_id_number', 'driving_license_number',
             'home_address', 'home_city_state', 'home_country_id', 'phone_home', 'phone_mobile',
             'personal_email', 'work_email',

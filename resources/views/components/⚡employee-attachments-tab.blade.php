@@ -90,7 +90,7 @@ new class extends Component
         <form wire:submit="uploadDocument" class="mb-4 flex flex-wrap items-end gap-3">
             <div>
                 <label class="mb-1.5 block text-xs font-semibold text-text">File</label>
-                <input type="file" wire:model="file" class="text-sm text-text">
+                <x-file-input model="file" :selected="$file" />
                 @error('file') <div class="mt-1 text-xs text-danger">{{ $message }}</div> @enderror
             </div>
             <div>

@@ -41,39 +41,73 @@ new class extends Component
                     @if(! ($results['sufficient'] ?? false))
                         <div class="text-sm text-text-muted">Only {{ $results['count'] ?? 0 }} of the required {{ $results['minRequired'] ?? '?' }} responses received — results are withheld until the anonymization threshold is met.</div>
                     @else
-                        <div class="flex flex-wrap gap-6">
-                            <div>
-                                <div class="text-2xl font-bold text-text">{{ $results['count'] }}</div>
-                                <div class="text-xs text-text-muted">Responses</div>
-                            </div>
-                            <div>
-                                <div class="text-2xl font-bold text-text">{{ $results['average'] }}</div>
-                                <div class="text-xs text-text-muted">Average score</div>
-                            </div>
-                            @if(isset($results['enps']))
-                                <div>
-                                    <div class="text-2xl font-bold text-text">{{ $results['enps'] }}</div>
-                                    <div class="text-xs text-text-muted">eNPS</div>
-                                </div>
-                            @endif
-                            @if($results['flaggedCount'] > 0)
-                                <div>
-                                    <div class="text-2xl font-bold text-warning">{{ $results['flaggedCount'] }}</div>
-                                    <div class="text-xs text-text-muted">Flagged comment(s) hidden</div>
-                                </div>
-                            @endif
+                        <div class="mb-4">
+                            <div class="text-2xl font-bold text-text">{{ $results['count'] }}</div>
+                            <div class="text-xs text-text-muted">Total responses</div>
                         </div>
 
-                        @if($results['freeText']->isNotEmpty())
-                            <div class="mt-4">
-                                <div class="mb-1.5 text-xs font-semibold text-text">Comments</div>
-                                <ul class="flex flex-col gap-1.5">
-                                    @foreach($results['freeText'] as $text)
-                                        <li class="rounded-sm bg-bg px-3 py-2 text-xs text-text">{{ $text }}</li>
-                                    @endforeach
-                                </ul>
-                            </div>
-                        @endif
+                        <div class="flex flex-col gap-5">
+                            @foreach($results['questions'] as $q)
+                                <div class="rounded-md border border-border bg-bg p-4">
+                                    <div class="mb-3 text-sm font-semibold text-text">{{ $q['question']->prompt }}</div>
+
+                                    @if($q['question']->type === 'free_text')
+                                        @if($q['flaggedCount'] > 0)
+                                            <div class="mb-2 text-xs text-warning">{{ $q['flaggedCount'] }} flagged comment(s) hidden.</div>
+                                        @endif
+                                        @if($q['freeText']->isNotEmpty())
+                                            <ul class="flex flex-col gap-1.5">
+                                                @foreach($q['freeText'] as $text)
+                                                    <li class="rounded-sm bg-surface px-3 py-2 text-xs text-text">{{ $text }}</li>
+                                                @endforeach
+                                            </ul>
+                                        @else
+                                            <div class="text-xs text-text-muted">No comments left for this question.</div>
+                                        @endif
+                                    @else
+                                        <div class="mb-3 flex flex-wrap gap-6">
+                                            <div>
+                                                <div class="text-xl font-bold text-text">{{ $q['average'] ?? '—' }}</div>
+                                                <div class="text-xs text-text-muted">Average score</div>
+                                            </div>
+                                            @if(isset($q['enps']))
+                                                <div>
+                                                    <div class="text-xl font-bold text-text">{{ $q['enps'] }}</div>
+                                                    <div class="text-xs text-text-muted">eNPS</div>
+                                                </div>
+                                            @endif
+                                        </div>
+
+                                        @if($q['count'] > 0)
+                                            <div class="grid gap-4 md:grid-cols-2">
+                                                <div>
+                                                    <div class="mb-1.5 text-xs font-semibold text-text-muted">Response distribution</div>
+                                                    <x-chart-canvas
+                                                        :id="'pulse-distribution-'.$run->id.'-'.$q['question']->id"
+                                                        type="bar"
+                                                        :labels="$q['distribution']->keys()->all()"
+                                                        :datasets="[['label' => 'Responses', 'data' => $q['distribution']->values()->all(), 'backgroundColor' => '#2563EB']]"
+                                                        :height="180"
+                                                    />
+                                                </div>
+                                                @if(isset($q['enps']))
+                                                    <div>
+                                                        <div class="mb-1.5 text-xs font-semibold text-text-muted">Promoters / passives / detractors</div>
+                                                        <x-chart-canvas
+                                                            :id="'pulse-enps-'.$run->id.'-'.$q['question']->id"
+                                                            type="doughnut"
+                                                            :labels="['Promoters', 'Passives', 'Detractors']"
+                                                            :datasets="[['data' => [$q['promoters'], $q['passives'], $q['detractors']], 'backgroundColor' => ['#1E9E63', '#B45309', '#DC2626']]]"
+                                                            :height="180"
+                                                        />
+                                                    </div>
+                                                @endif
+                                            </div>
+                                        @endif
+                                    @endif
+                                </div>
+                            @endforeach
+                        </div>
                     @endif
                 </div>
             @endif

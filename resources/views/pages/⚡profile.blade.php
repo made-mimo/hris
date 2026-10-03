@@ -11,10 +11,10 @@ new class extends Component
 };
 ?>
 
-<x-layouts.app title="My Profile">
+<x-layouts.app title="My Info">
     <div class="page-header">
         <div>
-            <h1>My Profile</h1>
+            <h1>My Info</h1>
             <p class="text-muted">{{ $me->fullName() }} · {{ $me->employee_id }}</p>
         </div>
     </div>
@@ -24,7 +24,7 @@ new class extends Component
 
         <section class="card">
             <div class="card-header"><h2>Details</h2></div>
-            <div style="display:flex;flex-direction:column;gap:10px;font-size:13.5px;">
+            <div style="display:flex;flex-direction:column;gap:10px;font-size:var(--fs-sm);">
                 <div style="display:flex;justify-content:space-between;"><span class="text-muted">Employee ID</span><span class="font-mono" style="font-weight:600;">{{ $me->employee_id }}</span></div>
                 <div style="display:flex;justify-content:space-between;"><span class="text-muted">Job title</span><span style="font-weight:600;">{{ $me->jobTitleName() }}</span></div>
                 <div style="display:flex;justify-content:space-between;"><span class="text-muted">Department</span><span style="font-weight:600;">{{ $me->departmentName() }}</span></div>
@@ -35,18 +35,22 @@ new class extends Component
     </div>
 
     {{--
-        Spec B2: "Self-service 'My Info' view exposing the subset of the
-        profile an employee may edit themselves." Reuses the same Personal/
-        Contact tab components the Admin/HR-facing employee profile editor
-        uses (employee-detail-form.blade.php's Job Details tab and beyond) —
-        both already take a plain Employee, with no admin-only gating, so
-        there's nothing self-service-specific to duplicate here.
+        Spec B2 / backlog #10: "Self-service 'My Info' view exposing the
+        subset of the profile an employee may edit themselves." Reuses the
+        same tab components the Admin/HR-facing employee profile editor
+        uses — each already takes a plain Employee with no admin-only
+        gating, so there's nothing self-service-specific to duplicate here.
+        Onboarding/offboarding tasks are deliberately excluded: that's an
+        HR-initiated workflow (employee-career-tab), not something an
+        employee should be able to assign to themselves.
     --}}
     <div class="mt-6">
-        <h2 class="mb-3" style="font-size:16px;font-weight:700;">My Info</h2>
+        <h2 class="mb-3" style="font-size:16px;font-weight:700;">Biodata</h2>
         <div class="flex flex-col gap-4">
             <livewire:employee-personal-tab :employee="$me" :key="'self-personal-'.$me->id" />
             <livewire:employee-contact-tab :employee="$me" :key="'self-contact-'.$me->id" />
+            <livewire:employee-qualifications-tab :employee="$me" :key="'self-qualifications-'.$me->id" />
+            <livewire:employee-development-tab :employee="$me" :key="'self-development-'.$me->id" />
         </div>
     </div>
 </x-layouts.app>

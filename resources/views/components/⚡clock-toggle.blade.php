@@ -32,7 +32,7 @@ new class extends Component
 
 <div style="display:flex;align-items:center;gap:10px;">
     @if(session('error'))
-        <span style="font-size:12px;color:var(--color-danger);">{{ session('error') }}</span>
+        <span style="font-size:var(--fs-xs);color:var(--color-danger);">{{ session('error') }}</span>
     @endif
     <span class="pill pill-neutral" style="height:40px;padding:0 14px;">
         <span style="width:8px;height:8px;border-radius:50%;background:{{ $currentPunch ? 'var(--color-accent)' : 'var(--color-text-faint)' }};"></span>

@@ -147,7 +147,7 @@ new class extends Component
                         </div>
                         <div class="flex items-center gap-3">
                             @if(! $jt->jobSpecUrl())
-                                <button wire:click="startUpload({{ $jt->id }})" class="text-xs font-semibold text-primary">Attach spec</button>
+                                <button wire:click="startUpload({{ $jt->id }})" class="text-xs font-semibold text-primary">Upload JD</button>
                             @endif
                             <button wire:click="startEdit({{ $jt->id }})" class="text-xs font-semibold text-primary">Edit</button>
                             <button wire:click="delete({{ $jt->id }})" wire:confirm="Delete this job title?" class="text-xs font-semibold text-danger">Delete</button>
@@ -156,7 +156,7 @@ new class extends Component
 
                     @if($uploadingForId === $jt->id)
                         <div class="w-full pt-2">
-                            <input type="file" wire:model="jobSpecFile" class="text-xs text-text">
+                            <x-file-input model="jobSpecFile" :selected="$jobSpecFile" label="Choose JD" />
                             <button wire:click="uploadJobSpec" class="ml-2 text-xs font-semibold text-primary">Upload</button>
                             <button wire:click="$set('uploadingForId', null)" class="ml-2 text-xs font-semibold text-text-muted">Cancel</button>
                             @error('jobSpecFile') <div class="mt-1 text-xs text-danger">{{ $message }}</div> @enderror

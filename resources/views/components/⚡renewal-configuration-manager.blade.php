@@ -117,7 +117,7 @@ new class extends Component
                             <span class="text-xs text-text-muted">No tiers configured — this type will never fire a reminder.</span>
                         @endforelse
                     </div>
-                    <form wire:submit="addTier({{ $type->id }})" class="flex items-end gap-2">
+                    <form wire:submit="addTier({{ $type->id }})" class="flex flex-wrap items-end gap-2">
                         <input type="number" wire:model="daysBeforeExpiry.{{ $type->id }}" min="1" max="730" placeholder="e.g. 30" class="w-28 rounded-sm border border-border bg-surface px-3 py-2 text-sm text-text outline-none focus:border-primary">
                         <button type="submit" class="rounded-sm bg-primary px-3 py-2 text-xs font-semibold text-white hover:bg-primary-dark">Add tier</button>
                     </form>

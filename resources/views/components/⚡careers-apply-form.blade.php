@@ -118,7 +118,7 @@ new class extends Component
             </div>
             <div>
                 <label class="mb-1.5 block text-xs font-semibold text-text">CV / resume <span class="text-text-muted" style="font-weight:400;">(PDF, Word, RTF, ODT, or plain text)</span></label>
-                <input type="file" wire:model="cv" class="w-full text-sm text-text">
+                <x-file-input model="cv" :selected="$cv" />
                 @error('cv') <div class="mt-1 text-xs text-danger">{{ $message }}</div> @enderror
             </div>
             <label class="flex items-center gap-1.5 text-xs text-text">

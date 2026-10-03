@@ -11,7 +11,7 @@ class SubUnit extends Model
 {
     use Auditable;
 
-    protected $fillable = ['parent_id', 'name', 'is_active'];
+    protected $fillable = ['parent_id', 'name', 'code', 'is_active'];
 
     protected function casts(): array
     {

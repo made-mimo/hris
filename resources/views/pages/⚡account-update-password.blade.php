@@ -21,7 +21,7 @@ new class extends Component
     </x-slot:illustration>
 
     <h1 style="font-size:28px;">Update your password</h1>
-    <p class="text-muted" style="margin:8px 0 24px;font-size:14px;line-height:1.55;">
+    <p class="text-muted" style="margin:8px 0 24px;font-size:var(--fs-base);line-height:1.55;">
         Your organization's password requirements have changed since you last set yours. Choose a new one that meets the current policy to continue.
     </p>
 

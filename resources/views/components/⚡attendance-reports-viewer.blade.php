@@ -37,10 +37,15 @@ new class extends Component
                 'hours' => $group->sum(fn ($r) => $r->durationHours() ?? 0),
             ])->sortByDesc('hours')->values();
 
+        $dailyHours = $records->groupBy(fn ($r) => $r->punch_in_at_local->format('Y-m-d'))
+            ->map(fn ($group) => round($group->sum(fn ($r) => $r->durationHours() ?? 0), 2))
+            ->sortKeys();
+
         return [
             'rows' => $rows,
             'employees' => Employee::orderBy('last_name')->get(),
             'totalHours' => $records->sum(fn ($r) => $r->durationHours() ?? 0),
+            'dailyHours' => $dailyHours,
         ];
     }
 };
@@ -66,6 +71,19 @@ new class extends Component
             </div>
             <div class="ml-auto text-sm text-text-muted">Total: <span class="font-mono font-semibold text-text">{{ number_format($totalHours, 2) }}h</span></div>
         </div>
+
+        @if($dailyHours->isNotEmpty())
+            <div class="mb-4">
+                <h3 class="mb-2 font-display text-sm font-bold text-text">Daily hours trend</h3>
+                <x-chart-canvas
+                    id="attendance-daily-trend"
+                    type="line"
+                    :labels="$dailyHours->keys()->all()"
+                    :datasets="[['label' => 'Hours', 'data' => $dailyHours->values()->all(), 'borderColor' => '#2563EB', 'backgroundColor' => 'rgba(37,99,235,0.12)', 'fill' => true, 'tension' => 0.3]]"
+                    :height="220"
+                />
+            </div>
+        @endif
 
         <div class="divide-y divide-border">
             @foreach($rows as $row)

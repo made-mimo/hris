@@ -9,6 +9,16 @@ new class extends Component
 {
     use WithFileUploads;
 
+    public string $activeTab = 'security';
+
+    public array $tabs = [
+        'security' => 'Security',
+        'organization' => 'Branding & Organization',
+        'integrations' => 'Integrations',
+        'system' => 'System',
+        'modules' => 'Modules',
+    ];
+
     public bool $twoFactorEnabled = false;
     public string $companyName = '';
     public $logo = null;
@@ -427,6 +437,16 @@ new class extends Component
         <div class="mb-4 inline-flex items-center gap-2 rounded-pill bg-accent-light px-3.5 py-2.5 text-xs font-semibold text-accent">{{ session('status') }}</div>
     @endif
 
+    <div class="mb-4 flex flex-wrap gap-1.5 border-b border-border">
+        @foreach($tabs as $key => $label)
+            <button type="button" wire:click="$set('activeTab', '{{ $key }}')"
+                class="rounded-t-sm border-b-2 px-3.5 py-2.5 text-sm font-semibold transition-colors {{ $activeTab === $key ? 'border-primary text-primary' : 'border-transparent text-text-muted hover:text-text' }}">
+                {{ $label }}
+            </button>
+        @endforeach
+    </div>
+
+    @if($activeTab === 'security')
     <div class="grid items-start gap-4 md:grid-cols-2">
         <section class="rounded-md border border-border bg-surface p-5 shadow-sm">
             <div class="mb-3.5 flex items-center justify-between">
@@ -505,7 +525,11 @@ new class extends Component
                 <button type="submit" class="self-start rounded-sm bg-primary px-4.5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-primary-dark">Save password policy</button>
             </form>
         </section>
+    </div>
+    @endif
 
+    @if($activeTab === 'organization')
+    <div class="grid items-start gap-4 md:grid-cols-2">
         <section class="rounded-md border border-border bg-surface p-5 shadow-sm">
             <div class="mb-3.5 flex items-center justify-between">
                 <h2 class="font-display text-base font-bold text-text">Branding</h2>
@@ -529,7 +553,7 @@ new class extends Component
                                 <span class="text-[11px] text-text-faint">No logo</span>
                             @endif
                         </div>
-                        <input type="file" wire:model="logo" accept="image/*" class="text-sm text-text">
+                        <x-file-input model="logo" accept="image/*" :selected="$logo" />
                     </div>
                     @error('logo') <div class="mt-1 text-xs text-danger">{{ $message }}</div> @enderror
                     <div class="mt-1 text-xs text-text-muted">PNG or SVG, up to 2 MB. Shown in the sidebar in place of the default mark.</div>
@@ -617,7 +641,11 @@ new class extends Component
                 <button type="submit" class="self-start rounded-sm bg-primary px-4.5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-primary-dark">Save organization profile</button>
             </form>
         </section>
+    </div>
+    @endif
 
+    @if($activeTab === 'integrations')
+    <div class="grid items-start gap-4 md:grid-cols-2">
         <section class="rounded-md border border-border bg-surface p-5 shadow-sm">
             <div class="mb-3.5 flex items-center justify-between">
                 <h2 class="font-display text-base font-bold text-text">Email / SMTP configuration</h2>
@@ -727,7 +755,11 @@ new class extends Component
                 <button type="submit" class="self-start rounded-sm bg-primary px-4.5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-primary-dark">Save Microsoft SSO configuration</button>
             </form>
         </section>
+    </div>
+    @endif
 
+    @if($activeTab === 'system')
+    <div class="grid items-start gap-4 md:grid-cols-2">
         <section class="rounded-md border border-border bg-surface p-5 shadow-sm">
             <div class="mb-3.5 flex items-center justify-between">
                 <h2 class="font-display text-base font-bold text-text">System</h2>
@@ -778,7 +810,15 @@ new class extends Component
                 <button type="submit" class="self-start rounded-sm bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-dark">Save Help &amp; Support settings</button>
             </form>
         </section>
+    </div>
+    @endif
 
+    {{-- Second "security" block: Data Retention and the idle-timeout Security
+         section live later in this file than Password Policy, but belong on
+         the same tab — two non-contiguous @if blocks on the same $activeTab
+         value, rather than physically reordering long-stable sections. --}}
+    @if($activeTab === 'security')
+    <div class="grid items-start gap-4 md:grid-cols-2">
         <section class="rounded-md border border-border bg-surface p-5 shadow-sm">
             <div class="mb-3.5 flex items-center justify-between">
                 <h2 class="font-display text-base font-bold text-text">Data Retention</h2>
@@ -818,7 +858,11 @@ new class extends Component
                 <button type="submit" class="rounded-sm bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-dark">Save security settings</button>
             </form>
         </section>
+    </div>
+    @endif
 
+    @if($activeTab === 'modules')
+    <div class="grid items-start gap-4 md:grid-cols-2">
         <section class="rounded-md border border-border bg-surface p-5 shadow-sm">
             <div class="mb-3.5 flex items-center justify-between">
                 <h2 class="font-display text-base font-bold text-text">Time & Attendance</h2>
@@ -878,4 +922,5 @@ new class extends Component
             <button wire:click="saveExpenseClaimSettings" class="mt-3.5 rounded-sm bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-dark">Save</button>
         </section>
     </div>
+    @endif
 </div>

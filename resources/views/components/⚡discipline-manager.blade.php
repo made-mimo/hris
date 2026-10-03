@@ -223,7 +223,7 @@ new class extends Component
                     </div>
                     <div>
                         <label class="mb-1.5 block text-xs font-semibold text-text">Supporting evidence <span class="text-text-muted" style="font-weight:400;">(optional)</span></label>
-                        <input type="file" wire:model="file" class="text-sm text-text">
+                        <x-file-input model="file" :selected="$file" />
                     </div>
                     <div class="flex gap-2">
                         <button type="submit" class="rounded-sm bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-dark">Submit case</button>
@@ -298,7 +298,7 @@ new class extends Component
                             <div class="rounded-sm border border-border bg-bg p-3.5">
                                 <textarea wire:model="responseBody" rows="2" placeholder="Your response" class="w-full rounded-sm border border-border bg-surface px-3 py-2 text-sm text-text outline-none focus:border-primary"></textarea>
                                 @error('responseBody') <div class="mt-1 text-xs text-danger">{{ $message }}</div> @enderror
-                                <input type="file" wire:model="file" class="mt-2 text-xs">
+                                <div class="mt-2"><x-file-input model="file" :selected="$file" /></div>
                                 <div class="mt-2 flex gap-2">
                                     <button wire:click="respond({{ $case->id }})" class="rounded-sm bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-primary-dark">Submit</button>
                                     <button wire:click="$set('respondingId', null)" class="text-xs font-semibold text-text-muted">Cancel</button>
@@ -317,7 +317,7 @@ new class extends Component
                                 </select>
                                 @error('outcome') <div class="mt-1 text-xs text-danger">{{ $message }}</div> @enderror
                                 <textarea wire:model="resolutionNote" rows="2" placeholder="Resolution note (optional)" class="mt-2 w-full rounded-sm border border-border bg-surface px-3 py-2 text-sm text-text outline-none focus:border-primary"></textarea>
-                                <input type="file" wire:model="file" class="mt-2 text-xs">
+                                <div class="mt-2"><x-file-input model="file" :selected="$file" /></div>
                                 <div class="mt-2 flex gap-2">
                                     <button wire:click="resolve({{ $case->id }})" class="rounded-sm bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-primary-dark">Resolve</button>
                                     <button wire:click="$set('resolvingId', null)" class="text-xs font-semibold text-text-muted">Cancel</button>

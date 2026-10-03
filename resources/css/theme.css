@@ -69,6 +69,20 @@
   --sidebar-w: 240px;
   --topbar-h: 68px;
   --bottomnav-h: 64px;
+
+  /* ---- Page text scale (backlog #12) ----
+     Sub-headings and body text inside page content had accreted as ~9
+     slightly-different magic px values (10px–14px) hand-picked per
+     component. Consolidated to 5 named steps and bumped ~1.5px each so the
+     type is legibly bigger without touching h1–h3 (already sized fine),
+     .btn/.nav-link (their own fixed sizes — "buttons are fine"), or the
+     sidebar/bottom-nav menu text (left alone; only the sidebar's own
+     Expand/Collapse-all controls were explicitly called out for a bump). */
+  --fs-3xs: 11.5px; /* was 10px / 10.5px */
+  --fs-2xs: 12.5px; /* was 11px / 11.5px */
+  --fs-xs: 13.5px;  /* was 12px / 12.5px */
+  --fs-sm: 14.5px;  /* was 13px / 13.5px */
+  --fs-base: 15.5px; /* was 14px */
 }
 
 /* ---- Dark theme ----
@@ -436,6 +450,15 @@ a:not(.btn):hover { color: var(--color-primary-dark); }
    ========================================================= */
 
 .grid { display: grid; gap: 18px; }
+/* A grid item defaults to min-width:auto, meaning it won't shrink below its
+   content's own intrinsic width even when that content (e.g. a wide
+   .data-table, several levels down) has its own overflow-x:auto that would
+   otherwise let IT scroll internally. Without this, a wide table/card
+   forces the whole grid — and on narrow (<1024px) screens, .app-content
+   itself, which picks up overflow-x:auto as a side effect of its own
+   overflow-y:auto — wider than the viewport, so the whole page scrolls
+   left/right instead of just the one element that's actually too wide. */
+.grid > * { min-width: 0; }
 .grid-5 { grid-template-columns: repeat(5, 1fr); }
 .grid-4 { grid-template-columns: repeat(4, 1fr); }
 .grid-3 { grid-template-columns: repeat(3, 1fr); }
@@ -511,7 +534,7 @@ a:not(.btn):hover { color: var(--color-primary-dark); }
   border-radius: var(--radius-sm);
   background: rgba(255, 255, 255, 0.08);
   color: #fff;
-  font-size: 13.5px;
+  font-size: var(--fs-sm);
   font-weight: 600;
   transition: background 0.15s ease;
 }
@@ -581,7 +604,7 @@ a:not(.btn):hover { color: var(--color-primary-dark); }
 
 .stat-card .stat-label {
   margin-top: 20px;
-  font-size: 13px;
+  font-size: var(--fs-sm);
   color: var(--color-text-muted);
   font-weight: 500;
 }
@@ -597,7 +620,7 @@ a:not(.btn):hover { color: var(--color-primary-dark); }
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-size: 12px;
+  font-size: var(--fs-xs);
   font-weight: 600;
   margin-top: 8px;
   padding: 3px 8px;
@@ -663,12 +686,12 @@ a:not(.btn):hover { color: var(--color-primary-dark); }
 table.data-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 14px;
+  font-size: var(--fs-base);
 }
 
 .data-table th {
   text-align: left;
-  font-size: 12px;
+  font-size: var(--fs-xs);
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--color-text-faint);
@@ -713,7 +736,7 @@ table.data-table {
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   font-family: var(--font-body);
-  font-size: 14px;
+  font-size: var(--fs-base);
   background: var(--color-surface);
   color: var(--color-text);
   outline: none;
@@ -732,7 +755,7 @@ table.data-table {
   box-shadow: 0 0 0 3px var(--color-primary-light);
 }
 
-.field .hint { font-size: 12px; color: var(--color-text-muted); margin-top: 4px; }
+.field .hint { font-size: var(--fs-xs); color: var(--color-text-muted); margin-top: 4px; }
 
 [x-cloak] { display: none !important; }
 
@@ -750,7 +773,7 @@ table.data-table {
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   font-family: var(--font-body);
-  font-size: 14px;
+  font-size: var(--fs-base);
   background: var(--color-surface);
   color: var(--color-text);
   cursor: pointer;
@@ -786,7 +809,7 @@ table.data-table {
   border: none;
   border-bottom: 1px solid var(--color-border);
   font-family: var(--font-body);
-  font-size: 14px;
+  font-size: var(--fs-base);
   outline: none;
   background: var(--color-surface);
   color: var(--color-text);
@@ -802,7 +825,7 @@ table.data-table {
 .searchable-select-option {
   padding: 9px 12px;
   border-radius: var(--radius-sm);
-  font-size: 14px;
+  font-size: var(--fs-base);
   color: var(--color-text);
   cursor: pointer;
 }
@@ -812,7 +835,7 @@ table.data-table {
   background: var(--color-bg);
 }
 
-.searchable-select-empty { padding: 12px; font-size: 13px; }
+.searchable-select-empty { padding: 12px; font-size: var(--fs-sm); }
 
 /* =========================================================
    MOBILE APP SHELL
@@ -830,6 +853,12 @@ table.data-table {
   .sidebar { display: none; }
   .main { padding: 16px 16px calc(var(--bottomnav-h) + 24px); }
   .topbar-search { display: none; }
+  /* .topbar's justify-content:space-between (theme.css above) assumes two
+     flex children; hiding .topbar-search leaves .topbar-actions as the only
+     one, and space-between pushes a lone flex child to flex-start — the
+     avatar/notification cluster jumping to the top-left instead of staying
+     at the top-right. */
+  .topbar { justify-content: flex-end; }
 
   .bottom-nav {
     position: fixed;
@@ -943,13 +972,13 @@ table.data-table {
 .auth-brand-art { position: relative; display: flex; align-items: center; justify-content: center; flex: 1; }
 .auth-brand-headline { position: relative; }
 .auth-brand-headline h1 { font-size: 27px; font-weight: 700; color: #fff; line-height: 1.3; }
-.auth-brand-headline p { margin: 10px 0 0; font-size: 13.5px; color: #9195A0; line-height: 1.55; max-width: 440px; }
+.auth-brand-headline p { margin: 10px 0 0; font-size: var(--fs-sm); color: #9195A0; line-height: 1.55; max-width: 440px; }
 
 .auth-form-pane { flex: 1; display: flex; align-items: center; justify-content: center; padding: 48px; }
 .auth-form { width: 100%; max-width: 380px; }
-.auth-eyebrow { font-size: 11.5px; font-weight: 700; letter-spacing: 1.2px; color: var(--color-primary); margin-bottom: 14px; }
-.auth-footer { margin-top: 48px; text-align: center; font-size: 11.5px; color: var(--color-text-faint); }
-.auth-back-link { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: var(--color-text-muted); margin-bottom: 28px; }
+.auth-eyebrow { font-size: var(--fs-2xs); font-weight: 700; letter-spacing: 1.2px; color: var(--color-primary); margin-bottom: 14px; }
+.auth-footer { margin-top: 48px; text-align: center; font-size: var(--fs-2xs); color: var(--color-text-faint); }
+.auth-back-link { display: inline-flex; align-items: center; gap: 6px; font-size: var(--fs-sm); font-weight: 600; color: var(--color-text-muted); margin-bottom: 28px; }
 
 @media (max-width: 900px) {
   .auth-brand { display: none; }
@@ -994,8 +1023,8 @@ table.data-table {
   background: var(--color-surface); font-family: var(--font-body); text-align: left;
   cursor: pointer; min-height: 64px; width: 100%;
 }
-.option-card .option-card-title { font-size: 14px; font-weight: 600; color: var(--color-text); }
-.option-card .option-card-hint { font-size: 12px; color: var(--color-text-muted); }
+.option-card .option-card-title { font-size: var(--fs-base); font-weight: 600; color: var(--color-text); }
+.option-card .option-card-hint { font-size: var(--fs-xs); color: var(--color-text-muted); }
 .option-card.is-active { background: var(--color-primary-light); border-color: var(--color-primary); }
 
 /* =========================================================
@@ -1015,8 +1044,8 @@ table.data-table {
 .timeline-dot.is-current { background: var(--color-primary); border-color: var(--color-primary); color: #fff; }
 .timeline-line { width: 2px; flex: 1; min-height: 18px; background: var(--color-border); margin-top: 2px; }
 .timeline-body { padding-bottom: 14px; }
-.timeline-body .timeline-title { font-size: 14px; font-weight: 600; color: var(--color-text); }
-.timeline-body .timeline-note { font-size: 12.5px; color: var(--color-text-muted); }
+.timeline-body .timeline-title { font-size: var(--fs-base); font-weight: 600; color: var(--color-text); }
+.timeline-body .timeline-note { font-size: var(--fs-xs); color: var(--color-text-muted); }
 
 /* Small inline dot-timeline used inside the Approvals detail pane */
 .trail-dot { width: 12px; height: 12px; border-radius: 999px; flex-shrink: 0; background: var(--color-border); }

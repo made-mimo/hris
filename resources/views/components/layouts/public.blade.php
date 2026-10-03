@@ -22,14 +22,14 @@
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:28px;">
         <div class="brand-mark" style="width:34px;height:34px;"></div>
         <div>
-            <div class="font-display" style="font-size:14px;font-weight:800;">SYSTEMS <span style="color:var(--color-primary);">INTELLIGENZ</span></div>
-            <div class="text-faint" style="font-size:10px;font-weight:700;letter-spacing:1.2px;">CAREERS</div>
+            <div class="font-display" style="font-size:var(--fs-base);font-weight:800;">SYSTEMS <span style="color:var(--color-primary);">INTELLIGENZ</span></div>
+            <div class="text-faint" style="font-size:var(--fs-3xs);font-weight:700;letter-spacing:1.2px;">CAREERS</div>
         </div>
     </div>
 
     {{ $slot }}
 
-    <div class="text-faint" style="margin-top:40px;text-align:center;font-size:12px;">© {{ date('Y') }} Systems Intelligenz Ltd</div>
+    <div class="text-faint" style="margin-top:40px;text-align:center;font-size:var(--fs-xs);">© {{ date('Y') }} Systems Intelligenz Ltd</div>
 </div>
 @livewireScripts
 </body>

@@ -61,6 +61,18 @@ new class extends Component
             <div class="ml-auto text-sm text-text-muted">Total: <span class="font-mono font-semibold text-text">{{ number_format($totalHours, 2) }}h</span></div>
         </div>
 
+        @if($rows->isNotEmpty())
+            <div class="mb-4">
+                <x-chart-canvas
+                    id="timesheet-hours"
+                    type="bar"
+                    :labels="$rows->pluck('label')->all()"
+                    :datasets="[['label' => 'Hours', 'data' => $rows->pluck('hours')->all(), 'backgroundColor' => '#1E9E63']]"
+                    :height="240"
+                />
+            </div>
+        @endif
+
         <div class="divide-y divide-border">
             @foreach($rows as $row)
                 <div class="flex items-center justify-between py-2.5 text-sm">

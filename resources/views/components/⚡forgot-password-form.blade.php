@@ -118,7 +118,7 @@ new class extends Component
 <div>
     @if($step === 'request')
         <h1 style="font-size:28px;">Reset your password</h1>
-        <p class="text-muted" style="margin:8px 0 24px;font-size:14px;line-height:1.55;">Enter your work email and we'll send you a code to reset your password.</p>
+        <p class="text-muted" style="margin:8px 0 24px;font-size:var(--fs-base);line-height:1.55;">Enter your work email and we'll send you a code to reset your password.</p>
 
         <form wire:submit="sendCode">
             <div class="field">
@@ -131,7 +131,7 @@ new class extends Component
         </form>
     @else
         <h1 style="font-size:28px;">Check your email</h1>
-        <p class="text-muted" style="margin:8px 0 24px;font-size:14px;line-height:1.55;">If an account exists for {{ $email }}, a 6-digit code was sent. It expires in 30 minutes.</p>
+        <p class="text-muted" style="margin:8px 0 24px;font-size:var(--fs-base);line-height:1.55;">If an account exists for {{ $email }}, a 6-digit code was sent. It expires in 30 minutes.</p>
 
         <form wire:submit="resetPassword">
             <div class="field">

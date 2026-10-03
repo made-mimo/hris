@@ -10,7 +10,15 @@ use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
 
-/** Spec F1: Post/Share separation — the feed lists PostShare rows (every appearance, original or reshare), each with its own independent like/comment thread. */
+/**
+ * Spec F1: Post/Share separation — the feed lists PostShare rows (every
+ * appearance, original or reshare), each with its own independent
+ * like/comment thread. Auto-updates via wire:poll (see the root element) so
+ * a post, like, or comment from a colleague appears without a manual
+ * reload — the same `wire:poll` stand-in for real-time push used by the
+ * Notification Center bell (⚡notification-bell.blade.php), since this dev
+ * box has no Reverb server running for an actual WebSocket push.
+ */
 new class extends Component
 {
     use WithFileUploads;
@@ -42,7 +50,7 @@ new class extends Component
             $rules['body'] = ['nullable', 'string', 'max:2000'];
         } else {
             $rules['photos'] = ['required', 'array', 'min:1', 'max:6'];
-            $rules['photos.*'] = ['image', 'max:2048'];
+            $rules['photos.*'] = ['image', 'max:10240'];
             $rules['body'] = ['nullable', 'string', 'max:2000'];
         }
 
@@ -146,7 +154,7 @@ new class extends Component
 };
 ?>
 
-<div class="grid" style="grid-template-columns:2fr 1fr;gap:16px;align-items:start;">
+<div class="grid" style="grid-template-columns:2fr 1fr;gap:16px;align-items:start;" wire:poll.15s>
     <div class="flex flex-col gap-4">
         @if(session('status'))
             <div class="inline-flex items-center gap-2 self-start rounded-pill bg-accent-light px-3.5 py-2.5 text-xs font-semibold text-accent">{{ session('status') }}</div>
@@ -166,7 +174,7 @@ new class extends Component
                 @endif
 
                 @if($type === 'photo')
-                    <input type="file" wire:model.live="photos" multiple class="w-full text-xs">
+                    <x-file-input model="photos" :live="true" :multiple="true" :selected="$photos" />
                     @error('photos') <div class="text-xs text-danger">{{ $message }}</div> @enderror
                     @error('photos.*') <div class="text-xs text-danger">{{ $message }}</div> @enderror
                 @endif

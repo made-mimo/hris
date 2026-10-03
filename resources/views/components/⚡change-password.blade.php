@@ -75,21 +75,21 @@ new class extends Component
 
     <form wire:submit="save" style="display:flex;flex-direction:column;gap:14px;max-width:360px;">
         <div>
-            <label for="current-password" style="font-size:13px;font-weight:600;display:block;margin-bottom:6px;">Current password</label>
+            <label for="current-password" style="font-size:var(--fs-sm);font-weight:600;display:block;margin-bottom:6px;">Current password</label>
             <input id="current-password" type="password" wire:model="currentPassword" autocomplete="current-password"
                    style="width:100%;padding:9px 12px;border:1px solid var(--color-border);border-radius:8px;">
             @error('currentPassword') <div class="hint" style="color:var(--color-danger);margin-top:4px;">{{ $message }}</div> @enderror
         </div>
 
         <div>
-            <label for="new-password" style="font-size:13px;font-weight:600;display:block;margin-bottom:6px;">New password</label>
+            <label for="new-password" style="font-size:var(--fs-sm);font-weight:600;display:block;margin-bottom:6px;">New password</label>
             <input id="new-password" type="password" wire:model="newPassword" autocomplete="new-password"
                    style="width:100%;padding:9px 12px;border:1px solid var(--color-border);border-radius:8px;">
             @error('newPassword') <div class="hint" style="color:var(--color-danger);margin-top:4px;">{{ $message }}</div> @enderror
         </div>
 
         <div>
-            <label for="new-password-confirmation" style="font-size:13px;font-weight:600;display:block;margin-bottom:6px;">Confirm new password</label>
+            <label for="new-password-confirmation" style="font-size:var(--fs-sm);font-weight:600;display:block;margin-bottom:6px;">Confirm new password</label>
             <input id="new-password-confirmation" type="password" wire:model="newPassword_confirmation" autocomplete="new-password"
                    style="width:100%;padding:9px 12px;border:1px solid var(--color-border);border-radius:8px;">
         </div>

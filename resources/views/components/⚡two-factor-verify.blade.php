@@ -129,16 +129,16 @@ new class extends Component
         <h1 style="font-size:28px;">Verify it's you</h1>
 
         @if($useBackupCode)
-            <p class="text-muted" style="margin:8px 0 22px;font-size:14px;line-height:1.55;">Enter one of your unused backup codes.</p>
+            <p class="text-muted" style="margin:8px 0 22px;font-size:var(--fs-base);line-height:1.55;">Enter one of your unused backup codes.</p>
         @elseif($method === 'totp')
-            <p class="text-muted" style="margin:8px 0 22px;font-size:14px;line-height:1.55;">Enter the 6-digit code from your authenticator app for {{ auth()->user()->email }}.</p>
+            <p class="text-muted" style="margin:8px 0 22px;font-size:var(--fs-base);line-height:1.55;">Enter the 6-digit code from your authenticator app for {{ auth()->user()->email }}.</p>
         @else
-            <p class="text-muted" style="margin:8px 0 22px;font-size:14px;line-height:1.55;">
+            <p class="text-muted" style="margin:8px 0 22px;font-size:var(--fs-base);line-height:1.55;">
                 We sent a 6-digit code to {{ \Illuminate\Support\Str::mask(auth()->user()->email, '•', 1, strpos(auth()->user()->email, '@') - 1) }}. It expires in {{ config('twofactor.email_code_ttl_minutes') }} minutes.
             </p>
         @endif
 
-        <label for="code" style="font-size:13px;font-weight:600;display:block;margin-bottom:8px;">{{ $useBackupCode ? 'Backup code' : '6-digit code' }}</label>
+        <label for="code" style="font-size:var(--fs-sm);font-weight:600;display:block;margin-bottom:8px;">{{ $useBackupCode ? 'Backup code' : '6-digit code' }}</label>
         @if($useBackupCode)
             <input id="code" wire:model="code" autocomplete="one-time-code"
                    class="otp-input" style="width:100%;letter-spacing:0.2em;font-size:18px;margin-bottom:8px;text-transform:uppercase;" placeholder="XXXX-XXXX">
@@ -166,8 +166,8 @@ new class extends Component
             <label style="display:flex;align-items:flex-start;gap:10px;padding:12px 14px;border:1px solid var(--color-border);border-radius:10px;background:var(--color-bg);cursor:pointer;margin-bottom:24px;">
                 <input type="checkbox" wire:model="trustDevice" style="width:16px;height:16px;margin-top:2px;accent-color:var(--color-primary);">
                 <span>
-                    <span style="display:block;font-size:13.5px;font-weight:600;">Trust this device for {{ $trustedDeviceDays }} days</span>
-                    <span style="display:block;font-size:12.5px;color:var(--color-text-muted);">Skip this step on this browser. Revoke anytime in Account Security.</span>
+                    <span style="display:block;font-size:var(--fs-sm);font-weight:600;">Trust this device for {{ $trustedDeviceDays }} days</span>
+                    <span style="display:block;font-size:var(--fs-xs);color:var(--color-text-muted);">Skip this step on this browser. Revoke anytime in Account Security.</span>
                 </span>
             </label>
         @else

@@ -11,7 +11,7 @@ new class extends Component
 <x-layouts.app title="Add employee">
     <div class="page-header">
         <div>
-            <div class="text-muted" style="font-size:13px;margin-bottom:6px;">
+            <div class="text-muted" style="font-size:var(--fs-sm);margin-bottom:6px;">
                 <a href="{{ route('employees') }}" wire:navigate class="text-muted">Employees</a> <span>/</span> <span style="color:var(--color-text);font-weight:600;">Add employee</span>
             </div>
             <h1>Add employee</h1>

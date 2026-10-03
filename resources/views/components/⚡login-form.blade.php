@@ -118,7 +118,7 @@ new class extends Component
     <form wire:submit="login">
         <div class="auth-eyebrow">HR INFORMATION SYSTEM</div>
         <h1 style="font-size:30px;">Welcome back</h1>
-        <p class="text-muted" style="margin:8px 0 30px;font-size:14px;">Sign in to apply for leave, submit claims and manage your team.</p>
+        <p class="text-muted" style="margin:8px 0 30px;font-size:var(--fs-base);">Sign in to apply for leave, submit claims and manage your team.</p>
 
         @if(session('status'))
             <div class="pill pill-success" style="margin-bottom:20px;padding:10px 14px;">{{ session('status') }}</div>
@@ -145,11 +145,11 @@ new class extends Component
         </div>
 
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:26px;">
-            <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--color-text-muted);cursor:pointer;">
+            <label style="display:flex;align-items:center;gap:8px;font-size:var(--fs-sm);color:var(--color-text-muted);cursor:pointer;">
                 <input type="checkbox" wire:model="remember" style="width:16px;height:16px;accent-color:var(--color-primary);">
                 Remember me
             </label>
-            <a href="{{ route('password.request') }}" wire:navigate style="font-size:13px;font-weight:600;">Forgot password?</a>
+            <a href="{{ route('password.request') }}" wire:navigate style="font-size:var(--fs-sm);font-weight:600;">Forgot password?</a>
         </div>
 
         <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;height:46px;">Sign in</button>
@@ -157,7 +157,7 @@ new class extends Component
         @if(count($ssoProviders))
             <div style="display:flex;align-items:center;gap:12px;margin:22px 0;">
                 <div style="flex:1;height:1px;background:var(--color-border);"></div>
-                <div class="text-muted" style="font-size:12px;">or</div>
+                <div class="text-muted" style="font-size:var(--fs-xs);">or</div>
                 <div style="flex:1;height:1px;background:var(--color-border);"></div>
             </div>
 
@@ -176,7 +176,7 @@ new class extends Component
             @endif
         @endif
 
-        <p class="text-muted" style="margin:22px 0 0;font-size:12.5px;text-align:center;line-height:1.55;">
+        <p class="text-muted" style="margin:22px 0 0;font-size:var(--fs-xs);text-align:center;line-height:1.55;">
             Accounts are created by HR during onboarding.<br>Can't sign in? Contact HR &amp; Admin.
         </p>
     </form>

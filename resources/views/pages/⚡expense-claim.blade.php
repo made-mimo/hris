@@ -17,13 +17,13 @@ new class extends Component
 <x-layouts.app title="New expense claim">
     <div class="page-header">
         <div>
-            <div class="text-muted" style="font-size:13px;margin-bottom:6px;">
+            <div class="text-muted" style="font-size:var(--fs-sm);margin-bottom:6px;">
                 <a href="{{ route('home') }}" wire:navigate class="text-muted">Home</a> <span>/</span> My Claims <span>/</span> <span style="color:var(--color-text);font-weight:600;">New claim</span>
             </div>
             <div style="display:flex;align-items:center;gap:12px;">
                 <h1>New expense claim</h1>
                 <span class="pill pill-neutral">Draft</span>
-                <span class="font-mono text-muted" style="font-size:13px;">{{ $nextReference }}</span>
+                <span class="font-mono text-muted" style="font-size:var(--fs-sm);">{{ $nextReference }}</span>
             </div>
         </div>
     </div>

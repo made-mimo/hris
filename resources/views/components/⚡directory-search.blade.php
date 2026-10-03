@@ -44,7 +44,7 @@ new class extends Component
     public function with(): array
     {
         $employees = Employee::query()
-            ->with(['jobTitle', 'subUnit', 'location'])
+            ->with(['jobTitle', 'subUnit', 'location', 'supervisor', 'media'])
             ->where('is_gdpr_purged', false)
             ->when($this->search, fn ($q) => $q->where(fn ($q2) => $q2
                 ->where('first_name', 'like', "%{$this->search}%")
@@ -93,22 +93,35 @@ new class extends Component
         @endif
     </section>
 
-    <div class="grid grid-3" style="gap:12px;">
+    {{-- align-items:start — the default CSS Grid stretch makes every card in
+         a row match the tallest one, so expanding one employee's detail
+         block visually grew every other card in that same row too, as if
+         they had all expanded. Each card now sizes to its own content. --}}
+    <div class="grid grid-3" style="gap:12px;align-items:start;">
         @foreach($employees as $employee)
             <section class="rounded-md border border-border bg-surface p-4 shadow-sm">
-                <button wire:click="$set('expandedId', {{ $expandedId === $employee->id ? 'null' : $employee->id }})" class="w-full text-left">
-                    <div class="font-display text-sm font-bold text-text">{{ $employee->fullName() }}</div>
-                    <div class="text-xs text-text-muted">{{ $employee->jobTitleName() ?? '—' }}</div>
-                    <div class="text-xs text-text-muted">{{ $employee->departmentName() ?? '—' }} · {{ $employee->locationName() ?? '—' }}</div>
-                    @if($employee->isTerminated())
-                        <span class="mt-1 inline-block rounded-pill bg-text-faint/15 px-2 py-0.5 text-xs font-semibold text-text-muted">Former employee</span>
-                    @endif
+                <button wire:click="$set('expandedId', {{ $expandedId === $employee->id ? 'null' : $employee->id }})" class="flex w-full items-start gap-3 text-left">
+                    <div class="avatar" style="width:44px;height:44px;font-size:var(--fs-base);flex-shrink:0;overflow:hidden;">
+                        @if($employee->avatarUrl())
+                            <img src="{{ $employee->avatarUrl() }}" alt="{{ $employee->fullName() }}" style="width:100%;height:100%;object-fit:cover;">
+                        @else
+                            {{ $employee->initials }}
+                        @endif
+                    </div>
+                    <div>
+                        <div class="font-display text-sm font-bold text-text">{{ $employee->fullName() }}</div>
+                        <div class="text-xs text-text-muted">{{ $employee->jobTitleName() ?? '—' }}</div>
+                        <div class="text-xs text-text-muted">{{ $employee->departmentName() ?? '—' }} · {{ $employee->locationName() ?? '—' }}</div>
+                        @if($employee->isTerminated())
+                            <span class="mt-1 inline-block rounded-pill bg-text-faint/15 px-2 py-0.5 text-xs font-semibold text-text-muted">Former employee</span>
+                        @endif
+                    </div>
                 </button>
                 @if($expandedId === $employee->id)
                     <div class="mt-2.5 border-t border-border pt-2.5 text-xs text-text-muted">
                         <div>Work email: {{ $employee->work_email ?? '—' }}</div>
                         <div>Phone: {{ $employee->phone_mobile ?? '—' }}</div>
-                        <div>Employee ID: {{ $employee->employee_id }}</div>
+                        <div>Reports to: {{ $employee->supervisor?->fullName() ?? '—' }}</div>
                     </div>
                 @endif
             </section>

@@ -111,12 +111,12 @@ new class extends Component
                         @foreach($lines as $i => $line)
                             @php $type = $expenseTypes->firstWhere('id', (int) ($line['type_id'] ?? 0)); @endphp
                             <tr wire:key="line-{{ $i }}">
-                                <td><select wire:model="lines.{{ $i }}.type_id" style="border:none;background:none;font-family:inherit;font-size:14px;font-weight:600;">
+                                <td><select wire:model="lines.{{ $i }}.type_id" style="border:none;background:none;font-family:inherit;font-size:var(--fs-base);font-weight:600;">
                                     @foreach($expenseTypes as $t)<option value="{{ $t->id }}">{{ $t->name }}</option>@endforeach
                                 </select></td>
-                                <td><input type="date" wire:model="lines.{{ $i }}.date" style="border:none;background:none;font-family:inherit;font-size:13px;padding:0;"></td>
-                                <td><input type="text" wire:model="lines.{{ $i }}.note" placeholder="Note" style="border:none;background:none;font-family:inherit;font-size:13px;padding:0;width:100%;"></td>
-                                <td><input type="number" step="0.01" wire:model.live="lines.{{ $i }}.amount" placeholder="0.00" style="border:none;background:none;font-family:var(--font-mono);font-size:14px;font-weight:600;text-align:right;padding:0;width:100%;"></td>
+                                <td><input type="date" wire:model="lines.{{ $i }}.date" style="border:none;background:none;font-family:inherit;font-size:var(--fs-sm);padding:0;"></td>
+                                <td><input type="text" wire:model="lines.{{ $i }}.note" placeholder="Note" style="border:none;background:none;font-family:inherit;font-size:var(--fs-sm);padding:0;width:100%;"></td>
+                                <td><input type="number" step="0.01" wire:model.live="lines.{{ $i }}.amount" placeholder="0.00" style="border:none;background:none;font-family:var(--font-mono);font-size:var(--fs-base);font-weight:600;text-align:right;padding:0;width:100%;"></td>
                                 <td>
                                     <button type="button" wire:click="removeLine({{ $i }})" aria-label="Remove expense" class="icon-btn" style="background:transparent;border:none;">
                                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"></path></svg>
@@ -127,7 +127,7 @@ new class extends Component
                                 <tr wire:key="flag-{{ $i }}"><td colspan="5" style="padding:0 22px 12px;">
                                     <div style="display:flex;align-items:center;gap:12px;padding:10px 12px;background:var(--color-warning-light);border-radius:8px;">
                                         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--color-warning)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M12 3 2 20h20z"></path><path d="M12 10v4M12 17h.01"></path></svg>
-                                        <span style="font-size:12.5px;color:var(--color-warning);"><strong>Above cap</strong> · ₦{{ number_format($type->default_cap) }}</span>
+                                        <span style="font-size:var(--fs-xs);color:var(--color-warning);"><strong>Above cap</strong> · ₦{{ number_format($type->default_cap) }}</span>
                                     </div>
                                 </td></tr>
                             @endif
@@ -135,15 +135,15 @@ new class extends Component
                     </tbody>
                 </table>
             </div>
-            <div style="display:flex;justify-content:flex-end;gap:24px;padding:14px 22px;background:var(--color-bg);font-size:14px;">
+            <div style="display:flex;justify-content:flex-end;gap:24px;padding:14px 22px;background:var(--color-bg);font-size:var(--fs-base);">
                 <span class="text-muted">{{ count($lines) }} items</span>
                 <span style="font-weight:600;">Subtotal <span class="font-mono" style="margin-left:10px;">₦{{ number_format($this->total, 2) }}</span></span>
             </div>
         </section>
 
         <section class="card">
-            <label for="receipt" style="font-weight:600;font-size:13.5px;display:block;margin-bottom:8px;">Receipt / supporting document <span class="text-muted" style="font-weight:400;">(optional)</span></label>
-            <input id="receipt" type="file" wire:model="receipt">
+            <label for="receipt" style="font-weight:600;font-size:var(--fs-sm);display:block;margin-bottom:8px;">Receipt / supporting document <span class="text-muted" style="font-weight:400;">(optional)</span></label>
+            <x-file-input id="receipt" model="receipt" :selected="$receipt" />
             @error('receipt') <div class="hint" style="color:var(--color-danger);margin-top:6px;">{{ $message }}</div> @enderror
         </section>
 
@@ -152,12 +152,12 @@ new class extends Component
 
     <div style="display:flex;flex-direction:column;gap:18px;">
         <section class="card-dark">
-            <div class="text-faint" style="font-size:12px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;">Claim total</div>
+            <div class="text-faint" style="font-size:var(--fs-xs);font-weight:700;letter-spacing:0.08em;text-transform:uppercase;">Claim total</div>
             <div class="font-mono" style="font-size:32px;font-weight:600;margin-top:6px;color:#fff;">₦{{ number_format($this->total, 2) }}</div>
             <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;margin-top:18px;">Submit claim
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
             </button>
-            <div class="text-faint" style="font-size:12px;margin-top:10px;text-align:center;">Expenses lock once submitted.</div>
+            <div class="text-faint" style="font-size:var(--fs-xs);margin-top:10px;text-align:center;">Expenses lock once submitted.</div>
         </section>
 
         <section class="card">

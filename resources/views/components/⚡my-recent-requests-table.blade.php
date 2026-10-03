@@ -53,6 +53,7 @@ new class extends Component
 <section class="card col-span-2">
     <div class="card-header">
         <h2>My recent requests</h2>
+        <a href="{{ route('my-requests') }}" wire:navigate style="font-size:var(--fs-xs);font-weight:600;">View all</a>
     </div>
     @if(session('status'))
         <div class="pill pill-success" style="margin:0 0 12px;padding:8px 12px;">{{ session('status') }}</div>
@@ -66,7 +67,7 @@ new class extends Component
                     <tr>
                         <td>
                             <div style="font-weight:600;">{{ $isLeave ? $item->leaveType->name.' leave' : 'Expense claim' }}</div>
-                            <div class="text-muted font-mono" style="font-size:12px;">{{ $item->reference }}</div>
+                            <div class="text-muted font-mono" style="font-size:var(--fs-xs);">{{ $item->reference }}</div>
                         </td>
                         <td class="text-muted">
                             @if($isLeave)
@@ -86,7 +87,7 @@ new class extends Component
                                 default => 'pill-neutral',
                             } }}">{{ ucfirst(str_replace('_',' ',$status)) }}</span>
                             @if($isLeave && in_array($status, ['pending_manager', 'pending_hr', 'approved', 'restricted'], true))
-                                <button type="button" wire:click="cancelLeave({{ $item->id }})" wire:confirm="Cancel this leave request?" style="margin-left:8px;font-size:12px;font-weight:600;color:var(--color-danger);background:none;border:none;cursor:pointer;padding:0;">Cancel</button>
+                                <button type="button" wire:click="cancelLeave({{ $item->id }})" wire:confirm="Cancel this leave request?" style="margin-left:8px;font-size:var(--fs-xs);font-weight:600;color:var(--color-danger);background:none;border:none;cursor:pointer;padding:0;">Cancel</button>
                             @endif
                         </td>
                     </tr>

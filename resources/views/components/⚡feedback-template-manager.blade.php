@@ -66,7 +66,7 @@ new class extends Component
 
     <section class="rounded-md border border-border bg-surface p-5 shadow-sm">
         <h2 class="mb-3.5 font-display text-base font-bold text-text">New template</h2>
-        <form wire:submit="create" class="flex items-end gap-3">
+        <form wire:submit="create" class="flex flex-wrap items-end gap-3">
             <div style="flex:1;">
                 <label class="mb-1.5 block text-xs font-semibold text-text">Template name</label>
                 <input type="text" wire:model="name" placeholder="e.g. Standard 360" class="w-full rounded-sm border border-border bg-surface px-3 py-2 text-sm text-text outline-none focus:border-primary">

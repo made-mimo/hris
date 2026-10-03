@@ -6,13 +6,11 @@ use Livewire\Component;
 
 new class extends Component
 {
-    public const GENDERS = ['Male', 'Female', 'Prefer not to say'];
+    public const GENDERS = ['Male', 'Female'];
 
     public const MARITAL_STATUSES = ['Single', 'Married', 'Divorced', 'Widowed', 'Separated'];
 
     public Employee $employee;
-
-    public ?string $preferredName;
 
     public ?string $dateOfBirth;
 
@@ -31,7 +29,6 @@ new class extends Component
     public function mount(Employee $employee): void
     {
         $this->employee = $employee;
-        $this->preferredName = $employee->preferred_name;
         $this->dateOfBirth = $employee->date_of_birth?->toDateString();
         $this->gender = $employee->gender;
         $this->maritalStatus = $employee->marital_status;
@@ -44,7 +41,6 @@ new class extends Component
     public function save(): void
     {
         $data = $this->validate([
-            'preferredName' => ['nullable', 'string', 'max:100'],
             'dateOfBirth' => ['nullable', 'date', 'before:today'],
             'gender' => ['nullable', 'string', 'in:'.implode(',', self::GENDERS)],
             'maritalStatus' => ['nullable', 'string', 'in:'.implode(',', self::MARITAL_STATUSES)],
@@ -55,7 +51,6 @@ new class extends Component
         ]);
 
         $this->employee->update([
-            'preferred_name' => $data['preferredName'] ?: null,
             'date_of_birth' => $data['dateOfBirth'] ?: null,
             'gender' => $data['gender'] ?: null,
             'marital_status' => $data['maritalStatus'] ?: null,
@@ -84,17 +79,10 @@ new class extends Component
         <form wire:submit="save" class="flex flex-col gap-3.5">
             <div class="grid grid-cols-2 gap-3">
                 <div>
-                    <label for="preferredName" class="mb-1.5 block text-xs font-semibold text-text">Preferred name</label>
-                    <input id="preferredName" type="text" wire:model="preferredName" class="w-full rounded-sm border border-border bg-surface px-3 py-2 text-sm text-text outline-none focus:border-primary">
-                </div>
-                <div>
                     <label for="dateOfBirth" class="mb-1.5 block text-xs font-semibold text-text">Date of birth</label>
                     <input id="dateOfBirth" type="date" wire:model="dateOfBirth" class="w-full rounded-sm border border-border bg-surface px-3 py-2 text-sm text-text outline-none focus:border-primary">
                     @error('dateOfBirth') <div class="mt-1 text-xs text-danger">{{ $message }}</div> @enderror
                 </div>
-            </div>
-
-            <div class="grid grid-cols-2 gap-3">
                 <div>
                     <label for="gender" class="mb-1.5 block text-xs font-semibold text-text">Gender</label>
                     <select id="gender" wire:model="gender" class="w-full rounded-sm border border-border bg-surface px-3 py-2 text-sm text-text outline-none focus:border-primary">
@@ -104,6 +92,9 @@ new class extends Component
                         @endforeach
                     </select>
                 </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
                 <div>
                     <label for="maritalStatus" class="mb-1.5 block text-xs font-semibold text-text">Marital status</label>
                     <select id="maritalStatus" wire:model="maritalStatus" class="w-full rounded-sm border border-border bg-surface px-3 py-2 text-sm text-text outline-none focus:border-primary">
@@ -113,16 +104,15 @@ new class extends Component
                         @endforeach
                     </select>
                 </div>
-            </div>
-
-            <div>
-                <label for="nationalityId" class="mb-1.5 block text-xs font-semibold text-text">Nationality</label>
-                <select id="nationalityId" wire:model="nationalityId" class="w-full max-w-xs rounded-sm border border-border bg-surface px-3 py-2 text-sm text-text outline-none focus:border-primary">
-                    <option value="">— none —</option>
-                    @foreach($nationalities as $n)
-                        <option value="{{ $n->id }}">{{ $n->name }}</option>
-                    @endforeach
-                </select>
+                <div>
+                    <label for="nationalityId" class="mb-1.5 block text-xs font-semibold text-text">Nationality</label>
+                    <select id="nationalityId" wire:model="nationalityId" class="w-full rounded-sm border border-border bg-surface px-3 py-2 text-sm text-text outline-none focus:border-primary">
+                        <option value="">— none —</option>
+                        @foreach($nationalities as $n)
+                            <option value="{{ $n->id }}">{{ $n->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
             </div>
 
             <div class="grid grid-cols-2 gap-3">

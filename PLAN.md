@@ -2663,3 +2663,170 @@ attribute — no behavior change otherwise. Re-verified live in the browser afte
 now correctly appears when submitting with no file selected, proving the PHP action is reached). A
 repository-wide scan for the second bug PIM reported — a public method and public property sharing a
 name on the same component — found no matches in HRIS.
+
+## Phase 9 — HRIS backlog review (October 2026)
+
+A 19-item bug/feature list from the user, triaged into quick fixes (built without further check-ins,
+per standing instruction to pick the sensible default and document for review rather than block on
+questions), three items needing explicit decisions, and three items the user asked to be written up as
+a proposal document before any code — delivered as a Claude-Docs artifact covering reports-as-graphs,
+nav restructuring, and Pulse Survey flexibility, then built out once approved with refinements.
+
+### 1 — Quick fixes batch
+
+Profile picture: fixed a stale-relation bug (`$employee->media` cached before `save()`'s relation write,
+so the layout header's avatar never saw the new upload — the tabbed body re-rendered, the header didn't)
+by full-page `redirectRoute(..., navigate: true)` after save/remove; tightened validation to
+image/jpg/png/webp, 2MB, min 200×200, with inline helper text. Removed the duplicate "My Profile" sidebar
+link (already reachable from the avatar dropdown). Sidebar scroll position now persists across the
+full-page reloads this app's nav links deliberately use (`sessionStorage`, restored in the nav's own
+Alpine `init()`). "Sub-units" renamed to "Departments" throughout. Onboarding/offboarding templates
+became editable (previously delete-and-recreate only). Home page now shows the employee's own line
+manager and (for supervisors) named direct reports, not just a headcount. Home's "My open requests" tile
+links to a new `/my-requests` page (`⚡my-requests.blade.php` + `⚡my-requests-table.blade.php`) with two
+independently-paginated, expandable tables (leave requests, expense claims) showing full approval-trail
+detail — made possible by `LeaveRequest`/`ExpenseClaim` already storing `manager_approved_by`/
+`hr_approved_by`/rejection reasons directly as columns, no audit-log parsing needed. Directory now shows
+uploaded avatars, drops the Employee ID line, and adds "Reports to."
+
+### 2 — Preferred Name removed (#3)
+
+Dropped the `employees.preferred_name` column outright rather than hiding the field — it had been
+write-only (added but never displayed anywhere) since it was introduced, so there was no existing UI
+behavior to preserve.
+
+### 3 — Department Code (#5d)
+
+Added `sub_units.code`, exactly 3 uppercase letters, unique, entered manually (not derived from the
+department name). CSS `text-transform:uppercase` is display-only and doesn't touch the submitted value,
+so normalization is server-side (`strtoupper(trim())`) ahead of the `/^[A-Z]{3}$/` + unique validation in
+both `create()` and `update()`.
+
+### 4 — Onboarding/offboarding task duration (#6b/#6c)
+
+`onboarding_offboarding_template_items` gained `duration_value`/`duration_unit` (hours or days) as a
+field genuinely separate from the existing `offset_days` (which answers "when is this due," not "how
+long does it take"). `OnboardingOffboardingTemplate::cumulativeSummary()` converts everything to hours
+(`WORKING_HOURS_PER_DAY = 8`) and renders next to the template name, e.g. "4 tasks · 16h (2 working
+days)."
+
+### 5 — Page text size, tokenized (#12)
+
+Investigation found ~230 inline `font-size:Npx` occurrences across 9 slightly-different hand-picked
+values (10px–14px) plus several shared component classes using the same raw values directly — exactly
+the kind of scattered-magic-number situation a "just bump the numbers" pass would make worse, not better.
+Consolidated to a 5-step named scale in `theme.css` (`--fs-3xs` 11.5px through `--fs-base` 15.5px, each
+~1.5px above its nearest predecessor), then did a scripted value-for-value substitution
+(`font-size:12px` → `font-size:var(--fs-xs)`, etc.) across ~39 blade files, explicitly excluding four
+email templates (CSS custom properties aren't reliable in email clients) and hand-excluding the sidebar/
+menu chrome, buttons, and h1–h3 (all confirmed "fine" by the user) — with one deliberate exception: the
+sidebar's own Expand-all/Collapse-all controls, explicitly called out despite living in the excluded
+sidebar file. Extended the same tokens to shared CSS classes that had never been touched by the inline
+sweep (`.stat-label`, `.stat-delta`, table/form/searchable-select text, timeline and option-card text,
+the auth screen) for one coherent scale rather than a token system half the page ignores.
+
+### 6 — Leave-type dropdown filtering (#14)
+
+Filters Apply Leave's type list to hide only types an employee has zero entitlement to *and* that are
+flagged `exclude_from_reports_if_unentitled` — reusing an existing flag (previously only consulted by
+the leave-reports viewer) whose documented semantics already matched exactly what was asked: hide
+entitlement-gated types with nothing to show, but never hide a type deliberately available to everyone
+without pre-assignment (e.g. unpaid leave). The same `visibleLeaveTypes()` method backs both the
+dropdown and the default-selection logic in `mount()`, and `submit()` re-validates server-side that the
+submitted `leaveTypeId` is still in that visible set — `leaveTypeId` is a client-writable Livewire
+property, so UI-only filtering alone could be bypassed by a tampered request.
+
+### 7 — Navigation restructuring (#10)
+
+Split the flat 18-screen "Admin" sidebar group into three: **HR Admin** (the 12 `admin.*-configuration`
+screens HR Admin actually touches daily), **Reports** (Leave/Timesheet/Attendance/Employee Reports —
+previously scattered one-per-module, with Employee Reports having no sidebar link at all despite a real
+route existing), and **Admin** (Settings, Roles, Audit Log, Signatures, Health Check, Customers &
+Projects — system/security-level). Regrouped the general nav into **Workspace** (My Leave, My Claims,
+Travel Advance, My Timesheets, My Attendance, Performance, Helpdesk), **Company** (Directory, Assets,
+Vehicles, Policies), **My Info** (the renamed My Profile page, My Requests), **Socials** (Pulse Surveys,
+Buzz), and unchanged **My Team**. Home is now a standalone link above every collapsible group, never
+itself collapsed. `Screen.nav_group` values updated to match (also read by the mobile API's
+`MenuController`, so both surfaces stay in sync by construction rather than by two hand-maintained
+copies). Two items in the original proposal turned out to be wrong on inspection and were corrected by
+the user: Travel Advance and My Attendance already existed as real nav links (piggybacking on the Claims/
+Timesheets screen permission rather than having their own `Screen` row) — no dead links, no new routes
+needed.
+
+### 8 — "My Info" page expansion (#10)
+
+The existing self-service `/profile` page's own code comment already called its editable section "My
+Info" (spec B2) — formalized that: page title, `<h1>`, and `Screen.label` all renamed from "My Profile"
+to "My Info" (the avatar-dropdown quick-access link now reads the same way). Added the Qualifications tab
+(education/skills/languages/licenses/memberships/work experience) to self-service, unchanged — it already
+took a plain `Employee` with no admin-only gating, same pattern as the Personal/Contact tabs already
+there. Development Plans and Training Records needed a different move: they'd been bundled into
+`⚡employee-career-tab.blade.php` together with onboarding/offboarding task management, and reusing that
+whole component on the self-service page would have handed employees the ability to assign themselves
+onboarding/offboarding tasks — an HR-initiated workflow, not a self-service one. Split it: a new
+`⚡employee-development-tab.blade.php` carries just the dev-plans/training half (reused on both the HR
+editor and My Info), and the trimmed `⚡employee-career-tab.blade.php` keeps only the task-checklist half,
+now labeled "Onboarding/Offboarding" in the HR editor's tab list. Gender options reduced to Male/Female
+only, per the user's explicit instruction.
+
+### 9 — Reports as graphs (#8)
+
+No charting library existed anywhere in the app — the dashboard's "headcount" widget that looked like a
+chart was plain CSS bars sized by inline `width:%`. Added Chart.js (`npm install chart.js`, registered
+globally on `window.Chart` in `resources/js/app.js`, which wasn't even being loaded by the layout's
+`@vite()` call before this — added it). Built one reusable `<x-chart-canvas>` Blade component: a
+`wire:ignore`d canvas keyed on a hash of its own data, so a filter change that alters the numbers makes
+Livewire swap in a fresh element (and a fresh `Chart.js` instance via Alpine `x-init`) rather than
+needing a hand-rolled `chart.update()` call. Wired into all four report viewers alongside their existing
+tables (never instead of — the detailed table is what HR actually audits against): a bar chart of leave
+days used by type, a bar chart of timesheet hours by the viewer's own grouping, a line chart of daily
+attendance-hours trend (grouped by `punch_in_at_local` for correct calendar-day buckets), and a doughnut
+of headcount-by-department for the employee report builder's *matching* (filtered) result set — which
+required restructuring `with()` to fetch the filtered set once and derive the preview/count/chart from
+it, instead of running the query three times. Also replaced the dashboard's CSS-bar headcount widget with
+real doughnut charts using the same component.
+
+### 10 — Pulse Survey question-bank overhaul (#11)
+
+`PulseSurveyTemplate` was hard-capped at exactly one scale question plus one optional free-text question
+by design ("kept short so completion rates stay high" — the model's own docblock). Rebuilt as a genuine
+question bank while keeping that design intent: new `PulseSurveyQuestion` (belongs to a template, has a
+`type` of scale/free-text), a `pulse_survey_run_question` pivot recording which subset of a template's
+bank a given run actually asks (capped at `PulseSurveyTemplate::MAX_QUESTIONS_PER_RUN = 5` — short by a
+configurable cap now, not by only ever having two questions to choose from), and `PulseSurveyAnswer`
+replacing the single `scale_value`/`free_text` columns `pulse_survey_responses` used to carry directly —
+one answer row per (response, question) pair. `PulseSurveyResponse` itself stays exactly what it was: the
+anonymous "submission envelope," still with no `employee_id` column anywhere in the chain. A four-step
+migration (create the three new tables, backfill every existing template/run/response into the new shape
+from the old fixed columns, then drop the old columns) handled the schema change without losing history;
+verified the backfill against the dev database's real pre-existing template/run/2-responses data before
+dropping anything.
+
+`PulseSurveyService::launchRun()`/`respond()`/`aggregatedResults()` all rewritten around a question list
+instead of two fixed fields — `aggregatedResults()` now returns a per-question breakdown (average +
+distribution + eNPS for scale questions, filtered free-text list for text questions), still gated on
+*total response count* against the anonymization threshold (that's what actually protects anonymity;
+individual questions don't get their own weaker threshold). Results screen renders each scale question's
+response distribution as a bar chart and, for eNPS questions, a promoters/passives/detractors doughnut,
+via the same `<x-chart-canvas>` component from item 9. The responder screen and its API twin
+(`PulseSurveyController`) loop over a run's actual question list with per-question nested form/JSON keys
+instead of two hardcoded fields; the API's `respond` endpoint gained a closure-based per-question scale-
+range validator and a completeness check (every scale question must have an answer) mirroring what the
+web responder's Livewire validation already enforced, since scale ranges now vary by question rather than
+being one fixed max for the whole run.
+
+Launching a run (picking a subset of questions) is now a capability separate from authoring the question
+bank: a new `pulse-survey-runs` screen, granted to HR Officer as well as HR Admin/Admin (previously HR
+Officer had no Pulse Survey access at all), reusing the same `⚡pulse-survey-configuration-manager.blade.php`
+component the HR-Admin-only `/admin/pulse-survey-configuration` page already used — which tab shows is
+computed from the viewer's own permission rather than which route they arrived by, so there's one
+component instead of two near-duplicates. Verified the permission split can't be bypassed by tampering
+`activeTab` directly (`Livewire::test(...)->set('activeTab', 'templates')` as an HR-Officer user renders
+no template-manager markup).
+
+Verified via `Livewire::test()` end-to-end (multi-question respond, per-question results, the HR-Officer
+tab restriction and its tamper-resistance) and live in the browser (question-bank authoring, run
+launching with question selection, the anonymization-threshold gate holding at exactly the configured
+minimum, and the full chart/distribution/flagged-comment rendering) — all test data created for
+verification was rolled back or deleted afterward. `php artisan test` (27/27) and `vendor/bin/pint` clean
+throughout this phase; no existing test coverage existed for Pulse Survey to begin with.

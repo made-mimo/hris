@@ -46,6 +46,7 @@ new class extends Component
 
         $team = $me->subordinates()->exists() ? [
             'count' => $me->subordinates()->count(),
+            'names' => $me->subordinates()->orderBy('first_name')->get(),
             'onLeaveThisWeek' => LeaveRequest::whereIn('employee_id', $me->subordinates()->pluck('id'))->where('status', 'approved')
                 ->whereDate('start_date', '<=', now()->endOfWeek())->whereDate('end_date', '>=', now()->startOfWeek())->count(),
         ] : null;
@@ -87,6 +88,7 @@ new class extends Component
             'awaitingPayment' => $awaitingPayment,
             'outToday' => $outToday,
             'team' => $team,
+            'supervisor' => $me->supervisor,
             'currentPunch' => $me->currentPunch(),
             'canAttendance' => $canAttendance,
             'weeklyClockedHours' => $weeklyClockedHours,
@@ -116,35 +118,35 @@ new class extends Component
                 <div class="stat-card-flag is-primary">of {{ rtrim(rtrim(number_format($annualBalance['entitled'],1),'0'),'.') }} days</div>
             @endif
             <div class="stat-label">Annual leave available</div>
-            <div class="stat-value">{{ $annualBalance ? number_format($annualBalance['available'],1) : '0.0' }} <span class="text-muted" style="font-size:14px;">days</span></div>
-            <div class="text-muted" style="font-size:12px;margin-top:6px;">{{ $annualBalance ? number_format($annualBalance['used'],1) : '0.0' }} taken/scheduled</div>
+            <div class="stat-value">{{ $annualBalance ? number_format($annualBalance['available'],1) : '0.0' }} <span class="text-muted" style="font-size:var(--fs-base);">days</span></div>
+            <div class="text-muted" style="font-size:var(--fs-xs);margin-top:6px;">{{ $annualBalance ? number_format($annualBalance['used'],1) : '0.0' }} taken/scheduled</div>
         </div>
         <div class="stat-card">
             <div class="stat-badge is-info"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 5.5-7 10-7 10z"></path></svg></div>
             <div class="stat-label">Sick leave available</div>
-            <div class="stat-value">{{ $sickBalance ? number_format($sickBalance['available'],1) : '0.0' }} <span class="text-muted" style="font-size:14px;">days</span></div>
-            <div class="text-muted" style="font-size:12px;margin-top:6px;">{{ $sickBalance && $sickBalance['used'] > 0 ? number_format($sickBalance['used'],1).' taken this year' : 'None taken this year' }}</div>
+            <div class="stat-value">{{ $sickBalance ? number_format($sickBalance['available'],1) : '0.0' }} <span class="text-muted" style="font-size:var(--fs-base);">days</span></div>
+            <div class="text-muted" style="font-size:var(--fs-xs);margin-top:6px;">{{ $sickBalance && $sickBalance['used'] > 0 ? number_format($sickBalance['used'],1).' taken this year' : 'None taken this year' }}</div>
         </div>
-        <div class="stat-card">
+        <a href="{{ route('my-requests') }}" wire:navigate class="stat-card" style="text-decoration:none;color:inherit;display:block;">
             <div class="stat-badge is-warning"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg></div>
             @if($openRequests > 0)<div class="stat-card-flag is-warning">In review</div>@endif
             <div class="stat-label">My open requests</div>
             <div class="stat-value">{{ $openRequests }}</div>
-            <div class="text-muted" style="font-size:12px;margin-top:6px;">{{ $openLeave }} leave · {{ $openClaims }} claim{{ $openClaims === 1 ? '' : 's' }}</div>
-        </div>
+            <div class="text-muted" style="font-size:var(--fs-xs);margin-top:6px;">{{ $openLeave }} leave · {{ $openClaims }} claim{{ $openClaims === 1 ? '' : 's' }}</div>
+        </a>
         <div class="stat-card">
             <div class="stat-badge is-accent"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"></path><path d="M9 8h6M9 12h6"></path></svg></div>
             @if($awaitingPayment > 0)<div class="stat-card-flag is-accent">Approved</div>@endif
             <div class="stat-label">Claims awaiting payment</div>
             <div class="stat-value">₦{{ number_format($awaitingPayment) }}</div>
-            <div class="text-muted" style="font-size:12px;margin-top:6px;">With Finance for payment</div>
+            <div class="text-muted" style="font-size:var(--fs-xs);margin-top:6px;">With Finance for payment</div>
         </div>
         @if($canAttendance)
             <div class="stat-card">
                 <div class="stat-badge is-info"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg></div>
                 <div class="stat-label">Clocked this week</div>
-                <div class="stat-value">{{ number_format($weeklyClockedHours, 1) }} <span class="text-muted" style="font-size:14px;">hrs</span></div>
-                <div class="text-muted" style="font-size:12px;margin-top:6px;">{{ $currentPunch ? 'Currently clocked in' : 'Not clocked in' }}</div>
+                <div class="stat-value">{{ number_format($weeklyClockedHours, 1) }} <span class="text-muted" style="font-size:var(--fs-base);">hrs</span></div>
+                <div class="text-muted" style="font-size:var(--fs-xs);margin-top:6px;">{{ $currentPunch ? 'Currently clocked in' : 'Not clocked in' }}</div>
             </div>
         @endif
     </div>
@@ -190,10 +192,10 @@ new class extends Component
             <div style="display:flex;flex-direction:column;gap:12px;">
                 @forelse($outToday as $row)
                     <div style="display:flex;align-items:center;gap:12px;">
-                        <div class="avatar" style="width:36px;height:36px;font-size:12px;background:var(--color-primary-light);color:var(--color-primary-dark);">{{ $row->employee->initials }}</div>
+                        <div class="avatar" style="width:36px;height:36px;font-size:var(--fs-xs);background:var(--color-primary-light);color:var(--color-primary-dark);">{{ $row->employee->initials }}</div>
                         <div style="flex:1;">
-                            <div style="font-size:14px;font-weight:600;">{{ $row->employee->fullName() }}</div>
-                            <div class="text-muted" style="font-size:12px;">{{ $row->leaveType->name }} leave · back {{ $row->end_date->addDay()->format('j M') }}</div>
+                            <div style="font-size:var(--fs-base);font-weight:600;">{{ $row->employee->fullName() }}</div>
+                            <div class="text-muted" style="font-size:var(--fs-xs);">{{ $row->leaveType->name }} leave · back {{ $row->end_date->addDay()->format('j M') }}</div>
                         </div>
                     </div>
                 @empty
@@ -210,7 +212,7 @@ new class extends Component
             <div style="display:flex;flex-direction:column;gap:10px;">
                 @forelse($tasks as $task)
                     <a href="{{ route($task['route']) }}" wire:navigate style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border:1px solid var(--color-border);border-radius:10px;text-decoration:none;color:inherit;">
-                        <span style="display:block;font-size:14px;font-weight:600;">{{ $task['label'] }}</span>
+                        <span style="display:block;font-size:var(--fs-base);font-weight:600;">{{ $task['label'] }}</span>
                     </a>
                 @empty
                     <p class="text-muted">Nothing outstanding right now.</p>
@@ -221,18 +223,32 @@ new class extends Component
         <section class="card" style="display:flex;flex-direction:column;">
             <div class="card-header">
                 <h2>My team</h2>
-                @if($team)<span class="text-muted" style="font-size:12px;">{{ $team['count'] }} direct reports</span>@endif
+                @if($team)<span class="text-muted" style="font-size:var(--fs-xs);">{{ $team['count'] }} direct report{{ $team['count'] === 1 ? '' : 's' }}</span>@endif
             </div>
+            @if($supervisor)
+                <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--color-bg);border-radius:10px;margin-bottom:10px;">
+                    <div class="avatar" style="width:30px;height:30px;font-size:var(--fs-2xs);background:var(--color-primary-light);color:var(--color-primary-dark);">{{ $supervisor->initials }}</div>
+                    <div><span class="text-muted" style="font-size:var(--fs-xs);">Reports to</span><div style="font-size:var(--fs-sm);font-weight:600;">{{ $supervisor->fullName() }}</div></div>
+                </div>
+            @endif
             @if($team)
                 <div style="display:flex;flex-direction:column;gap:10px;flex:1;">
                     <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--color-bg);border-radius:10px;">
                         <span>On leave this week</span><span class="font-mono" style="font-weight:600;">{{ $team['onLeaveThisWeek'] }}</span>
                     </div>
+                    <div style="display:flex;flex-direction:column;gap:6px;max-height:140px;overflow-y:auto;">
+                        @foreach($team['names'] as $report)
+                            <div style="display:flex;align-items:center;gap:8px;font-size:var(--fs-sm);">
+                                <div class="avatar" style="width:24px;height:24px;font-size:var(--fs-3xs);background:var(--color-primary-light);color:var(--color-primary-dark);">{{ $report->initials }}</div>
+                                {{ $report->fullName() }}
+                            </div>
+                        @endforeach
+                    </div>
                 </div>
                 <a href="{{ route('approvals') }}" wire:navigate class="btn btn-outline" style="justify-content:center;margin-top:14px;">Open approvals
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
                 </a>
-            @else
+            @elseif(! $supervisor)
                 <p class="text-muted">You have no direct reports.</p>
             @endif
         </section>

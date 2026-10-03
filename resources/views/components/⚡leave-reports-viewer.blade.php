@@ -55,10 +55,15 @@ new class extends Component
                 ];
             });
 
+        $usageByType = $balanceRows
+            ->groupBy(fn (array $r) => $r['type']->name)
+            ->map(fn ($rows) => round($rows->sum(fn (array $r) => $r['balance']['used']), 1));
+
         return [
             'types' => $types,
             'balanceRows' => $balanceRows,
             'carryoverRows' => $carryoverRows,
+            'usageByType' => $usageByType,
         ];
     }
 };
@@ -75,6 +80,20 @@ new class extends Component
     </div>
 
     @if($tab === 'balance')
+        <section class="mb-4 rounded-md border border-border bg-surface p-4 shadow-sm">
+            <h3 class="mb-3 font-display text-sm font-bold text-text">Days used by leave type</h3>
+            @if($usageByType->isNotEmpty())
+                <x-chart-canvas
+                    id="leave-usage-by-type"
+                    type="bar"
+                    :labels="$usageByType->keys()->values()->all()"
+                    :datasets="[['label' => 'Days used', 'data' => $usageByType->values()->all(), 'backgroundColor' => '#D9251E']]"
+                    :height="220"
+                />
+            @else
+                <p class="text-sm text-text-muted">No usage to chart yet.</p>
+            @endif
+        </section>
         <section class="overflow-x-auto rounded-md border border-border bg-surface shadow-sm">
             <div class="border-b border-border p-4">
                 <select wire:model.live="leaveTypeId" class="rounded-sm border border-border bg-surface px-3 py-2 text-sm text-text outline-none focus:border-primary">

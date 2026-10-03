@@ -65,6 +65,21 @@ class ExpenseClaim extends Model implements HasMedia
         return $this->belongsTo(ClaimEvent::class);
     }
 
+    public function managerApprovedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'manager_approved_by');
+    }
+
+    public function hrApprovedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'hr_approved_by');
+    }
+
+    public function secondApprovedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'second_approved_by');
+    }
+
     public function lines(): HasMany
     {
         return $this->hasMany(ExpenseClaimLine::class);

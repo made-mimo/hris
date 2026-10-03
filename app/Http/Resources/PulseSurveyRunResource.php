@@ -12,12 +12,17 @@ class PulseSurveyRunResource extends JsonResource
         return [
             'id' => $this->id,
             'template_name' => $this->template->name,
-            'primary_question' => $this->template->primary_question,
-            'free_text_question' => $this->template->free_text_question,
-            'scale_type' => $this->template->scale_type,
             'status' => $this->status,
             'close_date' => $this->close_date->toDateString(),
             'audience' => $this->audienceLabel(),
+            'questions' => $this->questions->map(fn ($q) => [
+                'id' => $q->id,
+                'type' => $q->type,
+                'prompt' => $q->prompt,
+                'scale_type' => $q->scale_type,
+                'scale_min' => $q->type === 'scale' ? $q->scaleMin() : null,
+                'scale_max' => $q->type === 'scale' ? $q->scaleMax() : null,
+            ]),
         ];
     }
 }

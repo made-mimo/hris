@@ -52,7 +52,7 @@ new class extends Component
 
     <div x-show="open" x-cloak class="notif-panel">
         <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--color-border);">
-            <span style="font-size:13.5px;font-weight:700;">Notifications{{ $unreadCount > 0 ? " · {$unreadCount} unread" : '' }}</span>
+            <span style="font-size:var(--fs-sm);font-weight:700;">Notifications{{ $unreadCount > 0 ? " · {$unreadCount} unread" : '' }}</span>
             <div style="display:flex;gap:10px;">
                 @if($unreadCount > 0)
                     <button type="button" wire:click="markAllAsRead" class="hint" style="background:none;border:none;padding:0;cursor:pointer;font-weight:600;">Mark all read</button>
@@ -70,8 +70,8 @@ new class extends Component
         @forelse($items as $item)
             <div class="notif-item{{ $item->isRead() ? '' : ' unread' }}" style="display:flex;gap:8px;padding:11px 14px;border-bottom:1px solid var(--color-border);{{ $item->isRead() ? '' : 'background:var(--color-primary-light);' }}">
                 <a href="{{ $item->deep_link ?? '#' }}" wire:navigate style="flex:1;text-decoration:none;color:inherit;" wire:click="markAsRead({{ $item->id }})">
-                    <div class="notif-title" style="font-size:13px;font-weight:600;">{{ $item->title }}</div>
-                    <div style="font-size:12.5px;color:var(--color-text-muted);margin-top:2px;">{{ $item->body }}</div>
+                    <div class="notif-title" style="font-size:var(--fs-sm);font-weight:600;">{{ $item->title }}</div>
+                    <div style="font-size:var(--fs-xs);color:var(--color-text-muted);margin-top:2px;">{{ $item->body }}</div>
                     <div class="hint" style="margin-top:4px;" title="{{ $item->created_at->format(\App\Support\Dates::DATE_TIME) }}">{{ $item->created_at->diffForHumans() }}</div>
                 </a>
                 <button type="button" wire:click="clear({{ $item->id }})" aria-label="Clear" style="background:none;border:none;cursor:pointer;color:var(--color-text-faint);align-self:flex-start;">&times;</button>

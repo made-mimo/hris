@@ -161,7 +161,7 @@ new class extends Component
             <textarea id="reason" rows="2" wire:model="reason"></textarea>
         </div>
 
-        <label style="display:flex;align-items:center;gap:8px;font-size:13px;margin-bottom:16px;">
+        <label style="display:flex;align-items:center;gap:8px;font-size:var(--fs-sm);margin-bottom:16px;">
             <input type="checkbox" wire:model="bypassBalance"> Bypass the balance check (allow booking beyond available entitlement)
         </label>
 
@@ -170,7 +170,7 @@ new class extends Component
 
     <section class="card">
         <h2 style="margin-bottom:10px;">How Assign differs from Apply</h2>
-        <ul class="text-muted" style="font-size:13.5px;line-height:1.7;padding-left:18px;">
+        <ul class="text-muted" style="font-size:var(--fs-sm);line-height:1.7;padding-left:18px;">
             <li>Books leave directly as approved — no Line Manager/HR approval step.</li>
             <li>Entitlement is consumed immediately, the same FIFO/expiry-aware rule Apply uses.</li>
             <li>The balance check can be bypassed entirely for a specific booking, e.g. an exceptional grant.</li>

@@ -74,7 +74,7 @@ new class extends Component
         <div style="display:flex;flex-direction:column;gap:10px;">
             @foreach($items as $item)
                 <a href="{{ route($item['route']) }}" wire:navigate style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--color-bg);border-radius:10px;text-decoration:none;color:inherit;">
-                    <span style="font-size:14px;">{{ $item['label'] }}</span>
+                    <span style="font-size:var(--fs-base);">{{ $item['label'] }}</span>
                     <span class="pill pill-danger">{{ $item['count'] }}</span>
                 </a>
             @endforeach

@@ -49,24 +49,24 @@ new class extends Component
 <section class="card" style="padding:0;overflow:hidden;">
     <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:18px;border-bottom:1px solid var(--color-border);">
         <input type="text" wire:model.live.debounce.400ms="purpose" placeholder="Filter by purpose"
-               style="flex:1;min-width:180px;padding:8px 12px;border:1px solid var(--color-border);border-radius:8px;font-size:13px;">
+               style="flex:1;min-width:180px;padding:8px 12px;border:1px solid var(--color-border);border-radius:8px;font-size:var(--fs-sm);">
         <input type="text" wire:model.live.debounce.400ms="signer" placeholder="Filter by signer email"
-               style="flex:1;min-width:180px;padding:8px 12px;border:1px solid var(--color-border);border-radius:8px;font-size:13px;">
+               style="flex:1;min-width:180px;padding:8px 12px;border:1px solid var(--color-border);border-radius:8px;font-size:var(--fs-sm);">
     </div>
 
-    <div style="display:grid;grid-template-columns:150px 1fr 160px 100px 40px;gap:12px;padding:10px 18px;border-bottom:1px solid var(--color-border);font-size:11px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--color-text-faint);">
+    <div style="display:grid;grid-template-columns:150px 1fr 160px 100px 40px;gap:12px;padding:10px 18px;border-bottom:1px solid var(--color-border);font-size:var(--fs-2xs);font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--color-text-faint);">
         <span>Signed</span><span>Purpose / document</span><span>Signer</span><span>Method</span><span></span>
     </div>
 
     @forelse($events as $event)
         <div style="border-bottom:1px solid var(--color-border);">
             <div style="display:grid;grid-template-columns:150px 1fr 160px 100px 40px;gap:12px;align-items:center;padding:12px 18px;">
-                <span class="font-mono text-muted" style="font-size:12.5px;">{{ $event->signed_at->format(\App\Support\Dates::DATE_TIME) }}</span>
-                <span style="font-size:13px;">
+                <span class="font-mono text-muted" style="font-size:var(--fs-xs);">{{ $event->signed_at->format(\App\Support\Dates::DATE_TIME) }}</span>
+                <span style="font-size:var(--fs-sm);">
                     <span style="font-weight:600;">{{ $event->purpose }}</span>
                     <span class="text-muted"> · {{ class_basename($event->signable_type) }} #{{ $event->signable_id }}</span>
                 </span>
-                <span style="font-size:13px;">{{ $event->signer?->email }}</span>
+                <span style="font-size:var(--fs-sm);">{{ $event->signer?->email }}</span>
                 <span class="pill pill-neutral">{{ $event->method === 'drawn' ? 'Drawn' : 'Click-to-sign' }}</span>
                 <button type="button" wire:click="toggleExpand({{ $event->id }})" class="icon-btn" style="background:none;border:none;cursor:pointer;">
                     {{ $expandedId === $event->id ? '▲' : '▼' }}
@@ -74,7 +74,7 @@ new class extends Component
             </div>
             @if($expandedId === $event->id)
                 <div style="padding:0 18px 16px;">
-                    <div style="background:var(--color-bg);border:1px solid var(--color-border);border-radius:8px;padding:12px 14px;font-family:'Courier New',monospace;font-size:12.5px;">
+                    <div style="background:var(--color-bg);border:1px solid var(--color-border);border-radius:8px;padding:12px 14px;font-family:'Courier New',monospace;font-size:var(--fs-xs);">
                         <div style="padding:3px 0;"><strong>Content hash</strong>: {{ $event->content_hash }}</div>
                         <div style="padding:3px 0;"><strong>IP address</strong>: {{ $event->ip_address ?? '—' }}</div>
                         <div style="padding:3px 0;"><strong>User agent</strong>: {{ $event->user_agent ?? '—' }}</div>

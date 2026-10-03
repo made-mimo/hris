@@ -84,19 +84,19 @@ new class extends Component
             <label style="display:flex;align-items:flex-start;gap:10px;padding:12px 14px;border:1px solid var(--color-border);border-radius:10px;background:var(--color-bg);cursor:pointer;">
                 <input type="checkbox" wire:model="required" style="width:16px;height:16px;margin-top:2px;accent-color:var(--color-primary);">
                 <span>
-                    <span style="display:block;font-size:13.5px;font-weight:600;">Require 2FA for this role</span>
-                    <span style="display:block;font-size:12.5px;color:var(--color-text-muted);">Only takes effect while the project-wide switch (Settings) is also on.</span>
+                    <span style="display:block;font-size:var(--fs-sm);font-weight:600;">Require 2FA for this role</span>
+                    <span style="display:block;font-size:var(--fs-xs);color:var(--color-text-muted);">Only takes effect while the project-wide switch (Settings) is also on.</span>
                 </span>
             </label>
 
             <div>
-                <div style="font-size:13px;font-weight:600;margin-bottom:8px;">Allowed methods</div>
+                <div style="font-size:var(--fs-sm);font-weight:600;margin-bottom:8px;">Allowed methods</div>
                 <div style="display:flex;gap:16px;">
-                    <label style="display:flex;align-items:center;gap:8px;font-size:13.5px;cursor:pointer;">
+                    <label style="display:flex;align-items:center;gap:8px;font-size:var(--fs-sm);cursor:pointer;">
                         <input type="checkbox" wire:model="allowTotp" style="width:16px;height:16px;accent-color:var(--color-primary);">
                         Authenticator app
                     </label>
-                    <label style="display:flex;align-items:center;gap:8px;font-size:13.5px;cursor:pointer;">
+                    <label style="display:flex;align-items:center;gap:8px;font-size:var(--fs-sm);cursor:pointer;">
                         <input type="checkbox" wire:model="allowEmail" style="width:16px;height:16px;accent-color:var(--color-primary);">
                         Email code
                     </label>
@@ -107,13 +107,13 @@ new class extends Component
             <label style="display:flex;align-items:flex-start;gap:10px;padding:12px 14px;border:1px solid var(--color-border);border-radius:10px;background:var(--color-bg);cursor:pointer;">
                 <input type="checkbox" wire:model="trustedDeviceAllowed" style="width:16px;height:16px;margin-top:2px;accent-color:var(--color-primary);">
                 <span>
-                    <span style="display:block;font-size:13.5px;font-weight:600;">Allow trusted-device skip</span>
-                    <span style="display:block;font-size:12.5px;color:var(--color-text-muted);">Off means this role verifies 2FA at every sign-in, no exceptions.</span>
+                    <span style="display:block;font-size:var(--fs-sm);font-weight:600;">Allow trusted-device skip</span>
+                    <span style="display:block;font-size:var(--fs-xs);color:var(--color-text-muted);">Off means this role verifies 2FA at every sign-in, no exceptions.</span>
                 </span>
             </label>
 
             <div>
-                <label for="td-days" style="font-size:13px;font-weight:600;display:block;margin-bottom:6px;">Trusted-device expiry override (days)</label>
+                <label for="td-days" style="font-size:var(--fs-sm);font-weight:600;display:block;margin-bottom:6px;">Trusted-device expiry override (days)</label>
                 <input id="td-days" type="number" wire:model="trustedDeviceDays" min="1" max="365" placeholder="Use project default ({{ config('twofactor.trusted_device_days') }})"
                        style="width:100%;padding:9px 12px;border:1px solid var(--color-border);border-radius:8px;">
                 @error('trustedDeviceDays') <div class="hint" style="color:var(--color-danger);margin-top:6px;">{{ $message }}</div> @enderror

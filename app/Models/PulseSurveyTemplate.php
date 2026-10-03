@@ -5,15 +5,26 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-/** Spec F8: "a short set of questions...kept short by design so completion rates stay high" — one scale question plus one optional free-text question, deliberately not a flexible question-builder. */
+/**
+ * Backlog #11 — a template is now a reusable question bank (see
+ * PulseSurveyQuestion) rather than a hard-coded scale+free-text pair, kept
+ * short in practice by capping how many of its questions a single run may
+ * select (MAX_QUESTIONS_PER_RUN) rather than by only ever having two to
+ * choose from.
+ */
 class PulseSurveyTemplate extends Model
 {
-    public const SCALE_TYPES = ['likert_5', 'enps_0_10'];
+    public const MAX_QUESTIONS_PER_RUN = 5;
 
-    protected $fillable = ['name', 'primary_question', 'scale_type', 'free_text_question'];
+    protected $fillable = ['name'];
 
     public function runs(): HasMany
     {
         return $this->hasMany(PulseSurveyRun::class);
+    }
+
+    public function questions(): HasMany
+    {
+        return $this->hasMany(PulseSurveyQuestion::class)->orderBy('sort_order');
     }
 }

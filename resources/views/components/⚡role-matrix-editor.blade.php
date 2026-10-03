@@ -102,7 +102,7 @@ new class extends Component
             @foreach($screens as $screen)
                 <label style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--color-border);border-radius:8px;{{ $role->is_system_role ? '' : 'cursor:pointer;' }}">
                     <input type="checkbox" wire:model="screenGrants.{{ $screen->id }}" @disabled($role->is_system_role) style="width:16px;height:16px;accent-color:var(--color-primary);">
-                    <span style="font-size:13.5px;font-weight:500;">{{ $screen->label }}</span>
+                    <span style="font-size:var(--fs-sm);font-weight:500;">{{ $screen->label }}</span>
                 </label>
             @endforeach
         </div>
@@ -118,7 +118,7 @@ new class extends Component
                         <tr>
                             <td>
                                 <div style="font-weight:600;">{{ $group->label }}</div>
-                                @if($group->description)<div class="text-muted" style="font-size:12px;">{{ $group->description }}</div>@endif
+                                @if($group->description)<div class="text-muted" style="font-size:var(--fs-xs);">{{ $group->description }}</div>@endif
                             </td>
                             <td>
                                 <select wire:model="groupGrants.{{ $group->id }}.scope" @disabled($role->is_system_role)>

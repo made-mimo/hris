@@ -213,7 +213,12 @@ new class extends Component
             </select>
             <input type="text" wire:model="eduField" placeholder="Field of study" class="rounded-sm border border-border bg-surface px-2.5 py-2 text-sm text-text outline-none focus:border-primary">
             <input type="date" wire:model="eduStart" class="rounded-sm border border-border bg-surface px-2.5 py-2 text-sm text-text outline-none focus:border-primary">
-            <div class="flex gap-2">
+            {{-- flex-col below sm: a native date input has its own minimum
+                 rendering width the browser won't shrink past, and packed
+                 side-by-side with the Add button in this grid's narrow
+                 mobile column, the two together no longer fit — overflowing
+                 the page horizontally. Stacking them avoids the squeeze. --}}
+            <div class="flex flex-col gap-2 sm:flex-row">
                 <input type="date" wire:model="eduEnd" class="w-full rounded-sm border border-border bg-surface px-2.5 py-2 text-sm text-text outline-none focus:border-primary">
                 <button type="submit" class="shrink-0 rounded-sm bg-primary px-3 py-2 text-xs font-semibold text-white hover:bg-primary-dark">Add</button>
             </div>

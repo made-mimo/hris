@@ -63,6 +63,16 @@ class LeaveRequest extends Model
         return $this->belongsTo(LeaveType::class);
     }
 
+    public function managerApprovedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'manager_approved_by');
+    }
+
+    public function hrApprovedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'hr_approved_by');
+    }
+
     /** Named to avoid colliding with the `days` column (the cached total) — Eloquent would always resolve `$request->days` to the attribute, never this relation, if it were named the same. */
     public function requestDays(): HasMany
     {

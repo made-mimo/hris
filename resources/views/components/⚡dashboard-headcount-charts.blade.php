@@ -19,8 +19,6 @@ new class extends Component
         return [
             'byDepartment' => $byDepartment,
             'byLocation' => $byLocation,
-            'maxDepartment' => $byDepartment->max() ?: 1,
-            'maxLocation' => $byLocation->max() ?: 1,
         ];
     }
 };
@@ -31,39 +29,33 @@ new class extends Component
         <div class="card-header">
             <h2>Headcount by department</h2>
         </div>
-        <div style="display:flex;flex-direction:column;gap:10px;">
-            @forelse($byDepartment as $name => $count)
-                <div>
-                    <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px;">
-                        <span>{{ $name }}</span><span class="font-mono" style="font-weight:600;">{{ $count }}</span>
-                    </div>
-                    <div style="height:8px;border-radius:4px;background:var(--color-bg);overflow:hidden;">
-                        <div style="height:100%;border-radius:4px;background:var(--color-primary);width:{{ round($count / $maxDepartment * 100) }}%;"></div>
-                    </div>
-                </div>
-            @empty
-                <p class="text-muted">No active employees yet.</p>
-            @endforelse
-        </div>
+        @if($byDepartment->isNotEmpty())
+            <x-chart-canvas
+                id="dashboard-headcount-department"
+                type="doughnut"
+                :labels="$byDepartment->keys()->all()"
+                :datasets="[['data' => $byDepartment->values()->all(), 'backgroundColor' => ['#D9251E', '#1E9E63', '#2563EB', '#B45309', '#7C3AED', '#DB2777', '#0891B2', '#65A30D']]]"
+                :height="240"
+            />
+        @else
+            <p class="text-muted">No active employees yet.</p>
+        @endif
     </section>
 
     <section class="card">
         <div class="card-header">
             <h2>Headcount by location</h2>
         </div>
-        <div style="display:flex;flex-direction:column;gap:10px;">
-            @forelse($byLocation as $name => $count)
-                <div>
-                    <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px;">
-                        <span>{{ $name }}</span><span class="font-mono" style="font-weight:600;">{{ $count }}</span>
-                    </div>
-                    <div style="height:8px;border-radius:4px;background:var(--color-bg);overflow:hidden;">
-                        <div style="height:100%;border-radius:4px;background:var(--color-accent);width:{{ round($count / $maxLocation * 100) }}%;"></div>
-                    </div>
-                </div>
-            @empty
-                <p class="text-muted">No active employees yet.</p>
-            @endforelse
-        </div>
+        @if($byLocation->isNotEmpty())
+            <x-chart-canvas
+                id="dashboard-headcount-location"
+                type="doughnut"
+                :labels="$byLocation->keys()->all()"
+                :datasets="[['data' => $byLocation->values()->all(), 'backgroundColor' => ['#1E9E63', '#D9251E', '#2563EB', '#B45309', '#7C3AED', '#DB2777', '#0891B2', '#65A30D']]]"
+                :height="240"
+            />
+        @else
+            <p class="text-muted">No active employees yet.</p>
+        @endif
     </section>
 </div>

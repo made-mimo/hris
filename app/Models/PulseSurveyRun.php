@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /** Spec F8: "a scheduled instance of a template — launch date, close date, target audience scope." */
@@ -43,6 +44,14 @@ class PulseSurveyRun extends Model
     public function responses(): HasMany
     {
         return $this->hasMany(PulseSurveyResponse::class);
+    }
+
+    /** Backlog #11 — the subset of the template's question bank this run actually asks, in order. */
+    public function questions(): BelongsToMany
+    {
+        return $this->belongsToMany(PulseSurveyQuestion::class, 'pulse_survey_run_question')
+            ->orderBy('sort_order')
+            ->withTimestamps();
     }
 
     public function audienceLabel(): string

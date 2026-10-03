@@ -22,9 +22,26 @@ new class extends Component
 
     public function mount(): void
     {
-        $this->leaveTypeId = LeaveType::orderBy('sort_order')->first()?->id;
+        $this->leaveTypeId = $this->visibleLeaveTypes()->first()?->id;
         $this->startDate = now()->addWeek()->startOfWeek()->toDateString();
         $this->endDate = now()->addWeek()->startOfWeek()->addDays(4)->toDateString();
+    }
+
+    /**
+     * Admin backlog item 14 — a type flagged exclude_from_reports_if_
+     * unentitled (e.g. Annual, Sick: accrual-based) drops out here for an
+     * employee with no entitlement to it at all, the same rule Leave
+     * Reports already applies. A type left unflagged (e.g. Unpaid,
+     * Compassionate: available to everyone by policy, no assignment
+     * needed) always shows, entitled or not.
+     */
+    private function visibleLeaveTypes()
+    {
+        $me = auth()->user()->employee;
+
+        return LeaveType::orderBy('sort_order')->get()
+            ->reject(fn (LeaveType $t) => $t->exclude_from_reports_if_unentitled && $me->leaveBalance($t)['entitled'] <= 0)
+            ->values();
     }
 
     public function pickType(int $id): void
@@ -60,6 +77,17 @@ new class extends Component
 
         $me = auth()->user()->employee;
         $type = LeaveType::findOrFail($this->leaveTypeId);
+
+        // leaveTypeId is a client-writable property (the picker sets it via
+        // pickType()) — re-check eligibility server-side rather than trust
+        // that a hidden type was never selected, closing the gap a tampered
+        // request could otherwise use to submit against a type the visible
+        // list itself was built to exclude.
+        if (! $this->visibleLeaveTypes()->contains('id', $type->id)) {
+            $this->addError('leaveTypeId', 'You are not eligible for that leave type.');
+
+            return;
+        }
 
         try {
             $request = app(LeaveRequestService::class)->apply(
@@ -108,11 +136,11 @@ new class extends Component
     public function with(): array
     {
         $me = auth()->user()->employee;
-        $types = LeaveType::orderBy('sort_order')->get()->map(function ($t) use ($me) {
-            $b = $me->leaveBalance($t);
-
-            return ['id' => $t->id, 'name' => $t->name, 'available' => $b['available']];
-        });
+        $types = $this->visibleLeaveTypes()->map(fn (LeaveType $t) => [
+            'id' => $t->id,
+            'name' => $t->name,
+            'available' => $me->leaveBalance($t)['available'],
+        ]);
 
         $selectedType = LeaveType::find($this->leaveTypeId);
         $balance = $selectedType ? $me->leaveBalance($selectedType) : ['entitled' => 0, 'used' => 0, 'available' => 0];
@@ -167,7 +195,7 @@ new class extends Component
                         <button type="button" wire:click="pickDuration('{{ $key }}')" wire:key="dur-{{ $key }}" class="seg-btn {{ $duration === $key ? 'is-active' : '' }}">{{ $label }}</button>
                     @endforeach
                 </div>
-                <div style="display:flex;align-items:center;gap:8px;margin-top:10px;font-size:13px;color:var(--color-text-muted);">
+                <div style="display:flex;align-items:center;gap:8px;margin-top:10px;font-size:var(--fs-sm);color:var(--color-text-muted);">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-10"></path></svg>
                     <span><strong class="font-mono" style="color:var(--color-text);">{{ number_format($this->requestDays, 1) }}</strong> working days requested</span>
                 </div>
@@ -191,7 +219,7 @@ new class extends Component
         </div>
 
         <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 24px;border-top:1px solid var(--color-border);background:var(--color-bg);border-radius:0 0 14px 14px;">
-            <span class="text-muted" style="font-size:12.5px;">Two-stage approval: Line Manager, then HR.</span>
+            <span class="text-muted" style="font-size:var(--fs-xs);">Two-stage approval: Line Manager, then HR.</span>
             <div style="display:flex;gap:10px;">
                 <a href="{{ route('home') }}" wire:navigate class="btn btn-ghost">Cancel</a>
                 <button type="submit" class="btn btn-primary">Submit request
@@ -205,13 +233,13 @@ new class extends Component
         <section class="card">
             <div class="card-header">
                 <h2>{{ $selectedType?->name }} balance</h2>
-                <span class="text-muted" style="font-size:12px;">Jan – Dec {{ now()->year }}</span>
+                <span class="text-muted" style="font-size:var(--fs-xs);">Jan – Dec {{ now()->year }}</span>
             </div>
             <div style="display:flex;align-items:baseline;gap:8px;">
                 <span class="font-mono" style="font-size:30px;font-weight:600;">{{ number_format($afterDays, 1) }}</span>
-                <span class="text-muted" style="font-size:13px;">days left after this request</span>
+                <span class="text-muted" style="font-size:var(--fs-sm);">days left after this request</span>
             </div>
-            <div style="display:flex;flex-direction:column;gap:8px;font-size:13.5px;margin-top:14px;">
+            <div style="display:flex;flex-direction:column;gap:8px;font-size:var(--fs-sm);margin-top:14px;">
                 <div style="display:flex;justify-content:space-between;"><span class="text-muted">Entitled</span><span class="font-mono" style="font-weight:600;">{{ number_format($balance['entitled'],1) }}</span></div>
                 <div style="display:flex;justify-content:space-between;"><span class="text-muted">Taken + scheduled</span><span class="font-mono" style="font-weight:600;">{{ number_format($balance['used'],1) }}</span></div>
                 <div style="display:flex;justify-content:space-between;"><span class="text-muted">This request</span><span class="font-mono" style="font-weight:600;color:var(--color-primary-dark);">−{{ number_format($this->requestDays,1) }}</span></div>

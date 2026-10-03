@@ -10,23 +10,33 @@ use Livewire\Component;
  */
 new class extends Component
 {
+    /** @var array<int, array<int, int>> runId => [questionId => scaleValue] */
     public array $scaleValue = [];
 
+    /** @var array<int, array<int, string>> runId => [questionId => freeText] */
     public array $freeText = [];
 
     public function respond(int $runId, PulseSurveyService $pulseSurveys): void
     {
-        $run = PulseSurveyRun::findOrFail($runId);
+        $run = PulseSurveyRun::with('questions')->findOrFail($runId);
         $employee = auth()->user()->employee;
 
-        $scale = $this->scaleValue[$runId] ?? null;
-        $max = $run->template->scale_type === 'enps_0_10' ? 10 : 5;
+        $rules = [];
+        foreach ($run->questions as $question) {
+            if ($question->type === 'scale') {
+                $rules['scaleValue.'.$runId.'.'.$question->id] = ['required', 'integer', 'min:'.$question->scaleMin(), 'max:'.$question->scaleMax()];
+            }
+        }
+        $this->validate($rules);
 
-        $this->validate([
-            'scaleValue.'.$runId => ['required', 'integer', 'min:0', 'max:'.$max],
-        ]);
+        $answers = [];
+        foreach ($run->questions as $question) {
+            $answers[$question->id] = $question->type === 'scale'
+                ? ['scale_value' => (int) ($this->scaleValue[$runId][$question->id] ?? null)]
+                : ['free_text' => trim($this->freeText[$runId][$question->id] ?? '') ?: null];
+        }
 
-        $pulseSurveys->respond($run, $employee, (int) $scale, trim($this->freeText[$runId] ?? '') ?: null);
+        $pulseSurveys->respond($run, $employee, $answers);
 
         unset($this->scaleValue[$runId], $this->freeText[$runId]);
         session()->flash('status', 'Thanks — your response has been recorded anonymously.');
@@ -36,7 +46,7 @@ new class extends Component
     {
         $employee = auth()->user()->employee;
 
-        $openRuns = PulseSurveyRun::with('template')
+        $openRuns = PulseSurveyRun::with(['template', 'questions'])
             ->where('status', 'open')
             ->get()
             ->filter(fn (PulseSurveyRun $run) => $pulseSurveys->audienceEmployees($run)->contains('id', $employee?->id)
@@ -65,25 +75,25 @@ new class extends Component
             <div class="font-display text-sm font-bold text-text">{{ $run->template->name }}</div>
             <div class="mb-3 text-xs text-text-muted">Closes {{ $run->close_date->format('j M Y') }} · {{ $run->audienceLabel() }}</div>
 
-            <div class="mb-3 text-sm text-text">{{ $run->template->primary_question }}</div>
+            @foreach($run->questions as $question)
+                <div class="mb-4">
+                    <div class="mb-2 text-sm text-text">{{ $question->prompt }} @if($question->type === 'free_text')<span class="text-text-muted">(optional)</span>@endif</div>
 
-            <div class="mb-3 flex flex-wrap gap-2">
-                @php $max = $run->template->scale_type === 'enps_0_10' ? 10 : 5; @endphp
-                @for($i = $run->template->scale_type === 'enps_0_10' ? 0 : 1; $i <= $max; $i++)
-                    <button type="button" wire:click="$set('scaleValue.{{ $run->id }}', {{ $i }})"
-                        class="h-9 w-9 rounded-sm border text-sm font-semibold {{ ($scaleValue[$run->id] ?? null) === $i ? 'border-primary bg-primary text-white' : 'border-border bg-surface text-text hover:border-primary' }}">
-                        {{ $i }}
-                    </button>
-                @endfor
-            </div>
-            @error('scaleValue.'.$run->id) <div class="mb-2 text-xs text-danger">{{ $message }}</div> @enderror
-
-            @if($run->template->free_text_question)
-                <div class="mb-3">
-                    <label class="mb-1.5 block text-xs font-semibold text-text">{{ $run->template->free_text_question }} <span class="text-text-muted">(optional)</span></label>
-                    <textarea wire:model="freeText.{{ $run->id }}" rows="2" class="w-full rounded-sm border border-border bg-surface px-3.5 py-2.5 text-sm text-text outline-none focus:border-primary"></textarea>
+                    @if($question->type === 'scale')
+                        <div class="flex flex-wrap gap-2">
+                            @for($i = $question->scaleMin(); $i <= $question->scaleMax(); $i++)
+                                <button type="button" wire:click="$set('scaleValue.{{ $run->id }}.{{ $question->id }}', {{ $i }})"
+                                    class="h-9 w-9 rounded-sm border text-sm font-semibold {{ ($scaleValue[$run->id][$question->id] ?? null) === $i ? 'border-primary bg-primary text-white' : 'border-border bg-surface text-text hover:border-primary' }}">
+                                    {{ $i }}
+                                </button>
+                            @endfor
+                        </div>
+                        @error('scaleValue.'.$run->id.'.'.$question->id) <div class="mt-1.5 text-xs text-danger">{{ $message }}</div> @enderror
+                    @else
+                        <textarea wire:model="freeText.{{ $run->id }}.{{ $question->id }}" rows="2" class="w-full rounded-sm border border-border bg-surface px-3.5 py-2.5 text-sm text-text outline-none focus:border-primary"></textarea>
+                    @endif
                 </div>
-            @endif
+            @endforeach
 
             <button wire:click="respond({{ $run->id }})" class="rounded-sm bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-dark">Submit anonymously</button>
         </section>

@@ -23,6 +23,8 @@
     $canVehicles = auth()->user()?->canView('vehicles');
     $canDirectory = auth()->user()?->canView('directory');
     $canPolicies = auth()->user()?->canView('policies');
+    $canProfile = auth()->user()?->canView('profile');
+    $canMyRequests = auth()->user()?->canView('my-requests');
     $canMasterData = auth()->user()?->canView('admin.master-data');
     $canOnboardingTemplates = auth()->user()?->canView('admin.onboarding-templates');
     $canLeaveConfiguration = auth()->user()?->canView('admin.leave-configuration');
@@ -33,6 +35,7 @@
     $canCompanyDocuments = auth()->user()?->canView('admin.company-documents');
     $canHelpdeskConfiguration = auth()->user()?->canView('admin.helpdesk-configuration');
     $canPulseSurveyConfiguration = auth()->user()?->canView('admin.pulse-survey-configuration');
+    $canPulseSurveyRuns = auth()->user()?->canView('pulse-survey-runs');
     $canRenewalConfiguration = auth()->user()?->canView('admin.renewal-configuration');
     $canClaimsManagement = auth()->user()?->canView('admin.claims-management');
     $canProjects = auth()->user()?->canView('admin.projects');
@@ -41,6 +44,77 @@
     $canAuditLog = auth()->user()?->canView('admin.audit-log');
     $canSignatures = auth()->user()?->canView('admin.signatures');
     $canHealthCheck = auth()->user()?->canView('admin.health-check');
+
+    // Backlog #8 — the bottom tab bar (<1024px) used to always show the
+    // same 4 generic quick links regardless of where you actually were,
+    // which stopped making sense once you'd navigated deep into, say, HR
+    // Admin: tapping "Leave" from inside Pulse Survey Configuration isn't
+    // useful. It now shows shortcuts from whichever sidebar segment the
+    // current page belongs to — the same grouping the sidebar and the
+    // mobile "More" sheet already use — falling back to the original
+    // generic set on pages that don't belong to a specific segment (Home).
+    $currentSegment = match (true) {
+        request()->routeIs(['leave.apply', 'claims.create', 'claims.travel-advance', 'timesheets', 'attendance', 'performance', 'helpdesk']) => 'workspace',
+        request()->routeIs(['directory', 'assets', 'vehicles', 'policies']) => 'company',
+        request()->routeIs(['profile', 'my-requests']) => 'myinfo',
+        request()->routeIs(['pulse-surveys', 'buzz']) => 'socials',
+        request()->routeIs(['approvals', 'timesheets.approvals', 'employees*', 'recruitment', 'discipline']) => 'myteam',
+        request()->routeIs(['admin.master-data', 'admin.onboarding-templates', 'admin.leave-configuration', 'admin.performance-configuration', 'admin.asset-configuration', 'admin.vehicle-configuration', 'admin.policy-configuration', 'admin.company-documents', 'admin.helpdesk-configuration', 'admin.pulse-survey-configuration', 'pulse-survey-runs', 'admin.renewal-configuration', 'admin.claims-management']) => 'hradmin',
+        request()->routeIs(['leave.reports', 'timesheets.reports', 'attendance.reports', 'employees.reports']) => 'reports',
+        request()->routeIs(['admin.projects', 'settings', 'admin.roles', 'admin.audit-log', 'admin.signatures', 'admin.health-check']) => 'admin',
+        default => null,
+    };
+
+    $bottomNavSegments = [
+        'workspace' => [
+            ['can' => $canLeave, 'route' => 'leave.apply', 'label' => 'Leave', 'icon' => '<rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18M8 3v4M16 3v4"></path>'],
+            ['can' => $canClaims, 'route' => 'claims.create', 'label' => 'Claims', 'icon' => '<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"></path><path d="M9 8h6M9 12h6"></path>'],
+            ['can' => $canTimesheets, 'route' => 'timesheets', 'label' => 'Timesheets', 'icon' => '<circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path>'],
+        ],
+        'company' => [
+            ['can' => $canDirectory, 'route' => 'directory', 'label' => 'Directory', 'icon' => '<path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"></path><path d="M4 21V5"></path>'],
+            ['can' => $canAssets, 'route' => 'assets', 'label' => 'Assets', 'icon' => '<rect x="2" y="7" width="20" height="14" rx="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>'],
+            ['can' => $canPolicies, 'route' => 'policies', 'label' => 'Policies', 'icon' => '<path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z"></path><path d="M14 3v5h5M9 13h6M9 17h6"></path>'],
+        ],
+        'myinfo' => [
+            ['can' => $canProfile, 'route' => 'profile', 'label' => 'My Info', 'icon' => '<circle cx="12" cy="8" r="4"></circle><path d="M4 21c1.5-4 5-6 8-6s6.5 2 8 6"></path>'],
+            ['can' => $canMyRequests, 'route' => 'my-requests', 'label' => 'Requests', 'icon' => '<path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z"></path><path d="M14 3v5h5M9 13h6M9 17h6"></path>'],
+        ],
+        'socials' => [
+            ['can' => $canPulseSurveys, 'route' => 'pulse-surveys', 'label' => 'Surveys', 'icon' => '<path d="M3 3v18h18"></path><path d="M7 12l3-3 3 3 5-6"></path>'],
+            ['can' => $canBuzz, 'route' => 'buzz', 'label' => 'Buzz', 'icon' => '<path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>'],
+        ],
+        'myteam' => [
+            ['can' => $canApprovals, 'route' => 'approvals', 'label' => 'Approvals', 'icon' => '<path d="M9 11l3 3 8-8"></path><path d="M20 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h11"></path>'],
+            ['can' => $canEmployees, 'route' => 'employees', 'label' => 'Employees', 'icon' => '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path>'],
+            ['can' => $canRecruitment, 'route' => 'recruitment', 'label' => 'Recruit', 'icon' => '<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle><path d="M16 3.5a4 4 0 0 1 0 7"></path>'],
+        ],
+        'hradmin' => [
+            ['can' => $canMasterData, 'route' => 'admin.master-data', 'label' => 'Org Data', 'icon' => '<path d="M3 21V8l9-5 9 5v13"></path><path d="M9 21v-6h6v6"></path>'],
+            ['can' => $canOnboardingTemplates, 'route' => 'admin.onboarding-templates', 'label' => 'Onboarding', 'icon' => '<path d="M9 11l3 3 8-8"></path><path d="M20 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h11"></path>'],
+            ['can' => $canLeaveConfiguration, 'route' => 'admin.leave-configuration', 'label' => 'Leave Cfg', 'icon' => '<rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18M8 3v4M16 3v4"></path>'],
+        ],
+        'reports' => [
+            ['can' => $canLeaveConfiguration, 'route' => 'leave.reports', 'label' => 'Leave Rpt', 'icon' => '<path d="M3 3v18h18"></path><path d="M18 17V9M13 17V5M8 17v-4"></path>'],
+            ['can' => $canProjects, 'route' => 'timesheets.reports', 'label' => 'Time Rpt', 'icon' => '<path d="M3 3v18h18"></path><path d="M7 15l4-4 3 3 5-6"></path>'],
+            ['can' => $canEmployees, 'route' => 'employees.reports', 'label' => 'Emp Rpt', 'icon' => '<path d="M3 3v18h18"></path><path d="M8 17V11M12 17V7M16 17v-5"></path>'],
+        ],
+        'admin' => [
+            ['can' => $canSettings, 'route' => 'settings', 'label' => 'Settings', 'icon' => '<circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>'],
+            ['can' => $canRoles, 'route' => 'admin.roles', 'label' => 'Roles', 'icon' => '<path d="M12 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8z"></path><path d="M4.5 20.5c1-4 4-6.5 7.5-6.5s6.5 2.5 7.5 6.5"></path><path d="m17 8 1.5 1.5L21.5 6.5"></path>'],
+            ['can' => $canAuditLog, 'route' => 'admin.audit-log', 'label' => 'Audit', 'icon' => '<path d="M9 12h6M9 16h6M9 8h1"></path><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z"></path><path d="M14 3v5h5"></path>'],
+        ],
+    ];
+    $defaultBottomNavItems = [
+        ['can' => $canLeave, 'route' => 'leave.apply', 'label' => 'Leave', 'icon' => '<rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18M8 3v4M16 3v4"></path>'],
+        ['can' => $canClaims, 'route' => 'claims.create', 'label' => 'Claims', 'icon' => '<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"></path><path d="M9 8h6M9 12h6"></path>'],
+        ['can' => $canApprovals, 'route' => 'approvals', 'label' => 'Approvals', 'icon' => '<path d="M9 11l3 3 8-8"></path><path d="M20 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h11"></path>'],
+    ];
+    $activeBottomNavItems = collect($bottomNavSegments[$currentSegment] ?? $defaultBottomNavItems)
+        ->filter(fn ($item) => $item['can'])
+        ->take(3)
+        ->values();
+
     $settings = \App\Models\Setting::current();
     $logoUrl = $settings->logo_path ? \Illuminate\Support\Facades\Storage::disk('public')->url($settings->logo_path) : null;
 @endphp
@@ -59,7 +133,7 @@
         })();
     </script>
     <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&amp;family=Inter:ital,wght@0,400;0,500;0,600;0,700;1,400&amp;family=JetBrains+Mono:wght@500;600&amp;display=swap" rel="stylesheet">
-    @vite(['resources/css/app.css'])
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
 </head>
 <body>
@@ -81,31 +155,55 @@
         <nav class="sidebar-nav" aria-label="Main"
             x-data="{
                 sections: (() => { try { return JSON.parse(localStorage.getItem('navSections')) || {}; } catch (e) { return {}; } })(),
-                keys: ['workspace', 'myteam', 'company', 'admin'],
-                init() { this.keys.forEach(k => { if (!(k in this.sections)) this.sections[k] = true; }); },
+                keys: ['workspace', 'company', 'myinfo', 'socials', 'myteam', 'hradmin', 'reports', 'admin'],
+                init() {
+                    this.keys.forEach(k => { if (!(k in this.sections)) this.sections[k] = true; });
+                    // Every sidebar click is a full page load (not
+                    // wire:navigate — this app's SFCs have documented
+                    // Livewire-morph stability issues, so a full reload here
+                    // is deliberate), which otherwise resets scroll to the
+                    // top on every click. sessionStorage survives that
+                    // reload without needing SPA-style navigation.
+                    //
+                    // $nextTick, not immediate: at this exact point each
+                    // x-cloak'd section <div> is still display:none (Alpine
+                    // only strips x-cloak once it finishes processing that
+                    // element, which happens AFTER this init() returns), so
+                    // .sidebar-nav's real scrollHeight is still just a
+                    // handful of collapsed headers tall. Setting scrollTop
+                    // here gets silently clamped to near 0 by the browser,
+                    // and it never catches back up once the real content
+                    // (and real scrollHeight) appears a moment later —
+                    // which is exactly why this kept resetting to the top.
+                    this.$nextTick(() => {
+                        try {
+                            const y = sessionStorage.getItem('navScrollTop');
+                            if (y !== null) this.$el.scrollTop = parseInt(y, 10);
+                        } catch (e) {}
+                    });
+                    this.$el.addEventListener('scroll', () => {
+                        try { sessionStorage.setItem('navScrollTop', this.$el.scrollTop); } catch (e) {}
+                    }, { passive: true });
+                },
                 toggle(k) { this.sections[k] = !this.sections[k]; this.save(); },
                 collapseAll() { this.keys.forEach(k => this.sections[k] = false); this.save(); },
                 expandAll() { this.keys.forEach(k => this.sections[k] = true); this.save(); },
                 save() { localStorage.setItem('navSections', JSON.stringify(this.sections)); }
             }">
             <div style="display:flex;justify-content:flex-end;gap:10px;padding:0 12px 8px;">
-                <button type="button" @click="expandAll()" style="background:none;border:none;padding:0;cursor:pointer;font-size:10.5px;font-weight:700;color:var(--color-text-faint);">Expand all</button>
-                <button type="button" @click="collapseAll()" style="background:none;border:none;padding:0;cursor:pointer;font-size:10.5px;font-weight:700;color:var(--color-text-faint);">Collapse all</button>
+                <button type="button" @click="expandAll()" style="background:none;border:none;padding:0;cursor:pointer;font-size:var(--fs-3xs);font-weight:700;color:var(--color-text-faint);">Expand all</button>
+                <button type="button" @click="collapseAll()" style="background:none;border:none;padding:0;cursor:pointer;font-size:var(--fs-3xs);font-weight:700;color:var(--color-text-faint);">Collapse all</button>
             </div>
+
+            <a href="{{ route('home') }}" class="nav-link {{ request()->routeIs('home') ? 'active' : '' }}" style="margin-bottom:6px;">
+                <span class="nav-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"></path></svg></span>Home
+            </a>
 
             <button type="button" @click="toggle('workspace')" class="nav-section-label" style="display:flex;width:100%;align-items:center;justify-content:space-between;background:none;border:none;cursor:pointer;font:inherit;text-align:left;">
                 <span>Workspace</span>
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" :style="sections.workspace ? '' : 'transform:rotate(-90deg)'" style="transition:transform .15s ease;"><path d="m6 9 6 6 6-6"></path></svg>
             </button>
             <div x-show="sections.workspace" x-cloak>
-            <a href="{{ route('home') }}" class="nav-link {{ request()->routeIs('home') ? 'active' : '' }}">
-                <span class="nav-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"></path></svg></span>Home
-            </a>
-            @if($canBuzz)
-                <a href="{{ route('buzz') }}" class="nav-link {{ request()->routeIs('buzz') ? 'active' : '' }}">
-                    <span class="nav-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg></span>Buzz
-                </a>
-            @endif
             @if($canLeave)
                 <a href="{{ route('leave.apply') }}" class="nav-link {{ request()->routeIs('leave.apply') ? 'active' : '' }}">
                     <span class="nav-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18M8 3v4M16 3v4"></path></svg></span>My Leave
@@ -132,30 +230,50 @@
                     <span class="nav-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"></path><path d="M18 17V9M13 17V5M8 17v-4"></path></svg></span>Performance
                 </a>
             @endif
-            @if($canAssets)
-                <a href="{{ route('assets') }}" class="nav-link {{ request()->routeIs('assets') ? 'active' : '' }}">
-                    <span class="nav-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg></span>Assets
-                </a>
-            @endif
-            @if($canVehicles)
-                <a href="{{ route('vehicles') }}" class="nav-link {{ request()->routeIs('vehicles') ? 'active' : '' }}">
-                    <span class="nav-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17h14M6 17V9a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v8"></path><circle cx="7.5" cy="17.5" r="1.8"></circle><circle cx="16.5" cy="17.5" r="1.8"></circle><path d="M3 13l1.5-4A2 2 0 0 1 6.4 7.5"></path></svg></span>Vehicles
-                </a>
-            @endif
-            <a href="{{ route('profile') }}" class="nav-link {{ request()->routeIs('profile') ? 'active' : '' }}">
-                <span class="nav-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"></path></svg></span>My Profile
-            </a>
             @if($canHelpdesk)
                 <a href="{{ route('helpdesk') }}" class="nav-link {{ request()->routeIs('helpdesk') ? 'active' : '' }}">
                     <span class="nav-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v3a2 2 0 0 0 0 4v3a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-3a2 2 0 0 0 0-4z"></path></svg></span>Helpdesk
                 </a>
             @endif
-            @if($canPulseSurveys)
-                <a href="{{ route('pulse-surveys') }}" class="nav-link {{ request()->routeIs('pulse-surveys') ? 'active' : '' }}">
-                    <span class="nav-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"></path><path d="M7 12l3-3 3 3 5-6"></path></svg></span>Pulse Surveys
-                </a>
-            @endif
             </div>
+
+            @if($canProfile || $canMyRequests)
+                <button type="button" @click="toggle('myinfo')" class="nav-section-label" style="display:flex;width:100%;align-items:center;justify-content:space-between;background:none;border:none;cursor:pointer;font:inherit;text-align:left;">
+                    <span>My info</span>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" :style="sections.myinfo ? '' : 'transform:rotate(-90deg)'" style="transition:transform .15s ease;"><path d="m6 9 6 6 6-6"></path></svg>
+                </button>
+                <div x-show="sections.myinfo" x-cloak>
+                @if($canProfile)
+                    <a href="{{ route('profile') }}" class="nav-link {{ request()->routeIs('profile') ? 'active' : '' }}">
+                        <span class="nav-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c1.5-4 5-6 8-6s6.5 2 8 6"></path></svg></span>My Info
+                    </a>
+                @endif
+                @if($canMyRequests)
+                    <a href="{{ route('my-requests') }}" class="nav-link {{ request()->routeIs('my-requests') ? 'active' : '' }}">
+                        <span class="nav-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z"></path><path d="M14 3v5h5M9 13h6M9 17h6"></path></svg></span>My Requests
+                    </a>
+                @endif
+                </div>
+            @endif
+
+            @if($canBuzz || $canPulseSurveys)
+                <button type="button" @click="toggle('socials')" class="nav-section-label" style="display:flex;width:100%;align-items:center;justify-content:space-between;background:none;border:none;cursor:pointer;font:inherit;text-align:left;">
+                    <span>Socials</span>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" :style="sections.socials ? '' : 'transform:rotate(-90deg)'" style="transition:transform .15s ease;"><path d="m6 9 6 6 6-6"></path></svg>
+                </button>
+                <div x-show="sections.socials" x-cloak>
+                @if($canPulseSurveys)
+                    <a href="{{ route('pulse-surveys') }}" class="nav-link {{ request()->routeIs('pulse-surveys') ? 'active' : '' }}">
+                        <span class="nav-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"></path><path d="M7 12l3-3 3 3 5-6"></path></svg></span>Pulse Surveys
+                    </a>
+                @endif
+                @if($canBuzz)
+                    <a href="{{ route('buzz') }}" class="nav-link {{ request()->routeIs('buzz') ? 'active' : '' }}">
+                        <span class="nav-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg></span>Buzz
+                    </a>
+                @endif
+                </div>
+            @endif
 
             @if($canApprovals || $canEmployees || $canRecruitment || $canDiscipline)
                 <button type="button" @click="toggle('myteam')" class="nav-section-label" style="display:flex;width:100%;align-items:center;justify-content:space-between;background:none;border:none;cursor:pointer;font:inherit;text-align:left;">
@@ -206,6 +324,16 @@
                     <span class="nav-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"></path><path d="M4 21V5"></path></svg></span>Directory
                 </a>
             @endif
+            @if($canAssets)
+                <a href="{{ route('assets') }}" class="nav-link {{ request()->routeIs('assets') ? 'active' : '' }}">
+                    <span class="nav-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg></span>Assets
+                </a>
+            @endif
+            @if($canVehicles)
+                <a href="{{ route('vehicles') }}" class="nav-link {{ request()->routeIs('vehicles') ? 'active' : '' }}">
+                    <span class="nav-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17h14M6 17V9a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v8"></path><circle cx="7.5" cy="17.5" r="1.8"></circle><circle cx="16.5" cy="17.5" r="1.8"></circle><path d="M3 13l1.5-4A2 2 0 0 1 6.4 7.5"></path></svg></span>Vehicles
+                </a>
+            @endif
             @if($canPolicies)
                 <a href="{{ route('policies') }}" class="nav-link {{ request()->routeIs('policies') ? 'active' : '' }}">
                     <span class="nav-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z"></path><path d="M14 3v5h5M9 13h6M9 17h6"></path></svg></span>Policies
@@ -213,12 +341,12 @@
             @endif
             </div>
 
-            @if($canMasterData || $canOnboardingTemplates || $canLeaveConfiguration || $canPerformanceConfiguration || $canAssetConfiguration || $canVehicleConfiguration || $canPolicyConfiguration || $canCompanyDocuments || $canHelpdeskConfiguration || $canPulseSurveyConfiguration || $canRenewalConfiguration || $canClaimsManagement || $canProjects || $canSettings || $canRoles || $canAuditLog || $canSignatures || $canHealthCheck)
-                <button type="button" @click="toggle('admin')" class="nav-section-label" style="display:flex;width:100%;align-items:center;justify-content:space-between;background:none;border:none;cursor:pointer;font:inherit;text-align:left;">
-                    <span>Admin</span>
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" :style="sections.admin ? '' : 'transform:rotate(-90deg)'" style="transition:transform .15s ease;"><path d="m6 9 6 6 6-6"></path></svg>
+            @if($canMasterData || $canOnboardingTemplates || $canLeaveConfiguration || $canPerformanceConfiguration || $canAssetConfiguration || $canVehicleConfiguration || $canPolicyConfiguration || $canCompanyDocuments || $canHelpdeskConfiguration || $canPulseSurveyConfiguration || $canPulseSurveyRuns || $canRenewalConfiguration || $canClaimsManagement)
+                <button type="button" @click="toggle('hradmin')" class="nav-section-label" style="display:flex;width:100%;align-items:center;justify-content:space-between;background:none;border:none;cursor:pointer;font:inherit;text-align:left;">
+                    <span>HR admin</span>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" :style="sections.hradmin ? '' : 'transform:rotate(-90deg)'" style="transition:transform .15s ease;"><path d="m6 9 6 6 6-6"></path></svg>
                 </button>
-                <div x-show="sections.admin" x-cloak>
+                <div x-show="sections.hradmin" x-cloak>
                 @if($canMasterData)
                     <a href="{{ route('admin.master-data') }}" class="nav-link {{ request()->routeIs('admin.master-data') ? 'active' : '' }}">
                         <span class="nav-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21V8l9-5 9 5v13"></path><path d="M9 21v-6h6v6"></path></svg></span>Org &amp; Master Data
@@ -232,9 +360,6 @@
                 @if($canLeaveConfiguration)
                     <a href="{{ route('admin.leave-configuration') }}" class="nav-link {{ request()->routeIs('admin.leave-configuration') ? 'active' : '' }}">
                         <span class="nav-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18M8 3v4M16 3v4"></path></svg></span>Leave Configuration
-                    </a>
-                    <a href="{{ route('leave.reports') }}" class="nav-link {{ request()->routeIs('leave.reports') ? 'active' : '' }}">
-                        <span class="nav-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"></path><path d="M18 17V9M13 17V5M8 17v-4"></path></svg></span>Leave Reports
                     </a>
                 @endif
                 @if($canPerformanceConfiguration)
@@ -271,6 +396,10 @@
                     <a href="{{ route('admin.pulse-survey-configuration') }}" class="nav-link {{ request()->routeIs('admin.pulse-survey-configuration') ? 'active' : '' }}">
                         <span class="nav-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"></path><path d="M7 12l3-3 3 3 5-6"></path></svg></span>Pulse Survey Configuration
                     </a>
+                @elseif($canPulseSurveyRuns)
+                    <a href="{{ route('pulse-survey-runs') }}" class="nav-link {{ request()->routeIs('pulse-survey-runs') ? 'active' : '' }}">
+                        <span class="nav-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"></path><path d="M7 12l3-3 3 3 5-6"></path></svg></span>Pulse Survey Runs
+                    </a>
                 @endif
                 @if($canRenewalConfiguration)
                     <a href="{{ route('admin.renewal-configuration') }}" class="nav-link {{ request()->routeIs('admin.renewal-configuration') ? 'active' : '' }}">
@@ -282,15 +411,45 @@
                         <span class="nav-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"></path><path d="M9 8h6M9 12h6"></path></svg></span>Claims Management
                     </a>
                 @endif
-                @if($canProjects)
-                    <a href="{{ route('admin.projects') }}" class="nav-link {{ request()->routeIs('admin.projects') ? 'active' : '' }}">
-                        <span class="nav-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="14" rx="2"></rect><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></span>Customers &amp; Projects
+                </div>
+            @endif
+
+            @if($canLeaveConfiguration || $canProjects || $canEmployees)
+                <button type="button" @click="toggle('reports')" class="nav-section-label" style="display:flex;width:100%;align-items:center;justify-content:space-between;background:none;border:none;cursor:pointer;font:inherit;text-align:left;">
+                    <span>Reports</span>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" :style="sections.reports ? '' : 'transform:rotate(-90deg)'" style="transition:transform .15s ease;"><path d="m6 9 6 6 6-6"></path></svg>
+                </button>
+                <div x-show="sections.reports" x-cloak>
+                @if($canLeaveConfiguration)
+                    <a href="{{ route('leave.reports') }}" class="nav-link {{ request()->routeIs('leave.reports') ? 'active' : '' }}">
+                        <span class="nav-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"></path><path d="M18 17V9M13 17V5M8 17v-4"></path></svg></span>Leave Reports
                     </a>
+                @endif
+                @if($canProjects)
                     <a href="{{ route('timesheets.reports') }}" class="nav-link {{ request()->routeIs('timesheets.reports') ? 'active' : '' }}">
                         <span class="nav-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"></path><path d="M7 15l4-4 3 3 5-6"></path></svg></span>Timesheet Reports
                     </a>
                     <a href="{{ route('attendance.reports') }}" class="nav-link {{ request()->routeIs('attendance.reports') ? 'active' : '' }}">
                         <span class="nav-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"></rect><path d="M16 2v4M8 2v4M3 10h18"></path><path d="M12 14v3l2 1"></path></svg></span>Attendance Reports
+                    </a>
+                @endif
+                @if($canEmployees)
+                    <a href="{{ route('employees.reports') }}" class="nav-link {{ request()->routeIs('employees.reports') ? 'active' : '' }}">
+                        <span class="nav-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"></path><path d="M8 17V11M12 17V7M16 17v-5"></path></svg></span>Employee Reports
+                    </a>
+                @endif
+                </div>
+            @endif
+
+            @if($canProjects || $canSettings || $canRoles || $canAuditLog || $canSignatures || $canHealthCheck)
+                <button type="button" @click="toggle('admin')" class="nav-section-label" style="display:flex;width:100%;align-items:center;justify-content:space-between;background:none;border:none;cursor:pointer;font:inherit;text-align:left;">
+                    <span>Admin</span>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" :style="sections.admin ? '' : 'transform:rotate(-90deg)'" style="transition:transform .15s ease;"><path d="m6 9 6 6 6-6"></path></svg>
+                </button>
+                <div x-show="sections.admin" x-cloak>
+                @if($canProjects)
+                    <a href="{{ route('admin.projects') }}" class="nav-link {{ request()->routeIs('admin.projects') ? 'active' : '' }}">
+                        <span class="nav-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="14" rx="2"></rect><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></span>Customers &amp; Projects
                     </a>
                 @endif
                 @if($canSettings)
@@ -394,30 +553,228 @@
     </div>
 </div>
 
+<div x-data="{
+        showMore: false,
+        mSections: (() => { try { return JSON.parse(localStorage.getItem('mobileNavSections')) || {}; } catch (e) { return {}; } })(),
+        mKeys: ['workspace', 'company', 'myinfo', 'socials', 'myteam', 'hradmin', 'reports', 'admin'],
+        currentSegment: @js($currentSegment),
+        init() {
+            this.mKeys.forEach(k => { if (!(k in this.mSections)) this.mSections[k] = false; });
+            // Contextual to match the bottom tab bar: opening the sheet
+            // while already inside a known segment shows that segment's
+            // options immediately, not whatever was left open last time.
+            if (this.currentSegment) {
+                this.mKeys.forEach(k => { this.mSections[k] = (k === this.currentSegment); });
+            }
+        },
+        // Accordion, not independent toggles like the desktop sidebar: a
+        // bottom sheet has far less room, so opening one segment closes
+        // whichever other one was open — the visible options are always
+        // just the one segment you tapped. 'Expand all' is the escape
+        // hatch for when you actually want everything visible at once.
+        toggleM(k) {
+            const wasOpen = this.mSections[k];
+            this.mKeys.forEach(key => { this.mSections[key] = false; });
+            this.mSections[k] = !wasOpen;
+            this.saveM();
+        },
+        expandAllM() { this.mKeys.forEach(k => this.mSections[k] = true); this.saveM(); },
+        collapseAllM() { this.mKeys.forEach(k => this.mSections[k] = false); this.saveM(); },
+        saveM() { try { localStorage.setItem('mobileNavSections', JSON.stringify(this.mSections)); } catch (e) {} },
+    }">
 <nav class="bottom-nav">
     <a href="{{ route('home') }}" class="nav-link {{ request()->routeIs('home') ? 'active' : '' }}">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"></path></svg>
         <span>Home</span>
     </a>
-    @if($canLeave)
-        <a href="{{ route('leave.apply') }}" class="nav-link {{ request()->routeIs('leave.apply') ? 'active' : '' }}">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18M8 3v4M16 3v4"></path></svg>
-            <span>Leave</span>
+    {{-- Backlog #8 — shortcuts from whichever segment the current page
+         belongs to ($activeBottomNavItems, computed above), not a fixed
+         Leave/Claims/Approvals set regardless of where you actually are. --}}
+    @foreach($activeBottomNavItems as $item)
+        <a href="{{ route($item['route']) }}" class="nav-link {{ request()->routeIs($item['route'].'*') ? 'active' : '' }}">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">{!! $item['icon'] !!}</svg>
+            <span>{{ $item['label'] }}</span>
         </a>
-    @endif
-    @if($canClaims)
-        <a href="{{ route('claims.create') }}" class="nav-link {{ request()->routeIs('claims.create') ? 'active' : '' }}">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"></path><path d="M9 8h6M9 12h6"></path></svg>
-            <span>Claims</span>
-        </a>
-    @endif
-    @if($canApprovals)
-        <a href="{{ route('approvals') }}" class="nav-link {{ request()->routeIs('approvals') ? 'active' : '' }}">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3 8-8"></path><path d="M20 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h11"></path></svg>
-            <span>Approvals</span>
-        </a>
-    @endif
+    @endforeach
+    <button type="button" @click="showMore = true" class="nav-link" style="background:none;border:none;cursor:pointer;font-family:inherit;width:100%;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="12" r="1.5"></circle><circle cx="12" cy="12" r="1.5"></circle><circle cx="19" cy="12" r="1.5"></circle></svg>
+        <span>More</span>
+    </button>
 </nav>
+
+{{-- Everything else the sidebar carries (Company/My Info/Socials/My Team/
+     HR Admin/Reports/Admin, plus the Workspace items that didn't fit the
+     4-tab bottom nav) — unreachable below 1024px without this, since the
+     sidebar itself is display:none there. Sections are collapsible, like
+     the desktop sidebar, but accordion-style rather than independent
+     toggles (see toggleM() above) — a bottom sheet has much less vertical
+     room, so opening one segment closes whichever other one was open,
+     keeping the visible list scoped to just the segment you tapped. --}}
+<div class="mobile-more-overlay" x-show="showMore" x-cloak @click.self="showMore = false" x-transition>
+    <div class="mobile-more-panel">
+        <div class="mobile-more-header">
+            <strong class="font-display text-text">Menu</strong>
+            <div style="display:flex;align-items:center;gap:14px;">
+                <button type="button" @click="expandAllM()" style="background:none;border:none;padding:0;cursor:pointer;font-size:var(--fs-3xs);font-weight:700;color:var(--color-text-faint);">Expand all</button>
+                <button type="button" @click="collapseAllM()" style="background:none;border:none;padding:0;cursor:pointer;font-size:var(--fs-3xs);font-weight:700;color:var(--color-text-faint);">Collapse all</button>
+                <button type="button" @click="showMore = false" aria-label="Close" class="icon-btn">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"></path></svg>
+                </button>
+            </div>
+        </div>
+        <div class="mobile-more-body" @click="showMore = false">
+            @if($canTimesheets || $canPerformance || $canHelpdesk)
+                <button type="button" @click.stop="toggleM('workspace')" class="nav-section-label" style="display:flex;width:100%;align-items:center;justify-content:space-between;background:none;border:none;cursor:pointer;font:inherit;text-align:left;">
+                    <span>Workspace</span>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" :style="mSections.workspace ? '' : 'transform:rotate(-90deg)'" style="transition:transform .15s ease;"><path d="m6 9 6 6 6-6"></path></svg>
+                </button>
+                <div x-show="mSections.workspace" x-cloak>
+                @if($canClaims)
+                    <a href="{{ route('claims.travel-advance') }}" class="nav-link {{ request()->routeIs('claims.travel-advance') ? 'active' : '' }}"><span>Travel Advance</span></a>
+                @endif
+                @if($canTimesheets)
+                    <a href="{{ route('timesheets') }}" class="nav-link {{ request()->routeIs('timesheets') ? 'active' : '' }}"><span>My Timesheets</span></a>
+                    <a href="{{ route('attendance') }}" class="nav-link {{ request()->routeIs('attendance') ? 'active' : '' }}"><span>My Attendance</span></a>
+                @endif
+                @if($canPerformance)
+                    <a href="{{ route('performance') }}" class="nav-link {{ request()->routeIs('performance') ? 'active' : '' }}"><span>Performance</span></a>
+                @endif
+                @if($canHelpdesk)
+                    <a href="{{ route('helpdesk') }}" class="nav-link {{ request()->routeIs('helpdesk') ? 'active' : '' }}"><span>Helpdesk</span></a>
+                @endif
+                </div>
+            @endif
+
+            @if($canDirectory || $canAssets || $canVehicles || $canPolicies)
+                <button type="button" @click.stop="toggleM('company')" class="nav-section-label" style="display:flex;width:100%;align-items:center;justify-content:space-between;background:none;border:none;cursor:pointer;font:inherit;text-align:left;">
+                    <span>Company</span>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" :style="mSections.company ? '' : 'transform:rotate(-90deg)'" style="transition:transform .15s ease;"><path d="m6 9 6 6 6-6"></path></svg>
+                </button>
+                <div x-show="mSections.company" x-cloak>
+                @if($canDirectory)
+                    <a href="{{ route('directory') }}" class="nav-link {{ request()->routeIs('directory') ? 'active' : '' }}"><span>Directory</span></a>
+                @endif
+                @if($canAssets)
+                    <a href="{{ route('assets') }}" class="nav-link {{ request()->routeIs('assets') ? 'active' : '' }}"><span>Assets</span></a>
+                @endif
+                @if($canVehicles)
+                    <a href="{{ route('vehicles') }}" class="nav-link {{ request()->routeIs('vehicles') ? 'active' : '' }}"><span>Vehicles</span></a>
+                @endif
+                @if($canPolicies)
+                    <a href="{{ route('policies') }}" class="nav-link {{ request()->routeIs('policies') ? 'active' : '' }}"><span>Policies</span></a>
+                @endif
+                </div>
+            @endif
+
+            @if($canProfile || $canMyRequests)
+                <button type="button" @click.stop="toggleM('myinfo')" class="nav-section-label" style="display:flex;width:100%;align-items:center;justify-content:space-between;background:none;border:none;cursor:pointer;font:inherit;text-align:left;">
+                    <span>My info</span>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" :style="mSections.myinfo ? '' : 'transform:rotate(-90deg)'" style="transition:transform .15s ease;"><path d="m6 9 6 6 6-6"></path></svg>
+                </button>
+                <div x-show="mSections.myinfo" x-cloak>
+                @if($canProfile)
+                    <a href="{{ route('profile') }}" class="nav-link {{ request()->routeIs('profile') ? 'active' : '' }}"><span>My Info</span></a>
+                @endif
+                @if($canMyRequests)
+                    <a href="{{ route('my-requests') }}" class="nav-link {{ request()->routeIs('my-requests') ? 'active' : '' }}"><span>My Requests</span></a>
+                @endif
+                </div>
+            @endif
+
+            @if($canBuzz || $canPulseSurveys)
+                <button type="button" @click.stop="toggleM('socials')" class="nav-section-label" style="display:flex;width:100%;align-items:center;justify-content:space-between;background:none;border:none;cursor:pointer;font:inherit;text-align:left;">
+                    <span>Socials</span>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" :style="mSections.socials ? '' : 'transform:rotate(-90deg)'" style="transition:transform .15s ease;"><path d="m6 9 6 6 6-6"></path></svg>
+                </button>
+                <div x-show="mSections.socials" x-cloak>
+                @if($canPulseSurveys)
+                    <a href="{{ route('pulse-surveys') }}" class="nav-link {{ request()->routeIs('pulse-surveys') ? 'active' : '' }}"><span>Pulse Surveys</span></a>
+                @endif
+                @if($canBuzz)
+                    <a href="{{ route('buzz') }}" class="nav-link {{ request()->routeIs('buzz') ? 'active' : '' }}"><span>Buzz</span></a>
+                @endif
+                </div>
+            @endif
+
+            @if($canApproveTimesheets || $canEmployees || $canRecruitment || $canDiscipline)
+                <button type="button" @click.stop="toggleM('myteam')" class="nav-section-label" style="display:flex;width:100%;align-items:center;justify-content:space-between;background:none;border:none;cursor:pointer;font:inherit;text-align:left;">
+                    <span>My team</span>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" :style="mSections.myteam ? '' : 'transform:rotate(-90deg)'" style="transition:transform .15s ease;"><path d="m6 9 6 6 6-6"></path></svg>
+                </button>
+                <div x-show="mSections.myteam" x-cloak>
+                @if($canApproveTimesheets)
+                    <a href="{{ route('timesheets.approvals') }}" class="nav-link {{ request()->routeIs('timesheets.approvals') ? 'active' : '' }}"><span>Timesheet Approvals</span></a>
+                @endif
+                @if($canEmployees)
+                    <a href="{{ route('employees') }}" class="nav-link {{ request()->routeIs('employees*') ? 'active' : '' }}"><span>Employees</span></a>
+                @endif
+                @if($canRecruitment)
+                    <a href="{{ route('recruitment') }}" class="nav-link {{ request()->routeIs('recruitment') ? 'active' : '' }}"><span>Recruitment</span></a>
+                @endif
+                @if($canDiscipline)
+                    <a href="{{ route('discipline') }}" class="nav-link {{ request()->routeIs('discipline') ? 'active' : '' }}"><span>Discipline Cases</span></a>
+                @endif
+                </div>
+            @endif
+
+            @if($canMasterData || $canOnboardingTemplates || $canLeaveConfiguration || $canPerformanceConfiguration || $canAssetConfiguration || $canVehicleConfiguration || $canPolicyConfiguration || $canCompanyDocuments || $canHelpdeskConfiguration || $canPulseSurveyConfiguration || $canPulseSurveyRuns || $canRenewalConfiguration || $canClaimsManagement)
+                <button type="button" @click.stop="toggleM('hradmin')" class="nav-section-label" style="display:flex;width:100%;align-items:center;justify-content:space-between;background:none;border:none;cursor:pointer;font:inherit;text-align:left;">
+                    <span>HR admin</span>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" :style="mSections.hradmin ? '' : 'transform:rotate(-90deg)'" style="transition:transform .15s ease;"><path d="m6 9 6 6 6-6"></path></svg>
+                </button>
+                <div x-show="mSections.hradmin" x-cloak>
+                @if($canMasterData)<a href="{{ route('admin.master-data') }}" class="nav-link {{ request()->routeIs('admin.master-data') ? 'active' : '' }}"><span>Org &amp; Master Data</span></a>@endif
+                @if($canOnboardingTemplates)<a href="{{ route('admin.onboarding-templates') }}" class="nav-link {{ request()->routeIs('admin.onboarding-templates') ? 'active' : '' }}"><span>Onboarding Templates</span></a>@endif
+                @if($canLeaveConfiguration)<a href="{{ route('admin.leave-configuration') }}" class="nav-link {{ request()->routeIs('admin.leave-configuration') ? 'active' : '' }}"><span>Leave Configuration</span></a>@endif
+                @if($canPerformanceConfiguration)<a href="{{ route('admin.performance-configuration') }}" class="nav-link {{ request()->routeIs('admin.performance-configuration') ? 'active' : '' }}"><span>Performance Configuration</span></a>@endif
+                @if($canAssetConfiguration)<a href="{{ route('admin.asset-configuration') }}" class="nav-link {{ request()->routeIs('admin.asset-configuration') ? 'active' : '' }}"><span>Asset Configuration</span></a>@endif
+                @if($canVehicleConfiguration)<a href="{{ route('admin.vehicle-configuration') }}" class="nav-link {{ request()->routeIs('admin.vehicle-configuration') ? 'active' : '' }}"><span>Vehicle Configuration</span></a>@endif
+                @if($canPolicyConfiguration)<a href="{{ route('admin.policy-configuration') }}" class="nav-link {{ request()->routeIs('admin.policy-configuration') ? 'active' : '' }}"><span>Policy Configuration</span></a>@endif
+                @if($canCompanyDocuments)<a href="{{ route('admin.company-documents') }}" class="nav-link {{ request()->routeIs('admin.company-documents') ? 'active' : '' }}"><span>Company Documents</span></a>@endif
+                @if($canHelpdeskConfiguration)<a href="{{ route('admin.helpdesk-configuration') }}" class="nav-link {{ request()->routeIs('admin.helpdesk-configuration') ? 'active' : '' }}"><span>Helpdesk Configuration</span></a>@endif
+                @if($canPulseSurveyConfiguration)
+                    <a href="{{ route('admin.pulse-survey-configuration') }}" class="nav-link {{ request()->routeIs('admin.pulse-survey-configuration') ? 'active' : '' }}"><span>Pulse Survey Configuration</span></a>
+                @elseif($canPulseSurveyRuns)
+                    <a href="{{ route('pulse-survey-runs') }}" class="nav-link {{ request()->routeIs('pulse-survey-runs') ? 'active' : '' }}"><span>Pulse Survey Runs</span></a>
+                @endif
+                @if($canRenewalConfiguration)<a href="{{ route('admin.renewal-configuration') }}" class="nav-link {{ request()->routeIs('admin.renewal-configuration') ? 'active' : '' }}"><span>Renewal Configuration</span></a>@endif
+                @if($canClaimsManagement)<a href="{{ route('admin.claims-management') }}" class="nav-link {{ request()->routeIs('admin.claims-management') ? 'active' : '' }}"><span>Claims Management</span></a>@endif
+                </div>
+            @endif
+
+            @if($canLeaveConfiguration || $canProjects || $canEmployees)
+                <button type="button" @click.stop="toggleM('reports')" class="nav-section-label" style="display:flex;width:100%;align-items:center;justify-content:space-between;background:none;border:none;cursor:pointer;font:inherit;text-align:left;">
+                    <span>Reports</span>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" :style="mSections.reports ? '' : 'transform:rotate(-90deg)'" style="transition:transform .15s ease;"><path d="m6 9 6 6 6-6"></path></svg>
+                </button>
+                <div x-show="mSections.reports" x-cloak>
+                @if($canLeaveConfiguration)<a href="{{ route('leave.reports') }}" class="nav-link {{ request()->routeIs('leave.reports') ? 'active' : '' }}"><span>Leave Reports</span></a>@endif
+                @if($canProjects)
+                    <a href="{{ route('timesheets.reports') }}" class="nav-link {{ request()->routeIs('timesheets.reports') ? 'active' : '' }}"><span>Timesheet Reports</span></a>
+                    <a href="{{ route('attendance.reports') }}" class="nav-link {{ request()->routeIs('attendance.reports') ? 'active' : '' }}"><span>Attendance Reports</span></a>
+                @endif
+                @if($canEmployees)<a href="{{ route('employees.reports') }}" class="nav-link {{ request()->routeIs('employees.reports') ? 'active' : '' }}"><span>Employee Reports</span></a>@endif
+                </div>
+            @endif
+
+            @if($canProjects || $canSettings || $canRoles || $canAuditLog || $canSignatures || $canHealthCheck)
+                <button type="button" @click.stop="toggleM('admin')" class="nav-section-label" style="display:flex;width:100%;align-items:center;justify-content:space-between;background:none;border:none;cursor:pointer;font:inherit;text-align:left;">
+                    <span>Admin</span>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" :style="mSections.admin ? '' : 'transform:rotate(-90deg)'" style="transition:transform .15s ease;"><path d="m6 9 6 6 6-6"></path></svg>
+                </button>
+                <div x-show="mSections.admin" x-cloak>
+                @if($canProjects)<a href="{{ route('admin.projects') }}" class="nav-link {{ request()->routeIs('admin.projects') ? 'active' : '' }}"><span>Customers &amp; Projects</span></a>@endif
+                @if($canSettings)<a href="{{ route('settings') }}" class="nav-link {{ request()->routeIs('settings') ? 'active' : '' }}"><span>Settings</span></a>@endif
+                @if($canRoles)<a href="{{ route('admin.roles') }}" class="nav-link {{ request()->routeIs('admin.roles*') ? 'active' : '' }}"><span>Roles &amp; Permissions</span></a>@endif
+                @if($canAuditLog)<a href="{{ route('admin.audit-log') }}" class="nav-link {{ request()->routeIs('admin.audit-log') ? 'active' : '' }}"><span>Audit Log</span></a>@endif
+                @if($canSignatures)<a href="{{ route('admin.signatures') }}" class="nav-link {{ request()->routeIs('admin.signatures') ? 'active' : '' }}"><span>Signature Verification</span></a>@endif
+                @if($canHealthCheck && ! \App\Models\Setting::current()->health_check_hidden)<a href="{{ route('admin.health-check') }}" class="nav-link {{ request()->routeIs('admin.health-check') ? 'active' : '' }}"><span>Health Check</span></a>@endif
+                </div>
+            @endif
+        </div>
+    </div>
+</div>
+</div>
 </div>
 
 @livewireScripts
