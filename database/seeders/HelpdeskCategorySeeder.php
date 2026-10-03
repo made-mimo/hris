@@ -22,6 +22,12 @@ class HelpdeskCategorySeeder extends Seeder
             HelpdeskCategory::firstOrCreate(['name' => $name]);
         }
 
+        $this->seedConfidential();
+    }
+
+    /** The only category every install needs; the production installer calls just this. */
+    public function seedConfidential(): void
+    {
         $grievance = HelpdeskCategory::firstOrCreate(
             ['name' => 'Grievance / Whistleblower'],
             ['is_confidential' => true]

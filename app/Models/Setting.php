@@ -97,7 +97,11 @@ class Setting extends Model implements HasMedia
 
     public static function current(): self
     {
-        return static::query()->firstOrCreate(['id' => 1]);
+        // `id` is not mass-assignable, so firstOrCreate(['id' => 1]) would insert a fresh auto-id row on every call whenever row 1 was missing. insertOrIgnore is race-safe and lets the column defaults apply.
+        static::query()->whereKey(1)->exists()
+            || static::query()->insertOrIgnore(['id' => 1, 'created_at' => now(), 'updated_at' => now()]);
+
+        return static::query()->findOrFail(1);
     }
 
     public static function forget(): void
