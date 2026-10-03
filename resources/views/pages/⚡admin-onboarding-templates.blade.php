@@ -12,7 +12,7 @@ new class extends Component
     <div class="page-header">
         <div>
             <h1>Onboarding/Offboarding Templates</h1>
-            <p class="text-muted">Spec Section B3 — reusable, ordered checklists; apply one to an employee from their Career tab.</p>
+            <p class="text-muted">Reusable, ordered checklists; apply one to an employee from their Career tab.</p>
         </div>
     </div>
 

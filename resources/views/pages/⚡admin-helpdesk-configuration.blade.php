@@ -12,7 +12,7 @@ new class extends Component
     <div class="page-header">
         <div>
             <h1>Helpdesk Configuration</h1>
-            <p class="text-muted">Spec Section F4 — ticket categories and confidential-category handler lists.</p>
+            <p class="text-muted">Ticket categories and confidential-category handler lists.</p>
         </div>
     </div>
 

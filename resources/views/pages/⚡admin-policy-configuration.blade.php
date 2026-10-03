@@ -12,7 +12,7 @@ new class extends Component
     <div class="page-header">
         <div>
             <h1>Policy Configuration</h1>
-            <p class="text-muted">Spec Section E4 — policy categories, documents, versions, and restricted-category access grants.</p>
+            <p class="text-muted">Policy categories, documents, versions and restricted-category access.</p>
         </div>
     </div>
 

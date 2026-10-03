@@ -493,10 +493,14 @@
 
     <div class="app-content">
         <header class="topbar">
-            <label class="topbar-search">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
-                <input type="search" aria-label="Search" placeholder="Search people, requests, policies…">
-            </label>
+            @if($canDirectory)
+                <form class="topbar-search" action="{{ route('directory') }}" method="GET" role="search" style="margin:0;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+                    <input type="search" name="q" aria-label="Search people" placeholder="Search people by name or ID…" autocomplete="off">
+                </form>
+            @else
+                <span class="topbar-search" aria-hidden="true" style="visibility:hidden;"></span>
+            @endif
             <div class="topbar-actions">
                 @if($helpUrl)
                     <a href="{{ $helpUrl }}" target="_blank" rel="noopener" aria-label="Help" title="Help" class="icon-btn">

@@ -12,7 +12,7 @@ new class extends Component
     <div class="page-header">
         <div>
             <h1>Leave Reports</h1>
-            <p class="text-muted">Spec Section C1 — balance and usage, plus year-end carryover/forfeiture.</p>
+            <p class="text-muted">Leave balances and usage, plus year-end carryover and forfeiture.</p>
         </div>
     </div>
 

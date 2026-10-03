@@ -23,7 +23,7 @@ new class extends Component
     <div class="page-header">
         <div>
             <h1>System Health Check</h1>
-            <p class="text-muted">Spec Section A5 — runtime dependencies, permissions, and connectivity. Can be hidden once initial setup is complete (see Settings).</p>
+            <p class="text-muted">Runtime dependencies, permissions and connectivity. Can be hidden once initial setup is complete (see Settings).</p>
         </div>
     </div>
 

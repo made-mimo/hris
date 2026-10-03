@@ -12,7 +12,7 @@ new class extends Component
     <div class="page-header">
         <div>
             <h1>Timesheet Reports</h1>
-            <p class="text-muted">Spec Section C2 — time by project, activity, and employee.</p>
+            <p class="text-muted">Time by project, activity and employee.</p>
         </div>
     </div>
 

@@ -12,7 +12,7 @@ new class extends Component
     <div class="page-header">
         <div>
             <h1>Assign Leave</h1>
-            <p class="text-muted">Spec Section C1 — books leave directly, bypassing the approval workflow.</p>
+            <p class="text-muted">Books leave directly, bypassing the approval workflow.</p>
         </div>
     </div>
 

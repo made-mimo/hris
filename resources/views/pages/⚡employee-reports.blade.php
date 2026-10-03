@@ -12,7 +12,7 @@ new class extends Component
     <div class="page-header">
         <div>
             <h1>Employee Reports</h1>
-            <p class="text-muted">Spec Section B2 — ad-hoc reporting: choose fields and filters, then export.</p>
+            <p class="text-muted">Choose fields and filters, then export.</p>
         </div>
     </div>
 

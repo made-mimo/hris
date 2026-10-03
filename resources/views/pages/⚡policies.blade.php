@@ -12,7 +12,7 @@ new class extends Component
     <div class="page-header">
         <div>
             <h1>Policies</h1>
-            <p class="text-muted">Spec Section E4 — company policy documents and acknowledgements.</p>
+            <p class="text-muted">Company policy documents and acknowledgements.</p>
         </div>
     </div>
 

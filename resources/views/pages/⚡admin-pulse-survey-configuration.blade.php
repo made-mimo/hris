@@ -12,7 +12,7 @@ new class extends Component
     <div class="page-header">
         <div>
             <h1>Pulse Survey Configuration</h1>
-            <p class="text-muted">Spec Section F8 — survey templates, launching runs, and reviewing anonymized results.</p>
+            <p class="text-muted">Survey templates, launching runs and reviewing anonymized results.</p>
         </div>
     </div>
 

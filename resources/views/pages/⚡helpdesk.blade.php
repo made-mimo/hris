@@ -12,7 +12,7 @@ new class extends Component
     <div class="page-header">
         <div>
             <h1>Helpdesk</h1>
-            <p class="text-muted">Spec Section F4 — support tickets, including confidential Grievance/Whistleblower reports.</p>
+            <p class="text-muted">Support tickets, including confidential Grievance/Whistleblower reports.</p>
         </div>
     </div>
 

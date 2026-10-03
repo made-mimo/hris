@@ -12,7 +12,7 @@ new class extends Component
     <div class="page-header">
         <div>
             <h1>Performance</h1>
-            <p class="text-muted">Spec Section D2 — reviews, ongoing tracker, goals, and 360° feedback.</p>
+            <p class="text-muted">Reviews, ongoing tracker, goals and 360° feedback.</p>
         </div>
     </div>
 

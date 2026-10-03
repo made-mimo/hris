@@ -197,4 +197,4 @@ Do **not** run `hris:install` again on an existing system.
 
 ## What is in the package
 
-Application code, pre-built front-end assets, production-only PHP libraries (no dev tools), the database migrations, the system-data seeders, and the `deploy/` folder (Apache, nginx and cron samples). The package contains no `.env`, no database, no logs and no demo accounts.
+Application code, pre-built front-end assets, production-only PHP libraries (no dev tools), the database migrations, the system-data seeders, the `deploy/` folder (Apache, nginx and cron samples), and `docs/USER_GUIDE.md` (the end-user guide to share with staff). The package contains no `.env`, no database, no logs and no demo accounts.

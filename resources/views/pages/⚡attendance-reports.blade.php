@@ -12,7 +12,7 @@ new class extends Component
     <div class="page-header">
         <div>
             <h1>Attendance Reports</h1>
-            <p class="text-muted">Spec Section C3 — attendance summary reporting across employees and date ranges.</p>
+            <p class="text-muted">Attendance summary across employees and date ranges.</p>
         </div>
     </div>
 

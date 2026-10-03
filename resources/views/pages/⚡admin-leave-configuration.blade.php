@@ -12,7 +12,7 @@ new class extends Component
     <div class="page-header">
         <div>
             <h1>Leave Configuration</h1>
-            <p class="text-muted">Spec Section C1 — leave types, the holiday calendar, the work-week pattern, and leave period history.</p>
+            <p class="text-muted">Leave types, the holiday calendar, the work-week pattern and leave period history.</p>
         </div>
     </div>
 

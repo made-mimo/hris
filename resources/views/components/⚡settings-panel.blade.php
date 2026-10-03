@@ -700,7 +700,7 @@ new class extends Component
             <div class="mb-3.5 flex items-center justify-between">
                 <h2 class="font-display text-base font-bold text-text">Google Workspace SSO</h2>
             </div>
-            <div class="mb-3 text-xs text-text-muted">Spec Section A3. Register an OAuth 2.0 Client ID in Google Cloud Console with this redirect URI, then paste its Client ID/secret below. Only accounts that already exist in this HRIS can sign in this way — a matching Google account never creates a new one.</div>
+            <div class="mb-3 text-xs text-text-muted">Register an OAuth 2.0 Client ID in Google Cloud Console with this redirect URI, then paste its Client ID/secret below. Only accounts that already exist in this HRIS can sign in this way — a matching Google account never creates a new one.</div>
             <div class="mb-3 rounded-sm bg-bg px-3 py-2 font-mono text-xs text-text-muted">{{ route('sso.callback', 'google') }}</div>
             <form wire:submit="saveGoogleSso" class="flex flex-col gap-3.5">
                 <label class="flex items-center gap-2 text-xs font-semibold text-text">
@@ -730,7 +730,7 @@ new class extends Component
             <div class="mb-3.5 flex items-center justify-between">
                 <h2 class="font-display text-base font-bold text-text">Microsoft 365 SSO</h2>
             </div>
-            <div class="mb-3 text-xs text-text-muted">Spec Section A3. Register an app in Microsoft Entra ID (Azure AD) with this redirect URI, then paste its Client ID/secret below. Only accounts that already exist in this HRIS can sign in this way — a matching Microsoft account never creates a new one.</div>
+            <div class="mb-3 text-xs text-text-muted">Register an app in Microsoft Entra ID (Azure AD) with this redirect URI, then paste its Client ID/secret below. Only accounts that already exist in this HRIS can sign in this way — a matching Microsoft account never creates a new one.</div>
             <div class="mb-3 rounded-sm bg-bg px-3 py-2 font-mono text-xs text-text-muted">{{ route('sso.callback', 'microsoft') }}</div>
             <form wire:submit="saveMicrosoftSso" class="flex flex-col gap-3.5">
                 <label class="flex items-center gap-2 text-xs font-semibold text-text">
@@ -769,14 +769,14 @@ new class extends Component
                     <input type="checkbox" wire:model.live="healthCheckHidden" class="mt-0.5 h-[18px] w-[18px] accent-primary">
                     <span>
                         <span class="block text-sm font-semibold text-text">Hide System Health Check</span>
-                        <span class="mt-0.5 block text-xs text-text-muted">Spec A5 — reduces information disclosure once initial setup is complete. Hides the screen and blocks direct access for everyone, including Admin, until switched back off here.</span>
+                        <span class="mt-0.5 block text-xs text-text-muted">Reduces information disclosure once initial setup is complete. Hides the screen and blocks direct access for everyone, including Admin, until switched back off here.</span>
                     </span>
                 </label>
                 <label class="flex cursor-pointer items-start gap-3 rounded-[10px] border border-border p-3.5">
                     <input type="checkbox" wire:model.live="showOptionalProfileFields" class="mt-0.5 h-[18px] w-[18px] accent-primary">
                     <span>
                         <span class="block text-sm font-semibold text-text">Show optional employee profile tabs</span>
-                        <span class="mt-0.5 block text-xs text-text-muted">Spec B2 — when off, hides the non-required profile tabs (Family, Immigration, Compensation, Qualifications, Career, Attachments) for everyone. Job Details, Personal, Contact, Reporting, Termination, and Activity stay visible either way.</span>
+                        <span class="mt-0.5 block text-xs text-text-muted">When off, hides the non-required profile tabs (Family, Immigration, Compensation, Qualifications, Career, Attachments) for everyone. Job Details, Personal, Contact, Reporting, Termination, and Activity stay visible either way.</span>
                     </span>
                 </label>
             </div>
@@ -792,7 +792,7 @@ new class extends Component
                     <option value="scoped">Only employees the viewer has access to</option>
                     <option value="everyone">Everyone in the company</option>
                 </select>
-                <div class="mt-1 text-xs text-text-muted">Spec F2 — controls the Home dashboard's "who's out today" widget scope for every viewer.</div>
+                <div class="mt-1 text-xs text-text-muted">Controls the Home dashboard's "who's out today" widget scope for every viewer.</div>
             </div>
         </section>
 
@@ -805,7 +805,7 @@ new class extends Component
                     <label for="helpProviderBaseUrl" class="mb-1.5 block text-xs font-semibold text-text">Help center base URL</label>
                     <input type="text" id="helpProviderBaseUrl" wire:model="helpProviderBaseUrl" placeholder="https://systemsintelligenz.zendesk.com" class="w-full max-w-md rounded-sm border border-border bg-surface px-3 py-2 text-sm text-text outline-none focus:border-primary">
                     @error('helpProviderBaseUrl') <div class="mt-1 text-xs text-danger">{{ $message }}</div> @enderror
-                    <div class="mt-1 text-xs text-text-muted">Spec F5 — the in-app Help link (topbar) is hidden entirely until a valid URL is set here. Every screen deep-links into a search on this help center; unmapped screens open its default landing page.</div>
+                    <div class="mt-1 text-xs text-text-muted">The in-app Help link (topbar) is hidden entirely until a valid URL is set here. Every screen deep-links into a search on this help center; unmapped screens open its default landing page.</div>
                 </div>
                 <button type="submit" class="self-start rounded-sm bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-dark">Save Help &amp; Support settings</button>
             </form>
@@ -873,10 +873,10 @@ new class extends Component
                     <option value="decimal">Decimal hours (e.g. 7.50)</option>
                     <option value="hhmm">HH:MM (e.g. 07:30)</option>
                 </select>
-                <div class="mt-1 text-xs text-text-muted">Spec C2 — how logged time displays across timesheets.</div>
+                <div class="mt-1 text-xs text-text-muted">How logged time displays across timesheets.</div>
             </div>
             <div class="flex flex-col gap-3.5">
-                <div class="text-xs text-text-muted">Spec C3 — three independently toggleable permissions, all off by default (only Admin has edit/delete/proxy rights until relaxed here).</div>
+                <div class="text-xs text-text-muted">Three independently toggleable permissions, all off by default (only Admin has edit/delete/proxy rights until relaxed here).</div>
                 <label class="flex cursor-pointer items-start gap-3 rounded-[10px] border border-border p-3.5">
                     <input type="checkbox" wire:model.live="attendanceAllowBackdate" class="mt-0.5 h-[18px] w-[18px] accent-primary">
                     <span>
@@ -909,7 +909,7 @@ new class extends Component
                 <div>
                     <label for="expenseClaimSecondApprovalThreshold" class="mb-1.5 block text-xs font-semibold text-text">Second-approval threshold</label>
                     <input id="expenseClaimSecondApprovalThreshold" type="number" step="0.01" min="0" wire:model="expenseClaimSecondApprovalThreshold" placeholder="Unset — single-level approval" class="w-full rounded-sm border border-border bg-surface px-3 py-2 text-sm text-text outline-none focus:border-primary">
-                    <div class="mt-1 text-xs text-text-muted">Spec E1 — claims above this amount route through a second, higher-level (Admin) approver. Leave blank for single-level approval.</div>
+                    <div class="mt-1 text-xs text-text-muted">Claims above this amount route through a second, higher-level (Admin) approver. Leave blank for single-level approval.</div>
                     @error('expenseClaimSecondApprovalThreshold') <div class="mt-1 text-xs text-danger">{{ $message }}</div> @enderror
                 </div>
                 <div>

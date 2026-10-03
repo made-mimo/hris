@@ -12,7 +12,7 @@ new class extends Component
     <div class="page-header">
         <div>
             <h1>Claims Management</h1>
-            <p class="text-muted">Spec Section E1 — filter, review, and mark expense claims paid.</p>
+            <p class="text-muted">Filter, review and mark expense claims paid.</p>
         </div>
     </div>
 

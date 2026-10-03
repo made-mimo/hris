@@ -12,7 +12,7 @@ new class extends Component
     <div class="page-header">
         <div>
             <h1>Signature Verification</h1>
-            <p class="text-muted">Spec Section A8: the evidence trail for every e-signature/digital-consent event across every module.</p>
+            <p class="text-muted">The evidence trail for every e-signature and digital consent event across all modules.</p>
         </div>
     </div>
 

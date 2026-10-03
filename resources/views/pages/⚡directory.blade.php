@@ -12,7 +12,7 @@ new class extends Component
     <div class="page-header">
         <div>
             <h1>Directory</h1>
-            <p class="text-muted">Spec Section F3 — a searchable company directory.</p>
+            <p class="text-muted">Search for colleagues by name, Employee ID, job title or location.</p>
         </div>
     </div>
 

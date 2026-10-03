@@ -12,7 +12,7 @@ new class extends Component
     <div class="page-header">
         <div>
             <h1>Vehicle Configuration</h1>
-            <p class="text-muted">Spec Section E3 — vehicle custom field definitions.</p>
+            <p class="text-muted">Vehicle custom field definitions.</p>
         </div>
     </div>
 

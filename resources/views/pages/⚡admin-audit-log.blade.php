@@ -12,7 +12,7 @@ new class extends Component
     <div class="page-header">
         <div>
             <h1>Audit Log</h1>
-            <p class="text-muted">Spec Section 3.2/A2: every entity mutation and every login/2FA security event, in one place.</p>
+            <p class="text-muted">Every change to records and every sign-in and two-factor event, in one place.</p>
         </div>
     </div>
 

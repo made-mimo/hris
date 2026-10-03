@@ -348,7 +348,7 @@ new class extends Component
                                     @if(! empty($licenseWarning))
                                         <div class="mt-3 rounded-sm border border-warning/40 bg-warning-light p-3 text-xs text-warning">
                                             <div class="mb-1.5 font-semibold">{{ $licenseWarning['reason'] }}</div>
-                                            <div class="mb-2 text-text">Spec E3: this is a warning, not a hard block — you may proceed with an explicit, logged override reason.</div>
+                                            <div class="mb-2 text-text">This is a warning, not a hard block — you may proceed with an explicit, logged override reason.</div>
                                             <input type="text" wire:model="overrideReason" placeholder="Override reason (required to proceed)" class="w-full rounded-sm border border-border bg-surface px-2.5 py-1.5 text-xs text-text outline-none focus:border-primary">
                                             <label class="mt-2 flex items-center gap-1.5 text-xs text-text">
                                                 <input type="checkbox" wire:model="licenseWarningAcknowledged" class="h-3.5 w-3.5 accent-warning">

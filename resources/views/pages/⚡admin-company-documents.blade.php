@@ -12,7 +12,7 @@ new class extends Component
     <div class="page-header">
         <div>
             <h1>Company Registration Documents</h1>
-            <p class="text-muted">Spec Section E5 — company legal/compliance documents, restricted by default.</p>
+            <p class="text-muted">Company legal and compliance documents, restricted by default.</p>
         </div>
     </div>
 

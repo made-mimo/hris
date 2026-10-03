@@ -12,7 +12,7 @@ new class extends Component
     <div class="page-header">
         <div>
             <h1>Timesheet Approvals</h1>
-            <p class="text-muted">Spec Section C2 — submitted timesheets across your accessible employees.</p>
+            <p class="text-muted">Submitted timesheets across the employees you can access.</p>
         </div>
     </div>
 

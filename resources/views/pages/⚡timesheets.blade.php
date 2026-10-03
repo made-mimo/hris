@@ -12,7 +12,7 @@ new class extends Component
     <div class="page-header">
         <div>
             <h1>My Timesheets</h1>
-            <p class="text-muted">Spec Section C2 — one timesheet per week, logged against your assigned projects.</p>
+            <p class="text-muted">One timesheet per week, logged against your assigned projects.</p>
         </div>
     </div>
 

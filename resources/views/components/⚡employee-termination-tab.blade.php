@@ -139,7 +139,7 @@ new class extends Component
             @if($employee->is_gdpr_purged)
                 <div class="text-sm text-text">This record was purged on {{ $employee->gdpr_purged_at->format('j M Y, H:i') }}. The Employee ID stays retired and can never be reissued.</div>
             @else
-                <div class="mb-3 text-xs text-text-muted">Spec Section A6 — irreversibly anonymizes this employee's personal data (name, contact details, government ID, immigration/compensation/qualification records) while permanently preserving the Employee ID as "used" so it's never reassigned. This cannot be undone.</div>
+                <div class="mb-3 text-xs text-text-muted">Irreversibly anonymizes this employee's personal data (name, contact details, government ID, immigration/compensation/qualification records) while permanently preserving the Employee ID as "used" so it's never reassigned. This cannot be undone.</div>
                 @if(! $confirmingPurge)
                     <button wire:click="$set('confirmingPurge', true)" class="rounded-sm border border-danger px-4 py-2 text-sm font-semibold text-danger hover:bg-danger/10">Purge this employee's data</button>
                 @else

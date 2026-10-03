@@ -12,7 +12,7 @@ new class extends Component
     <div class="page-header">
         <div>
             <h1>Buzz</h1>
-            <p class="text-muted">Spec Section F1 — the company-wide social feed.</p>
+            <p class="text-muted">The company-wide social feed.</p>
         </div>
     </div>
 

@@ -12,7 +12,7 @@ new class extends Component
     <div class="page-header">
         <div>
             <h1>Attendance</h1>
-            <p class="text-muted">Spec Section C3 — punch history, with Admin-configurable self-edit and supervisor proxy-punch permissions.</p>
+            <p class="text-muted">Your punch history. Self-editing and supervisor punching depend on company settings.</p>
         </div>
     </div>
 

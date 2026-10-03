@@ -12,7 +12,7 @@ new class extends Component
     <div class="page-header">
         <div>
             <h1>Employees</h1>
-            <p class="text-muted">Spec Section B2 — the Employee Master Record list, with the Employee ID auto-generated on creation.</p>
+            <p class="text-muted">Your employee records. Employee IDs are generated automatically.</p>
         </div>
         <div style="display:flex;gap:10px;">
             <a href="{{ route('org-chart') }}" wire:navigate class="btn btn-outline">Org chart</a>

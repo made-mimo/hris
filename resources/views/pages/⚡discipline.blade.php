@@ -12,7 +12,7 @@ new class extends Component
     <div class="page-header">
         <div>
             <h1>Discipline Cases</h1>
-            <p class="text-muted">Spec Section D3 — restricted to HR Admin and above, plus the employees and supervisors directly involved.</p>
+            <p class="text-muted">Restricted to HR Admin and above, plus the employees and supervisors directly involved.</p>
         </div>
     </div>
 

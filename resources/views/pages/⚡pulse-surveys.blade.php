@@ -12,7 +12,7 @@ new class extends Component
     <div class="page-header">
         <div>
             <h1>Pulse Surveys</h1>
-            <p class="text-muted">Spec Section F8 — quick, anonymous engagement check-ins. Your individual response is never shown to anyone.</p>
+            <p class="text-muted">Quick, anonymous engagement check-ins. Your individual response is never shown to anyone.</p>
         </div>
     </div>
 

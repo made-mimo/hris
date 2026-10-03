@@ -15,7 +15,7 @@ new class extends Component
                 <a href="{{ route('employees') }}" wire:navigate class="text-muted">Employees</a> <span>/</span> <span style="color:var(--color-text);font-weight:600;">Add employee</span>
             </div>
             <h1>Add employee</h1>
-            <p class="text-muted">Spec Section B2: "only name required at creation" — everything else can be completed later.</p>
+            <p class="text-muted">Only the name is required to start. Everything else can be completed later.</p>
         </div>
     </div>
 

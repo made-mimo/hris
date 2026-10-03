@@ -12,7 +12,7 @@ new class extends Component
     <div class="page-header">
         <div>
             <h1>Asset Configuration</h1>
-            <p class="text-muted">Spec Section E2 — asset categories and custom field definitions.</p>
+            <p class="text-muted">Asset categories and custom field definitions.</p>
         </div>
     </div>
 

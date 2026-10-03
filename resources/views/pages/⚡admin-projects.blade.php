@@ -12,7 +12,7 @@ new class extends Component
     <div class="page-header">
         <div>
             <h1>Customers &amp; Projects</h1>
-            <p class="text-muted">Spec Section C2 — the Customer → Project → Activity hierarchy timesheets log against.</p>
+            <p class="text-muted">The Customer → Project → Activity structure that timesheets are logged against.</p>
         </div>
     </div>
 
